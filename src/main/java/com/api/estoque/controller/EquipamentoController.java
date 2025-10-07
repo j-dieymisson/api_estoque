@@ -1,0 +1,49 @@
+package com.api.estoque.controller;
+
+import com.api.estoque.dto.request.EquipamentoRequest;
+import com.api.estoque.dto.response.EquipamentoResponse;
+import com.api.estoque.service.EquipamentoService;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
+
+@RestController // Anotação que combina @Controller e @ResponseBody, ideal para APIs REST
+@RequestMapping("/equipamentos") // Define o endereço base para todos os métodos neste controller
+public class EquipamentoController {
+
+    private final EquipamentoService equipamentoService;
+
+    public EquipamentoController(EquipamentoService equipamentoService) {
+        this.equipamentoService = equipamentoService;
+    }
+
+    @PostMapping // Mapeia este método para requisições HTTP POST para /equipamentos
+    public ResponseEntity<EquipamentoResponse> cadastrar(
+            @RequestBody @Valid EquipamentoRequest request, // Pega o corpo da requisição e valida
+            UriComponentsBuilder uriBuilder
+    ) {
+        EquipamentoResponse response = equipamentoService.criarEquipamento(request);
+
+        // Cria a URI para o novo recurso criado (boa prática REST)
+        URI uri = uriBuilder.path("/equipamentos/{id}").buildAndExpand(response.id()).toUri();
+
+        // Retorna o status 201 Created, a URI no header 'Location', e o objeto criado no corpo
+        return ResponseEntity.created(uri).body(response);
+    }
+
+    @GetMapping // Mapeia este método para requisições HTTP GET para /equipamentos
+    public ResponseEntity<Page<EquipamentoResponse>> listar(
+            // O Spring automaticamente popula o objeto Pageable com os parâmetros da URL
+            // Ex: /equipamentos?size=10&page=0&sort=nome,asc
+            @PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao
+    ) {
+        Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarTodos(paginacao);
+        return ResponseEntity.ok(pageDeEquipamentos); // Retorna o status 200 OK com a página de dados
+    }
+}
