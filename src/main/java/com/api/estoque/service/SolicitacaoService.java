@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SolicitacaoService {
@@ -340,11 +341,17 @@ public class SolicitacaoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<SolicitacaoResponse> listarTodas(Pageable pageable) {
-        // Busca todas as solicitações do banco de forma paginada
-        Page<Solicitacao> solicitacoes = solicitacaoRepository.findAll(pageable);
+    public Page<SolicitacaoResponse> listarTodas(Optional<StatusSolicitacao> status, Pageable pageable) {
+        Page<Solicitacao> solicitacoes;
 
-        // Mapeia a página de entidades para uma página de DTOs
+        if (status.isPresent()) {
+            // Se um status foi passado como parâmetro, usa o novo método de filtro
+            solicitacoes = solicitacaoRepository.findAllByStatus(status.get(), pageable);
+        } else {
+            // Caso contrário, retorna todas, como fazia antes
+            solicitacoes = solicitacaoRepository.findAll(pageable);
+        }
+
         return solicitacoes.map(this::mapToSolicitacaoResponse);
     }
 

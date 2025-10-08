@@ -3,6 +3,7 @@ package com.api.estoque.controller;
 import com.api.estoque.dto.request.SolicitacaoRequest;
 import com.api.estoque.dto.response.HistoricoStatusSolicitacaoResponse;
 import com.api.estoque.dto.response.SolicitacaoResponse;
+import com.api.estoque.model.StatusSolicitacao;
 import com.api.estoque.service.HistoricoService;
 import com.api.estoque.service.SolicitacaoService;
 import jakarta.validation.Valid;
@@ -15,6 +16,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/solicitacoes")
@@ -50,6 +52,7 @@ public class SolicitacaoController {
         SolicitacaoResponse response = solicitacaoService.recusarSolicitacao(id);
         return ResponseEntity.ok(response);
     }
+
     // O novo endpoint de histórico
     @GetMapping("/{id}/historico")
     public ResponseEntity<List<HistoricoStatusSolicitacaoResponse>> listarHistoricoDaSolicitacao(@PathVariable Long id) {
@@ -59,11 +62,13 @@ public class SolicitacaoController {
 
     @GetMapping
     public ResponseEntity<Page<SolicitacaoResponse>> listar(
-            @PageableDefault(size = 10, sort = {"dataSolicitacao"}) Pageable paginacao
+            @PageableDefault(size = 10, sort = {"dataSolicitacao"}) Pageable paginacao,
+            @RequestParam(required = false) Optional<StatusSolicitacao> status
     ) {
-        Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarTodas(paginacao);
+        Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarTodas(status, paginacao);
         return ResponseEntity.ok(paginaDeSolicitacoes);
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<SolicitacaoResponse> detalhar(@PathVariable Long id) {
         // A anotação @PathVariable diz ao Spring para pegar o valor {id} da URL
@@ -72,6 +77,7 @@ public class SolicitacaoController {
         SolicitacaoResponse response = solicitacaoService.buscarPorId(id);
         return ResponseEntity.ok(response); // Retorna 200 OK com o corpo da resposta
     }
+
     @PostMapping("/{id}/devolver-tudo")
     public ResponseEntity<SolicitacaoResponse> devolverTudo(@PathVariable Long id) {
         // Pode receber um DTO no body se quiser adicionar uma observação, por exemplo
