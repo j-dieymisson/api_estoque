@@ -5,5 +5,6 @@ public enum StatusSolicitacao {
     APROVADA,
     RECUSADA,
     RASCUNHO,
-    FINALIZADA
+    FINALIZADA,
+    CANCELADA
 }

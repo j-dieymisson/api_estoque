@@ -2,6 +2,7 @@ package com.api.estoque.service;
 
 import com.api.estoque.dto.request.SolicitacaoItemRequest;
 import com.api.estoque.dto.request.SolicitacaoRequest;
+import com.api.estoque.dto.request.SolicitacaoUpdateRequest;
 import com.api.estoque.dto.response.SolicitacaoItemResponse;
 import com.api.estoque.dto.response.SolicitacaoResponse;
 import com.api.estoque.exception.BusinessException;
@@ -14,9 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class SolicitacaoService {
@@ -62,23 +61,7 @@ public class SolicitacaoService {
         novaSolicitacao.setJustificativa(request.justificativa());
 
         // 3. Processa cada item do pedido
-        for (SolicitacaoItemRequest itemRequest : request.itens()) {
-            Equipamento equipamento = equipamentoRepository.findById(itemRequest.equipamentoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + itemRequest.equipamentoId()));
-
-            // ===== REGRA DE NEGÓCIO MAIS IMPORTANTE =====
-            // Verifica se a quantidade solicitada está disponível no estoque
-            if (equipamento.getQuantidadeDisponivel() < itemRequest.quantidade()) {
-                throw new BusinessException("Estoque insuficiente para o equipamento: " + equipamento.getNome());
-            }
-
-            // Cria o item da solicitação e o associa ao equipamento e à solicitação principal
-            SolicitacaoItem novoItem = new SolicitacaoItem();
-            novoItem.setEquipamento(equipamento);
-            novoItem.setQuantidadeSolicitada(itemRequest.quantidade());
-
-            novaSolicitacao.adicionarItem(novoItem); // Usa o método auxiliar que criamos na entidade
-        }
+        processarEAgruparItens(request.itens(), novaSolicitacao);
 
         // 4. Salva a solicitação (e seus itens, graças ao CascadeType.ALL)
         Solicitacao solicitacaoSalva = solicitacaoRepository.save(novaSolicitacao);
@@ -430,5 +413,83 @@ public class SolicitacaoService {
         registrarHistoricoDeStatus(solicitacaoSalva, statusAnterior, StatusSolicitacao.FINALIZADA);
 
         return mapToSolicitacaoResponse(solicitacaoSalva);
+    }
+
+    @Transactional
+    public SolicitacaoResponse cancelarSolicitacao(Long id) {
+        Solicitacao solicitacao = solicitacaoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Solicitação não encontrada com o ID: " + id));
+
+        // REGRA DE NEGÓCIO: Só se pode cancelar um pedido que ainda está pendente.
+        if (solicitacao.getStatus() != StatusSolicitacao.PENDENTE) {
+            throw new BusinessException("Apenas solicitações com status PENDENTE podem ser canceladas. Status atual: " + solicitacao.getStatus());
+        }
+
+        StatusSolicitacao statusAnterior = solicitacao.getStatus();
+        solicitacao.setStatus(StatusSolicitacao.CANCELADA);
+        Solicitacao solicitacaoSalva = solicitacaoRepository.save(solicitacao);
+
+        // Regista a alteração no histórico de status
+        registrarHistoricoDeStatus(solicitacaoSalva, statusAnterior, StatusSolicitacao.CANCELADA);
+
+        return mapToSolicitacaoResponse(solicitacaoSalva);
+    }
+
+    @Transactional
+    public SolicitacaoResponse atualizarSolicitacaoPendente(Long id, SolicitacaoUpdateRequest request) {
+        // 1. Busca a solicitação
+        Solicitacao solicitacao = solicitacaoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Solicitação não encontrada com o ID: " + id));
+
+        // 2. O ESCUDO PROTETOR: Garante que só se pode editar solicitações pendentes.
+        if (solicitacao.getStatus() != StatusSolicitacao.PENDENTE) {
+            throw new BusinessException("Apenas solicitações com status PENDENTE podem ser editadas.");
+        }
+
+        // 3. Limpa os itens antigos para os substituir. O orphanRemoval apaga-os da BD.
+        solicitacao.getItens().clear();
+
+        // 4. Adiciona os novos itens, validando o stock para cada um.
+        processarEAgruparItens(request.itens(), solicitacao);
+
+        // 5. Atualiza a justificação e salva.
+        solicitacao.setJustificativa(request.justificativa());
+        solicitacaoRepository.save(solicitacao);
+
+        // Não há mudança de status, então não é necessário registar no histórico de status.
+
+        return mapToSolicitacaoResponse(solicitacao);
+    }
+
+    private void processarEAgruparItens(List<SolicitacaoItemRequest> itensRequest, Solicitacao solicitacao) {
+        // Usamos um Map para agrupar itens pelo ID do equipamento
+        Map<Long, SolicitacaoItemRequest> itensAgrupados = new HashMap<>();
+
+        for (SolicitacaoItemRequest itemReq : itensRequest) {
+            itensAgrupados.merge(
+                    itemReq.equipamentoId(),
+                    itemReq,
+                    (itemExistente, novoItem) -> new SolicitacaoItemRequest(
+                            itemExistente.equipamentoId(),
+                            itemExistente.quantidade() + novoItem.quantidade() // Soma as quantidades
+                    )
+            );
+        }
+
+        // Agora, processamos a lista já agrupada e sem duplicados
+        for (SolicitacaoItemRequest itemAgrupado : itensAgrupados.values()) {
+            Equipamento equipamento = equipamentoRepository.findById(itemAgrupado.equipamentoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + itemAgrupado.equipamentoId()));
+
+            // A validação de stock continua aqui, agora sobre a quantidade total somada
+            if (equipamento.getQuantidadeDisponivel() < itemAgrupado.quantidade()) {
+                throw new BusinessException("Stock insuficiente para o equipamento: " + equipamento.getNome());
+            }
+
+            SolicitacaoItem novoItem = new SolicitacaoItem();
+            novoItem.setEquipamento(equipamento);
+            novoItem.setQuantidadeSolicitada(itemAgrupado.quantidade());
+            solicitacao.adicionarItem(novoItem);
+        }
     }
 }

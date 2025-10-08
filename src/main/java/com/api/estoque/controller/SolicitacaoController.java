@@ -1,6 +1,7 @@
 package com.api.estoque.controller;
 
 import com.api.estoque.dto.request.SolicitacaoRequest;
+import com.api.estoque.dto.request.SolicitacaoUpdateRequest;
 import com.api.estoque.dto.response.HistoricoStatusSolicitacaoResponse;
 import com.api.estoque.dto.response.SolicitacaoResponse;
 import com.api.estoque.model.StatusSolicitacao;
@@ -82,6 +83,21 @@ public class SolicitacaoController {
     public ResponseEntity<SolicitacaoResponse> devolverTudo(@PathVariable Long id) {
         // Pode receber um DTO no body se quiser adicionar uma observação, por exemplo
         SolicitacaoResponse response = solicitacaoService.devolverTudo(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/cancelar")
+    public ResponseEntity<SolicitacaoResponse> cancelar(@PathVariable Long id) {
+        SolicitacaoResponse response = solicitacaoService.cancelarSolicitacao(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<SolicitacaoResponse> atualizar(
+            @PathVariable Long id,
+            @RequestBody @Valid SolicitacaoUpdateRequest request
+    ) {
+        SolicitacaoResponse response = solicitacaoService.atualizarSolicitacaoPendente(id, request);
         return ResponseEntity.ok(response);
     }
 }
