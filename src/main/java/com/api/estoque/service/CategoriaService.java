@@ -2,9 +2,11 @@ package com.api.estoque.service;
 
 import com.api.estoque.dto.request.CategoriaRequest;
 import com.api.estoque.dto.response.CategoriaResponse;
+import com.api.estoque.exception.BusinessException;
 import com.api.estoque.exception.ResourceNotFoundException;
 import com.api.estoque.model.Categoria;
 import com.api.estoque.repository.CategoriaRepository;
+import com.api.estoque.repository.EquipamentoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +18,13 @@ import java.util.stream.Collectors;
 public class CategoriaService {
 
     private final CategoriaRepository categoriaRepository;
+    private final EquipamentoRepository equipamentoRepository;
 
     // Injeção de dependência via construtor (melhor prática)
-    public CategoriaService(CategoriaRepository categoriaRepository) {
+    public CategoriaService(CategoriaRepository categoriaRepository,
+                            EquipamentoRepository equipamentoRepository) {
         this.categoriaRepository = categoriaRepository;
+        this.equipamentoRepository = equipamentoRepository;
     }
 
     @Transactional // Garante que a operação seja atômica (ou tudo funciona, ou nada é salvo)
@@ -81,6 +86,14 @@ public class CategoriaService {
         // Busca a categoria para garantir que ela existe antes de tentar desativar.
         Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com o ID: " + id));
+
+        // Verifica se existem equipamentos ativos associados a esta categoria
+        long equipamentosAtivos = equipamentoRepository.countByCategoriaIdAndAtivoTrue(id);
+        if (equipamentosAtivos > 0) {
+            throw new BusinessException(
+                    "Não é possível desativar a categoria. Existem " + equipamentosAtivos + " equipamentos ativos associados a ela."
+            );
+        }
 
         // Ação de negócio: em vez de apagar, mudamos o estado.
         categoria.setAtiva(false);

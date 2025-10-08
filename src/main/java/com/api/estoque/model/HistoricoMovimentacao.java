@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
-@Builder // Adicionando a anotação Builder, que será muito útil para criar esses objetos
+@Builder
 @Entity(name = "HistoricoMovimentacao")
 @Table(name = "historico_movimentacoes")
 public class HistoricoMovimentacao {

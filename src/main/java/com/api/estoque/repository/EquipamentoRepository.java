@@ -15,4 +15,7 @@ public interface EquipamentoRepository extends JpaRepository<Equipamento, Long> 
     // Spring Data JPA é inteligente! Só por escrever o método com esse nome,
     // ele automaticamente cria uma query para buscar equipamentos ativos com paginação.
     Page<Equipamento> findAllByAtivoTrue(Pageable pageable);
+
+    // Conta quantos equipamentos ativos existem numa determinada categoria
+    long countByCategoriaIdAndAtivoTrue(Long categoriaId);
 }

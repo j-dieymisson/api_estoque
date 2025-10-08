@@ -1,5 +1,6 @@
 package com.api.estoque.controller;
 
+import com.api.estoque.dto.request.AjusteEstoqueRequest;
 import com.api.estoque.dto.request.EquipamentoRequest;
 import com.api.estoque.dto.response.EquipamentoResponse;
 import com.api.estoque.service.EquipamentoService;
@@ -45,5 +46,43 @@ public class EquipamentoController {
     ) {
         Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarTodos(paginacao);
         return ResponseEntity.ok(pageDeEquipamentos); // Retorna o status 200 OK com a página de dados
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<EquipamentoResponse> atualizar(
+            @PathVariable Long id,
+            @RequestBody @Valid EquipamentoRequest request
+    ) {
+        EquipamentoResponse response = equipamentoService.atualizarEquipamento(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> desativar(@PathVariable Long id) {
+        equipamentoService.desativarEquipamento(id);
+        return ResponseEntity.noContent().build(); // Retorna 204 No Content
+    }
+
+    @GetMapping("/todos")
+    public ResponseEntity<Page<EquipamentoResponse>> listarTodosAdmin(
+            @PageableDefault(size = 10, sort = {"id"}) Pageable paginacao
+    ) {
+        Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarTodosAdmin(paginacao);
+        return ResponseEntity.ok(pageDeEquipamentos);
+    }
+
+    @PatchMapping("/{id}/ativar")
+    public ResponseEntity<Void> ativar(@PathVariable Long id) {
+        equipamentoService.ativarEquipamento(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{id}/ajustar-estoque")
+    public ResponseEntity<EquipamentoResponse> ajustarEstoque(
+            @PathVariable Long id,
+            @RequestBody @Valid AjusteEstoqueRequest request
+    ) {
+        EquipamentoResponse response = equipamentoService.ajustarEstoque(id, request);
+        return ResponseEntity.ok(response);
     }
 }
