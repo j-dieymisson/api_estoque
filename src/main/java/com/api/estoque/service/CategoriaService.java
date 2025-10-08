@@ -2,12 +2,14 @@ package com.api.estoque.service;
 
 import com.api.estoque.dto.request.CategoriaRequest;
 import com.api.estoque.dto.response.CategoriaResponse;
+import com.api.estoque.exception.ResourceNotFoundException;
 import com.api.estoque.model.Categoria;
 import com.api.estoque.repository.CategoriaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service // Marca a classe como um componente de serviço gerenciado pelo Spring
@@ -31,14 +33,67 @@ public class CategoriaService {
         return new CategoriaResponse(categoriaSalva.getId(), categoriaSalva.getNome(), categoriaSalva.isAtiva());
     }
 
-    @Transactional(readOnly = true) // Otimização para operações que são apenas de leitura
-    public List<CategoriaResponse> listarTodas() {
-        return categoriaRepository.findAll()
-                .stream()
-                // Mapeia cada Entidade Categoria para um DTO CategoriaResponse
+    @Transactional(readOnly = true)
+    public List<CategoriaResponse> listarTodas(Optional<Boolean> ativa) {
+        List<Categoria> categorias;
+
+        if (ativa.isPresent()) {
+            // Se o parâmetro 'ativa' foi fornecido, usa o novo método de filtro
+            categorias = categoriaRepository.findByAtiva(ativa.get());
+        } else {
+            // Se nenhum parâmetro foi fornecido, retorna todas as categorias, como antes
+            categorias = categoriaRepository.findAll();
+        }
+
+        return categorias.stream()
                 .map(categoria -> new CategoriaResponse(categoria.getId(), categoria.getNome(), categoria.isAtiva()))
                 .collect(Collectors.toList());
     }
 
-    // Futuramente, podemos adicionar métodos para buscar por ID, atualizar e desativar.
+    @Transactional
+    public CategoriaResponse atualizarCategoria(Long id, CategoriaRequest request) {
+        // 1. Busca a categoria que queremos atualizar. Se não encontrar, lança o erro 404.
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com o ID: " + id));
+
+        // 2. Atualiza os dados da entidade com as informações do DTO.
+        // Por agora, apenas o nome pode ser alterado.
+        categoria.setNome(request.nome());
+
+        // 3. O JPA/Hibernate deteta a alteração e atualiza o registo na base de dados
+        // quando a transação for concluída. Não precisamos de chamar .save() explicitamente.
+
+        // 4. Mapeia a entidade atualizada para o DTO de resposta.
+        return new CategoriaResponse(categoria.getId(), categoria.getNome(), categoria.isAtiva());
+    }
+
+    @Transactional(readOnly = true)
+    public CategoriaResponse buscarPorId(Long id) {
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com o ID: " + id));
+
+        return new CategoriaResponse(categoria.getId(), categoria.getNome(), categoria.isAtiva());
+    }
+
+    // MÉTODO PARA DESATIVAR
+    @Transactional
+    public void desativarCategoria(Long id) {
+        // Busca a categoria para garantir que ela existe antes de tentar desativar.
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com o ID: " + id));
+
+        // Ação de negócio: em vez de apagar, mudamos o estado.
+        categoria.setAtiva(false);
+
+        // Não precisamos de retornar nada, a operação é apenas de modificação.
+    }
+
+    @Transactional
+    public void ativarCategoria(Long id) {
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com o ID: " + id));
+
+        // Ação de negócio: muda o estado para ativo
+        categoria.setAtiva(true);
+    }
 }

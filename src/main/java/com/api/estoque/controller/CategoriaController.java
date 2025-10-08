@@ -10,6 +10,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/categorias")
@@ -38,11 +39,45 @@ public class CategoriaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoriaResponse>> listar() {
-        // Chama o serviço para obter a lista de todas as categorias
-        List<CategoriaResponse> lista = categoriaService.listarTodas();
-
-        // Retorna 200 OK com a lista no corpo da resposta
+    public ResponseEntity<List<CategoriaResponse>> listar(
+            @RequestParam(required = false) Optional<Boolean> ativa
+    ) {
+        // A anotação @RequestParam pega o valor do parâmetro da URL (ex: ?ativa=true)
+        // 'required = false' indica que o parâmetro é opcional.
+        List<CategoriaResponse> lista = categoriaService.listarTodas(ativa);
         return ResponseEntity.ok(lista);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CategoriaResponse> atualizar(
+            @PathVariable Long id,
+            @RequestBody @Valid CategoriaRequest request
+    ) {
+        // A anotação @PathVariable pega o {id} da URL.
+        // A anotação @RequestBody pega o JSON do corpo da requisição.
+
+        CategoriaResponse response = categoriaService.atualizarCategoria(id, request);
+        return ResponseEntity.ok(response); // Retorna 200 OK com o objeto atualizado.
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<CategoriaResponse> detalhar(@PathVariable Long id) {
+        CategoriaResponse response = categoriaService.buscarPorId(id);
+        return ResponseEntity.ok(response);
+    }
+
+    // ENDPOINT PARA DESATIVAR
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> desativar(@PathVariable Long id) {
+        categoriaService.desativarCategoria(id);
+        // O status 204 No Content é a resposta padrão para uma operação
+        // de exclusão (ou desativação) bem-sucedida, pois não há conteúdo para retornar.
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/ativar")
+    public ResponseEntity<Void> ativar(@PathVariable Long id) {
+        categoriaService.ativarCategoria(id);
+        // Retornamos 200 OK ou 204 No Content. 200 OK com uma resposta vazia é comum.
+        return ResponseEntity.ok().build();
     }
 }

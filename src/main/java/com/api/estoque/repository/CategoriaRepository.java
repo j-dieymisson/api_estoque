@@ -3,7 +3,9 @@ package com.api.estoque.repository;
 import com.api.estoque.model.Categoria;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-// A interface estende JpaRepository<TipoDaEntidade, TipoDoIdDaEntidade>
+import java.util.List;
+
+
 public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
-    // Pronto! Nenhum código a mais é necessário para as operações básicas de CRUD.
+    List<Categoria> findByAtiva(boolean ativa);
 }
