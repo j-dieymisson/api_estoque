@@ -147,26 +147,34 @@ public class EquipamentoService {
                             "não pode ser menor que a quantidade de itens atualmente em utilização (" + quantidadeEmUso + ")."
             );
         }
-        // 1. BUSCAR UM RESPONSÁVEL
+        //BUSCAR UM RESPONSÁVEL
         Usuario responsavel = usuarioRepository.findById(1L)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilizador padrão (ID 1) não encontrado..."));
 
-        // Regra de Negócio: Calcula a diferença entre o stock antigo e o novo
-        int quantidadeAntiga = equipamento.getQuantidadeTotal();
-        int diferenca = request.novaQuantidade() - quantidadeAntiga;
+        // 1. Captura as quantidades ANTES da alteração
+        int quantidadeTotalAntiga = equipamento.getQuantidadeTotal();
+        int quantidadeDisponivelAntiga = equipamento.getQuantidadeDisponivel();
 
-        // Atualiza as quantidades no equipamento
+        // 2. Calcula a diferença com base na mudança da QUANTIDADE TOTAL
+        int diferenca = request.novaQuantidade() - quantidadeTotalAntiga;
+
+        // 3. Atualiza as quantidades no equipamento
         equipamento.setQuantidadeTotal(request.novaQuantidade());
-        equipamento.setQuantidadeDisponivel(equipamento.getQuantidadeDisponivel() + diferenca);
+        equipamento.setQuantidadeDisponivel(quantidadeDisponivelAntiga + diferenca);
+
+        // 4. Captura a quantidade DEPOIS da alteração
+        int quantidadeDisponivelPosterior = equipamento.getQuantidadeDisponivel();
 
         // Regista a movimentação de AJUSTE no histórico
         // Nota: O utilizador responsável aqui será o que estiver autenticado no futuro. Por agora, podemos deixar nulo ou usar um utilizador padrão.
         HistoricoMovimentacao registoHistorico = HistoricoMovimentacao.builder()
                 .dataMovimentacao(LocalDateTime.now())
                 .tipoMovimentacao(TipoMovimentacao.AJUSTE_MANUAL)
-                .quantidade(diferenca) // Regista a diferença (positiva ou negativa)
+                .quantidade(diferenca) // A diferença pode ser positiva ou negativa
+                .quantidadeAnterior(quantidadeDisponivelAntiga)
+                .quantidadePosterior(quantidadeDisponivelPosterior)
                 .equipamento(equipamento)
-                .usuarioResponsavel(responsavel) // TODO: Substituir pelo utilizador logado no futuro
+                .usuarioResponsavel(responsavel)
                 .build();
         historicoRepository.save(registoHistorico);
 

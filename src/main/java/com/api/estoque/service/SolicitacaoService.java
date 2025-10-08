@@ -114,14 +114,22 @@ public class SolicitacaoService {
                 throw new BusinessException("Estoque insuficiente para o equipamento: " + equipamento.getNome() + ". A aprovação não pode ser concluída.");
             }
 
+            // Captura a quantidade ANTES da mudança
+            int qtdAnterior = equipamento.getQuantidadeDisponivel();
+
             // Diminui a quantidade disponível no estoque.
             int novaQuantidade = equipamento.getQuantidadeDisponivel() - item.getQuantidadeSolicitada();
             equipamento.setQuantidadeDisponivel(novaQuantidade);
 
+            // Captura a quantidade DEPOIS da mudança
+            int qtdPosterior = equipamento.getQuantidadeDisponivel();
+
             HistoricoMovimentacao registroHistorico = HistoricoMovimentacao.builder()
                     .dataMovimentacao(LocalDateTime.now())
                     .tipoMovimentacao(TipoMovimentacao.SAIDA)
-                    .quantidade(item.getQuantidadeSolicitada())
+                    .quantidade(item.getQuantidadeSolicitada() * -1)
+                    .quantidadeAnterior(qtdAnterior)
+                    .quantidadePosterior(qtdPosterior)
                     .equipamento(equipamento)
                     .solicitacao(solicitacao)
                     .usuarioResponsavel(solicitacao.getUsuario())
@@ -351,6 +359,8 @@ public class SolicitacaoService {
         return mapToSolicitacaoResponse(solicitacao);
     }
 
+    // Dentro da classe SolicitacaoService.java
+
     @Transactional
     public SolicitacaoResponse devolverTudo(Long solicitacaoId) {
         // 1. Busca a solicitação e valida o seu estado
@@ -366,33 +376,41 @@ public class SolicitacaoService {
             int quantidadeJaDevolvida = item.getTotalDevolvido();
             int quantidadeParaDevolver = item.getQuantidadeSolicitada() - quantidadeJaDevolvida;
 
-            // Se ainda houver itens para devolver nesta linha
             if (quantidadeParaDevolver > 0) {
                 Equipamento equipamento = item.getEquipamento();
 
-                // 2a. Cria o registo da devolução
-                Devolucao novaDevolucao = new Devolucao();
-                novaDevolucao.setSolicitacaoItem(item);
-                item.getDevolucoes().add(novaDevolucao); // Sincroniza o objeto em memória
-                novaDevolucao.setQuantidadeDevolvida(quantidadeParaDevolver);
-                novaDevolucao.setDataDevolucao(LocalDateTime.now());
-                novaDevolucao.setObservacao("Devolução total automática.");
-                devolucaoRepository.save(novaDevolucao); // Salva a devolução
+                // 2a. Captura a quantidade ANTES da mudança
+                int qtdAnterior = equipamento.getQuantidadeDisponivel();
 
                 // 2b. Reabastece o stock
                 equipamento.setQuantidadeDisponivel(equipamento.getQuantidadeDisponivel() + quantidadeParaDevolver);
 
-                // 2c. Regista no histórico de movimentação de equipamento
+                // 2c. Captura a quantidade DEPOIS da mudança
+                int qtdPosterior = equipamento.getQuantidadeDisponivel();
+
+                // 2d. Cria o registo da devolução
+                Devolucao novaDevolucao = new Devolucao();
+                novaDevolucao.setSolicitacaoItem(item);
+                item.getDevolucoes().add(novaDevolucao);
+                novaDevolucao.setQuantidadeDevolvida(quantidadeParaDevolver);
+                novaDevolucao.setDataDevolucao(LocalDateTime.now());
+                novaDevolucao.setObservacao("Devolução total automática.");
+                devolucaoRepository.save(novaDevolucao);
+
+                // 2e. Regista no histórico de movimentação COM OS DADOS CORRETOS
                 HistoricoMovimentacao registoHistorico = HistoricoMovimentacao.builder()
                         .dataMovimentacao(LocalDateTime.now())
                         .tipoMovimentacao(TipoMovimentacao.DEVOLUCAO)
                         .quantidade(quantidadeParaDevolver)
+                        .quantidadeAnterior(qtdAnterior)      // <-- CORRIGIDO
+                        .quantidadePosterior(qtdPosterior)     // <-- CORRIGIDO
                         .equipamento(equipamento)
                         .solicitacao(solicitacao)
                         .devolucao(novaDevolucao)
                         .usuarioResponsavel(solicitacao.getUsuario())
                         .build();
                 historicoRepository.save(registoHistorico);
+
             }
         }
 

@@ -28,6 +28,12 @@ public class HistoricoMovimentacao {
 
     private int quantidade;
 
+    @Column(name = "quantidade_anterior")
+    private int quantidadeAnterior;
+
+    @Column(name = "quantidade_posterior")
+    private int quantidadePosterior;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "equipamento_id")
     private Equipamento equipamento;

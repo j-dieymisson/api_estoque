@@ -48,12 +48,14 @@ public class HistoricoService {
                 historico.getDataMovimentacao(),
                 historico.getTipoMovimentacao().name(),
                 historico.getQuantidade(),
+                historico.getQuantidadeAnterior(), // Novo
+                historico.getQuantidadePosterior(), // Novo
                 historico.getEquipamento().getNome(),
                 historico.getUsuarioResponsavel().getNome(),
-                historico.getSolicitacao() != null ? historico.getSolicitacao().getId() : null,
-                historico.getDevolucao() != null ? historico.getDevolucao().getId() : null
+                historico.getSolicitacao() != null ? historico.getSolicitacao().getId() : null
         );
     }
+
     private HistoricoStatusSolicitacaoResponse mapToHistoricoStatusResponse(HistoricoStatusSolicitacao historico) {
         return new HistoricoStatusSolicitacaoResponse(
                 historico.getId(),

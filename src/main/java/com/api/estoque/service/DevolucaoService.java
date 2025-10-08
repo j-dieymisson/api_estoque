@@ -45,32 +45,38 @@ public class DevolucaoService {
         // 3. Cria a nova entidade Devolucao
         Devolucao novaDevolucao = new Devolucao();
         novaDevolucao.setSolicitacaoItem(itemSolicitado);
-        itemSolicitado.getDevolucoes().add(novaDevolucao);
+        itemSolicitado.getDevolucoes().add(novaDevolucao); // Sincroniza o objeto em memória
         novaDevolucao.setQuantidadeDevolvida(request.quantidadeDevolvida());
         novaDevolucao.setDataDevolucao(LocalDateTime.now());
         novaDevolucao.setObservacao(request.observacao());
 
-        // 4. ATUALIZA O ESTOQUE: Aumenta a quantidade disponível do equipamento.
+        // 4. ATUALIZA O ESTOQUE e captura os valores
         Equipamento equipamento = itemSolicitado.getEquipamento();
+        int qtdAnterior = equipamento.getQuantidadeDisponivel(); // Captura ANTES
+
         int novaQuantidadeDisponivel = equipamento.getQuantidadeDisponivel() + request.quantidadeDevolvida();
         equipamento.setQuantidadeDisponivel(novaQuantidadeDisponivel);
 
-        // 5. Salva a devolução no banco. A alteração no equipamento será salva automaticamente
-        // pela transação do JPA.
+        int qtdPosterior = equipamento.getQuantidadeDisponivel(); // Captura DEPOIS
+
+        // 5. Salva a devolução no banco.
         Devolucao devolucaoSalva = devolucaoRepository.save(novaDevolucao);
 
+        // 6. Regista o histórico com os valores corretos
         HistoricoMovimentacao registroHistorico = HistoricoMovimentacao.builder()
                 .dataMovimentacao(LocalDateTime.now())
                 .tipoMovimentacao(TipoMovimentacao.DEVOLUCAO)
                 .quantidade(devolucaoSalva.getQuantidadeDevolvida())
+                .quantidadeAnterior(qtdAnterior)             // <-- Usa o valor capturado
+                .quantidadePosterior(qtdPosterior)            // <-- Usa o valor capturado
                 .equipamento(equipamento)
                 .solicitacao(itemSolicitado.getSolicitacao())
-                .devolucao(devolucaoSalva) // Ligamos ao registro de devolução
+                .devolucao(devolucaoSalva)
                 .usuarioResponsavel(itemSolicitado.getSolicitacao().getUsuario())
                 .build();
-
         historicoRepository.save(registroHistorico);
 
+        // 7. Verifica se a solicitação pode ser finalizada
         verificarEFinalizarSolicitacaoSeCompleta(itemSolicitado.getSolicitacao());
 
         return mapToDevolucaoResponse(devolucaoSalva);
