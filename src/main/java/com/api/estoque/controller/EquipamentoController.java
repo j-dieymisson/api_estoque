@@ -85,4 +85,12 @@ public class EquipamentoController {
         EquipamentoResponse response = equipamentoService.ajustarEstoque(id, request);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/disponiveis")
+    public ResponseEntity<Page<EquipamentoResponse>> listarDisponiveis(
+            @PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao
+    ) {
+        Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarDisponiveis(paginacao);
+        return ResponseEntity.ok(pageDeEquipamentos);
+    }
 }

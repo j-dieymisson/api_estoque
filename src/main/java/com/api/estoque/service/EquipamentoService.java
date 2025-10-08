@@ -180,4 +180,14 @@ public class EquipamentoService {
 
         return mapToEquipamentoResponse(equipamento);
     }
+
+    @Transactional(readOnly = true)
+    public Page<EquipamentoResponse> listarDisponiveis(Pageable pageable) {
+        // Chamamos o novo método do repositório, passando 0 como a quantidade mínima
+        Page<Equipamento> equipamentosDisponiveis = equipamentoRepository
+                .findAllByAtivoTrueAndQuantidadeDisponivelGreaterThan(0, pageable);
+
+        // Reutilizamos o nosso mapeamento para DTOs
+        return equipamentosDisponiveis.map(this::mapToEquipamentoResponse);
+    }
 }

@@ -18,4 +18,6 @@ public interface EquipamentoRepository extends JpaRepository<Equipamento, Long> 
 
     // Conta quantos equipamentos ativos existem numa determinada categoria
     long countByCategoriaIdAndAtivoTrue(Long categoriaId);
+
+    Page<Equipamento> findAllByAtivoTrueAndQuantidadeDisponivelGreaterThan(int quantidade, Pageable pageable);
 }
