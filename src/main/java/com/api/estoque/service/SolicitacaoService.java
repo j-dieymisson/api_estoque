@@ -324,14 +324,21 @@ public class SolicitacaoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<SolicitacaoResponse> listarTodas(Optional<StatusSolicitacao> status, Pageable pageable) {
+    public Page<SolicitacaoResponse> listarTodas(Optional<StatusSolicitacao> status, Optional<Long> usuarioId, Pageable pageable) {
         Page<Solicitacao> solicitacoes;
 
-        if (status.isPresent()) {
-            // Se um status foi passado como parâmetro, usa o novo método de filtro
+        // A lógica agora verifica todas as combinações de filtros
+        if (usuarioId.isPresent() && status.isPresent()) {
+            // Se AMBOS os filtros foram fornecidos
+            solicitacoes = solicitacaoRepository.findAllByUsuarioIdAndStatus(usuarioId.get(), status.get(), pageable);
+        } else if (usuarioId.isPresent()) {
+            // Se APENAS o filtro de utilizador foi fornecido
+            solicitacoes = solicitacaoRepository.findAllByUsuarioId(usuarioId.get(), pageable);
+        } else if (status.isPresent()) {
+            // Se APENAS o filtro de status foi fornecido
             solicitacoes = solicitacaoRepository.findAllByStatus(status.get(), pageable);
         } else {
-            // Caso contrário, retorna todas, como fazia antes
+            // Se NENHUM filtro foi fornecido
             solicitacoes = solicitacaoRepository.findAll(pageable);
         }
 

@@ -64,9 +64,10 @@ public class SolicitacaoController {
     @GetMapping
     public ResponseEntity<Page<SolicitacaoResponse>> listar(
             @PageableDefault(size = 10, sort = {"dataSolicitacao"}) Pageable paginacao,
-            @RequestParam(required = false) Optional<StatusSolicitacao> status
+            @RequestParam(required = false) Optional<StatusSolicitacao> status,
+            @RequestParam(required = false) Optional<Long> usuarioId
     ) {
-        Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarTodas(status, paginacao);
+        Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarTodas(status, usuarioId, paginacao);
         return ResponseEntity.ok(paginaDeSolicitacoes);
     }
 

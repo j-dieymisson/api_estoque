@@ -20,4 +20,10 @@ public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> 
 
     Page<Solicitacao> findAllByStatus(StatusSolicitacao status, Pageable pageable);
 
+    // Busca todas as solicitações de um utilizador, com paginação
+    Page<Solicitacao> findAllByUsuarioId(Long usuarioId, Pageable pageable);
+
+    // Busca todas as solicitações de um utilizador COM um status específico, com paginação
+    Page<Solicitacao> findAllByUsuarioIdAndStatus(Long usuarioId, StatusSolicitacao status, Pageable pageable);
+
 }
