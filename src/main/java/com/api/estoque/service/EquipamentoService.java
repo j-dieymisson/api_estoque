@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class EquipamentoService {
@@ -56,8 +57,15 @@ public class EquipamentoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<EquipamentoResponse> listarTodos(Pageable pageable) {
-        Page<Equipamento> equipamentos = equipamentoRepository.findAllByAtivoTrue(pageable);
+    public Page<EquipamentoResponse> listarTodos(Optional<String> nome, Pageable pageable) {
+        Page<Equipamento> equipamentos;
+        if (nome.isPresent()) {
+            // Se um nome foi fornecido, usa a nossa nova busca parcial
+            equipamentos = equipamentoRepository.findAllByAtivoTrueAndNomeContainingIgnoreCase(nome.get(), pageable);
+        } else {
+            // Se não, continua a retornar todos os equipamentos ativos
+            equipamentos = equipamentoRepository.findAllByAtivoTrue(pageable);
+        }
         return equipamentos.map(this::mapToEquipamentoResponse);
     }
 

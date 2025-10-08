@@ -20,4 +20,6 @@ public interface EquipamentoRepository extends JpaRepository<Equipamento, Long> 
     long countByCategoriaIdAndAtivoTrue(Long categoriaId);
 
     Page<Equipamento> findAllByAtivoTrueAndQuantidadeDisponivelGreaterThan(int quantidade, Pageable pageable);
+
+    Page<Equipamento> findAllByAtivoTrueAndNomeContainingIgnoreCase(String nome, Pageable pageable);
 }

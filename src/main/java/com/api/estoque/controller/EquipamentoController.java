@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Optional;
 
 @RestController // Anotação que combina @Controller e @ResponseBody, ideal para APIs REST
 @RequestMapping("/equipamentos") // Define o endereço base para todos os métodos neste controller
@@ -40,12 +41,12 @@ public class EquipamentoController {
 
     @GetMapping // Mapeia este método para requisições HTTP GET para /equipamentos
     public ResponseEntity<Page<EquipamentoResponse>> listar(
-            // O Spring automaticamente popula o objeto Pageable com os parâmetros da URL
-            // Ex: /equipamentos?size=10&page=0&sort=nome,asc
-            @PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao
+
+            @PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao,
+            @RequestParam(required = false) Optional<String> nome
     ) {
-        Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarTodos(paginacao);
-        return ResponseEntity.ok(pageDeEquipamentos); // Retorna o status 200 OK com a página de dados
+        Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarTodos(nome, paginacao);
+        return ResponseEntity.ok(pageDeEquipamentos);
     }
 
     @PutMapping("/{id}")
