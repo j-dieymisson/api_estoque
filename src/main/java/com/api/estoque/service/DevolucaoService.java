@@ -6,6 +6,8 @@ import com.api.estoque.exception.BusinessException;
 import com.api.estoque.exception.ResourceNotFoundException;
 import com.api.estoque.model.*;
 import com.api.estoque.repository.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -149,5 +151,23 @@ public class DevolucaoService {
                 devolucao.getDataDevolucao(),
                 devolucao.getObservacao()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public Page<DevolucaoResponse> listarTodas(Pageable pageable) {
+        // Busca todas as devoluções de forma paginada
+        Page<Devolucao> devolucoes = devolucaoRepository.findAll(pageable);
+
+        // Reutiliza o nosso método de mapeamento para converter para DTOs
+        return devolucoes.map(this::mapToDevolucaoResponse);
+    }
+
+    // MÉTODO PARA BUSCAR UMA DEVOLUÇÃO POR ID
+    @Transactional(readOnly = true)
+    public DevolucaoResponse buscarPorId(Long id) {
+        Devolucao devolucao = devolucaoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Devolução não encontrada com o ID: " + id));
+
+        return mapToDevolucaoResponse(devolucao);
     }
 }

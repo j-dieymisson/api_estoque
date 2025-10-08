@@ -4,11 +4,11 @@ import com.api.estoque.dto.request.DevolucaoRequest;
 import com.api.estoque.dto.response.DevolucaoResponse;
 import com.api.estoque.service.DevolucaoService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -36,5 +36,20 @@ public class DevolucaoController {
 
         // Retorna o status 201 Created com a localização e o corpo da resposta
         return ResponseEntity.created(uri).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<DevolucaoResponse>> listar(
+            @PageableDefault(size = 10, sort = {"dataDevolucao"}) Pageable paginacao
+    ) {
+        Page<DevolucaoResponse> paginaDeDevolucoes = devolucaoService.listarTodas(paginacao);
+        return ResponseEntity.ok(paginaDeDevolucoes);
+    }
+
+    // ENDPOINT PARA DETALHAR UMA DEVOLUÇÃO
+    @GetMapping("/{id}")
+    public ResponseEntity<DevolucaoResponse> detalhar(@PathVariable Long id) {
+        DevolucaoResponse response = devolucaoService.buscarPorId(id);
+        return ResponseEntity.ok(response);
     }
 }
