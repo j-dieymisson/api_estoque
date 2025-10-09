@@ -1,8 +1,14 @@
 package com.api.estoque.controller;
 
+import com.api.estoque.dto.request.UsuarioRequest;
+import com.api.estoque.dto.response.UsuarioResponse;
 import com.api.estoque.service.UsuarioService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/usuarios")
@@ -12,6 +18,16 @@ public class UsuarioController {
 
     public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
+    }
+
+    @PostMapping
+    public ResponseEntity<UsuarioResponse> criar(
+            @RequestBody @Valid UsuarioRequest request,
+            UriComponentsBuilder uriBuilder
+    ) {
+        UsuarioResponse response = usuarioService.criarUsuario(request);
+        URI uri = uriBuilder.path("/usuarios/{id}").buildAndExpand(response.id()).toUri();
+        return ResponseEntity.created(uri).body(response);
     }
 
     @DeleteMapping("/{id}")
