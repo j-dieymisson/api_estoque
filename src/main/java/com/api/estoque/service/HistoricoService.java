@@ -11,7 +11,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,11 +29,27 @@ public class HistoricoService {
         this.historicoStatusRepository = historicoStatusRepository;
     }
 
-    @Transactional(readOnly = true) // Boa prática para métodos de apenas leitura
-    public Page<HistoricoResponse> buscarPorEquipamentoId(Long equipamentoId, Pageable pageable) {
-        // Futuramente, poderíamos criar uma query customizada no repositório para otimizar isso,
-        // mas por enquanto, vamos buscar a entidade e mapear.
-        Page<HistoricoMovimentacao> historicoPage = historicoRepository.findByEquipamentoIdOrderByDataMovimentacaoDesc(equipamentoId, pageable);
+    @Transactional(readOnly = true)
+    public Page<HistoricoResponse> buscarPorEquipamentoId(
+            Long equipamentoId,
+            Optional<LocalDate> dataInicio,
+            Optional<LocalDate> dataFim,
+            Pageable pageable) {
+
+        Page<HistoricoMovimentacao> historicoPage;
+
+        // Verifica se ambas as datas foram fornecidas
+        if (dataInicio.isPresent() && dataFim.isPresent()) {
+            // Converte LocalDate para LocalDateTime para abranger o dia inteiro
+            LocalDateTime inicio = dataInicio.get().atStartOfDay(); // Ex: 2025-10-09 -> 2025-10-09T00:00:00
+            LocalDateTime fim = dataFim.get().atTime(23, 59, 59);    // Ex: 2025-10-10 -> 2025-10-10T23:59:59
+
+            historicoPage = historicoRepository.findByEquipamentoIdAndDataMovimentacaoBetween(equipamentoId, inicio, fim, pageable);
+        } else {
+            // Se as datas não forem fornecidas, usa o método antigo
+            historicoPage = historicoRepository.findAllByEquipamentoIdOrderByDataMovimentacaoDesc(equipamentoId, pageable);
+        }
+
         return historicoPage.map(this::mapToHistoricoResponse);
     }
 
