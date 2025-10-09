@@ -20,5 +20,9 @@ public class Usuario {
     private String login;
     private String senha;
     private boolean ativo;
+    private String email;
+    @ManyToOne(fetch = FetchType.EAGER) // Muitos Utilizadores podem ter UM Cargo
+    @JoinColumn(name = "cargo_id")
+    private Cargo cargo;
 
 }
