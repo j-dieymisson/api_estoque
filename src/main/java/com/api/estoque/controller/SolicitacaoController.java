@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -74,9 +76,12 @@ public class SolicitacaoController {
     public ResponseEntity<Page<SolicitacaoResponse>> listar(
             @PageableDefault(size = 10, sort = {"dataSolicitacao"}) Pageable paginacao,
             @RequestParam(required = false) Optional<StatusSolicitacao> status,
-            @RequestParam(required = false) Optional<Long> usuarioId
+            @RequestParam(required = false) Optional<Long> usuarioId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim
     ) {
-        Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarTodas(status, usuarioId, paginacao);
+        // Passe todos os parâmetros para o serviço
+        Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarTodas(status, usuarioId, dataInicio, dataFim, paginacao);
         return ResponseEntity.ok(paginaDeSolicitacoes);
     }
 

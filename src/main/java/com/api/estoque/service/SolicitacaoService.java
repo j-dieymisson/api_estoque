@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -330,27 +331,49 @@ public class SolicitacaoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<SolicitacaoResponse> listarTodas(Optional<StatusSolicitacao> status, Optional<Long> usuarioId, Pageable pageable) {
+    public Page<SolicitacaoResponse> listarTodas(
+            Optional<StatusSolicitacao> status,
+            Optional<Long> usuarioId,
+            Optional<LocalDate> dataInicio,
+            Optional<LocalDate> dataFim,
+            Pageable pageable) {
+
         Page<Solicitacao> solicitacoes;
 
-        // A lógica agora verifica todas as combinações de filtros
-        if (usuarioId.isPresent() && status.isPresent()) {
-            // Se AMBOS os filtros foram fornecidos
+        // Converte as datas para LocalDateTime para abranger o dia inteiro
+        LocalDateTime inicio = dataInicio.map(LocalDate::atStartOfDay).orElse(null);
+        LocalDateTime fim = dataFim.map(d -> d.atTime(23, 59, 59)).orElse(null);
+        boolean datasPresentes = inicio != null && fim != null;
+
+        // Lógica para decidir qual método do repositório chamar
+        if (usuarioId.isPresent() && status.isPresent() && datasPresentes) {
+            // Filtro por: Utilizador + Status + Data
+            solicitacoes = solicitacaoRepository.findAllByUsuarioIdAndStatusAndDataSolicitacaoBetween(usuarioId.get(), status.get(), inicio, fim, pageable);
+        } else if (usuarioId.isPresent() && datasPresentes) {
+            // Filtro por: Utilizador + Data
+            solicitacoes = solicitacaoRepository.findAllByUsuarioIdAndDataSolicitacaoBetween(usuarioId.get(), inicio, fim, pageable);
+        } else if (status.isPresent() && datasPresentes) {
+            // Filtro por: Status + Data
+            solicitacoes = solicitacaoRepository.findAllByStatusAndDataSolicitacaoBetween(status.get(), inicio, fim, pageable);
+        } else if (datasPresentes) {
+            // Filtro por: Apenas Data
+            solicitacoes = solicitacaoRepository.findAllByDataSolicitacaoBetween(inicio, fim, pageable);
+        } else if (usuarioId.isPresent() && status.isPresent()) {
+            // Filtro por: Utilizador + Status (já existia)
             solicitacoes = solicitacaoRepository.findAllByUsuarioIdAndStatus(usuarioId.get(), status.get(), pageable);
         } else if (usuarioId.isPresent()) {
-            // Se APENAS o filtro de utilizador foi fornecido
+            // Filtro por: Apenas Utilizador (já existia)
             solicitacoes = solicitacaoRepository.findAllByUsuarioId(usuarioId.get(), pageable);
         } else if (status.isPresent()) {
-            // Se APENAS o filtro de status foi fornecido
+            // Filtro por: Apenas Status (já existia)
             solicitacoes = solicitacaoRepository.findAllByStatus(status.get(), pageable);
         } else {
-            // Se NENHUM filtro foi fornecido
+            // Sem filtros
             solicitacoes = solicitacaoRepository.findAll(pageable);
         }
 
         return solicitacoes.map(this::mapToSolicitacaoResponse);
     }
-
     @Transactional(readOnly = true)
     public SolicitacaoResponse buscarPorId(Long id) {
         // Usa o método findById do repositório, que retorna um Optional
