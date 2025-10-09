@@ -59,6 +59,8 @@ public class SolicitacaoService {
         novaSolicitacao.setDataSolicitacao(LocalDateTime.now());
         novaSolicitacao.setStatus(StatusSolicitacao.PENDENTE); // Toda nova solicitação começa como pendente
         novaSolicitacao.setJustificativa(request.justificativa());
+        novaSolicitacao.setDataPrevisaoEntrega(request.dataPrevisaoEntrega());
+        novaSolicitacao.setDataPrevisaoDevolucao(request.dataPrevisaoDevolucao());
 
         // 3. Processa cada item do pedido
         processarEAgruparItens(request.itens(), novaSolicitacao);
@@ -170,6 +172,8 @@ public class SolicitacaoService {
         novoRascunho.setDataSolicitacao(LocalDateTime.now());
         novoRascunho.setStatus(StatusSolicitacao.RASCUNHO);
         novoRascunho.setJustificativa(request.justificativa());
+        novoRascunho.setDataPrevisaoEntrega(request.dataPrevisaoEntrega());
+        novoRascunho.setDataPrevisaoDevolucao(request.dataPrevisaoDevolucao());
 
         // Adiciona os itens JÁ VALIDANDO O STOCK
         for (SolicitacaoItemRequest itemRequest : request.itens()) {
@@ -304,6 +308,8 @@ public class SolicitacaoService {
                 solicitacao.getId(),
                 solicitacao.getUsuario().getNome(),
                 solicitacao.getDataSolicitacao(),
+                solicitacao.getDataPrevisaoEntrega(),
+                solicitacao.getDataPrevisaoDevolucao(),
                 solicitacao.getStatus().name(), // .name() converte o Enum para String
                 solicitacao.getJustificativa(),
                 itemResponses

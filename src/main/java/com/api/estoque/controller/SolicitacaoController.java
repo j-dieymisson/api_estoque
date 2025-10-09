@@ -5,13 +5,18 @@ import com.api.estoque.dto.request.SolicitacaoUpdateRequest;
 import com.api.estoque.dto.response.HistoricoStatusSolicitacaoResponse;
 import com.api.estoque.dto.response.SolicitacaoResponse;
 import com.api.estoque.model.StatusSolicitacao;
+import com.api.estoque.model.Usuario;
 import com.api.estoque.service.HistoricoService;
+import com.api.estoque.service.PdfService;
 import com.api.estoque.service.SolicitacaoService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -25,11 +30,15 @@ public class SolicitacaoController {
 
     private final SolicitacaoService solicitacaoService;
     private final HistoricoService historicoService;
+    private final PdfService pdfService;
 
     // O construtor DEVE receber os dois serviços
-    public SolicitacaoController(SolicitacaoService solicitacaoService, HistoricoService historicoService) {
+    public SolicitacaoController(SolicitacaoService solicitacaoService,
+                                 HistoricoService historicoService,
+                                 PdfService pdfService) {
         this.solicitacaoService = solicitacaoService;
         this.historicoService = historicoService;
+        this.pdfService = pdfService;
     }
 
     @PostMapping
@@ -100,5 +109,24 @@ public class SolicitacaoController {
     ) {
         SolicitacaoResponse response = solicitacaoService.atualizarSolicitacaoPendente(id, request);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> gerarPdf(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuarioLogado
+    ) {
+        // 3. Chama o serviço para gerar o PDF, passando o utilizador autenticado para a auditoria
+        byte[] pdfBytes = pdfService.gerarPdfSolicitacao(id, usuarioLogado);
+
+        // 4. Prepara os cabeçalhos da resposta para indicar que é um ficheiro PDF
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        // O nome do ficheiro que será sugerido para download
+        headers.setContentDispositionFormData("attachment", "solicitacao_" + id + ".pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
     }
 }

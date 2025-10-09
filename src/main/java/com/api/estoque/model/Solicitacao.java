@@ -3,6 +3,7 @@ package com.api.estoque.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,12 @@ public class Solicitacao {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
+
+    @Column(name = "data_previsao_entrega")
+    private LocalDate dataPrevisaoEntrega;
+
+    @Column(name = "data_previsao_devolucao")
+    private LocalDate dataPrevisaoDevolucao;
 
     // --- Relacionamento com SolicitacaoItem ---
     // Uma solicitação tem uma lista de itens.

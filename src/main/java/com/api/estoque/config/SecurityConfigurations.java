@@ -42,24 +42,23 @@ public class SecurityConfigurations {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Endpoints Públicos (não precisam de login)
+                        // ===== Endpoints Públicos Essenciais para o Arranque =====
                         .requestMatchers(HttpMethod.POST, "/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/cargos").permitAll() // <-- TORNAR PÚBLICO para sabermos os IDs
 
-
-                        // Endpoints de Gestão (só para ADMIN)
-                        .requestMatchers("/usuarios/**").hasRole("ADMIN")
+                        // ===== Regras de Admin (Exigem login como Admin) =====
+                        // Qualquer outra ação em /cargos (que não seja o GET público) exige ser ADMIN
                         .requestMatchers("/cargos/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/equipamentos").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/equipamentos/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/equipamentos/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/equipamentos/**/ajustar-estoque").hasRole("ADMIN")
+                        .requestMatchers("/equipamentos/**").hasRole("ADMIN")
+                        .requestMatchers("/usuarios/**").hasRole("ADMIN") // Qualquer outra ação em /usuarios exige ser ADMIN
 
-                        // Endpoints de Aprovação (ADMIN ou um futuro MANAGER)
-                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/**/aprovar").hasAnyRole("ADMIN", "MANAGER")
-                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/**/recusar").hasAnyRole("ADMIN", "MANAGER")
+                        // ===== Regras de Gestor/Admin =====
+                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/**/aprovar").hasAnyRole("ADMIN", "GESTOR")
+                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/**/recusar").hasAnyRole("ADMIN", "GESTOR")
 
-                        // Qualquer outra requisição (ex: GET /equipamentos, POST /solicitacoes)
-                        // só precisa de que o utilizador esteja autenticado.
+                        // ===== Regra Final =====
+                        // Qualquer outra requisição (como criar uma solicitação) exige apenas autenticação
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
