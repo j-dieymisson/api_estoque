@@ -54,9 +54,10 @@ public class SecurityConfigurations {
                         .requestMatchers("/usuarios/**").hasRole("ADMIN") // Qualquer outra ação em /usuarios exige ser ADMIN
 
                         // ===== Regras de Gestor/Admin =====
-                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/**/aprovar").hasAnyRole("ADMIN", "GESTOR")
-                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/**/recusar").hasAnyRole("ADMIN", "GESTOR")
-
+                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/aprovar").hasAnyRole("ADMIN", "GESTOR")
+                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/recusar").hasAnyRole("ADMIN", "GESTOR")
+                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/cancelar").hasRole("ADMIN") // Vamos proteger este também
+                        .requestMatchers(HttpMethod.POST, "/solicitacoes/*/devolver-tudo").hasAnyRole("ADMIN", "GESTOR")
                         // ===== Regra Final =====
                         // Qualquer outra requisição (como criar uma solicitação) exige apenas autenticação
                         .anyRequest().authenticated()

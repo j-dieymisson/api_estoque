@@ -4,10 +4,13 @@ import com.api.estoque.dto.request.AjusteEstoqueRequest;
 import com.api.estoque.dto.request.EquipamentoRequest;
 import com.api.estoque.dto.response.EquipamentoResponse;
 import com.api.estoque.service.EquipamentoService;
+import com.api.estoque.service.PdfService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +24,12 @@ import java.util.Optional;
 public class EquipamentoController {
 
     private final EquipamentoService equipamentoService;
+    private final PdfService pdfService;
 
-    public EquipamentoController(EquipamentoService equipamentoService) {
+    public EquipamentoController(EquipamentoService equipamentoService,
+                                 PdfService pdfService) {
         this.equipamentoService = equipamentoService;
+        this.pdfService = pdfService;
     }
 
     @PostMapping // Mapeia este método para requisições HTTP POST para /equipamentos
@@ -97,5 +103,17 @@ public class EquipamentoController {
     ) {
         Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarDisponiveis(paginacao);
         return ResponseEntity.ok(pageDeEquipamentos);
+    }
+
+    @GetMapping("/relatorio-pdf")
+    @PreAuthorize("hasRole('ADMIN')") // Apenas um admin pode gerar um relatório completo de inventário
+    public ResponseEntity<byte[]> gerarRelatorioPdf() {
+        byte[] pdfBytes = pdfService.gerarPdfListaEquipamentos();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "relatorio_inventario.pdf");
+
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }
 }

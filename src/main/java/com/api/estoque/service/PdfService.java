@@ -2,10 +2,8 @@ package com.api.estoque.service;
 
 import com.api.estoque.exception.BusinessException;
 import com.api.estoque.exception.ResourceNotFoundException;
-import com.api.estoque.model.HistoricoGeracaoPdf;
-import com.api.estoque.model.HistoricoMovimentacao;
-import com.api.estoque.model.Solicitacao;
-import com.api.estoque.model.Usuario;
+import com.api.estoque.model.*;
+import com.api.estoque.repository.EquipamentoRepository;
 import com.api.estoque.repository.HistoricoGeracaoPdfRepository;
 import com.api.estoque.repository.HistoricoMovimentacaoRepository;
 import com.api.estoque.repository.SolicitacaoRepository;
@@ -31,6 +29,7 @@ public class PdfService {
     private final SolicitacaoRepository solicitacaoRepository;
     private final HistoricoGeracaoPdfRepository historicoRepository;
     private final HistoricoMovimentacaoRepository historicoMovimentacaoRepository;
+    private final EquipamentoRepository equipamentoRepository;
 
     // Um mapa para encontrar rapidamente o gerador de PDF correto pelo seu tipo
     private final Map<TipoRelatorio, RelatorioPdfGenerator<?>> geradores;
@@ -39,10 +38,12 @@ public class PdfService {
     public PdfService(SolicitacaoRepository solicitacaoRepository,
                       HistoricoGeracaoPdfRepository historicoRepository,
                       HistoricoMovimentacaoRepository historicoMovimentacaoRepository,
+                      EquipamentoRepository equipamentoRepository,
                       List<RelatorioPdfGenerator<?>> geradoresList) {
         this.solicitacaoRepository = solicitacaoRepository;
         this.historicoRepository = historicoRepository;
         this.historicoMovimentacaoRepository = historicoMovimentacaoRepository;
+        this.equipamentoRepository = equipamentoRepository;
 
         // Transformamos a lista num mapa para acesso rápido (Tipo -> Gerador)
         this.geradores = geradoresList.stream()
@@ -91,6 +92,27 @@ public class PdfService {
             throw new BusinessException("Nenhum gerador de PDF encontrado para o tipo: " + tipo);
         }
         return gerador;
+    }
+
+    public byte[] gerarPdfListaEquipamentos() {
+        // 1. Busca os dados: todos os equipamentos
+        List<Equipamento> equipamentos = equipamentoRepository.findAll();
+
+        // 2. Encontra o gerador de PDF específico
+        RelatorioPdfGenerator<List<Equipamento>> gerador =
+                (RelatorioPdfGenerator<List<Equipamento>>) getGerador(TipoRelatorio.LISTA_EQUIPAMENTOS);
+
+        // 3. Gera o PDF em memória
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            Document document = new Document();
+            PdfWriter.getInstance(document, baos);
+            document.open();
+            gerador.gerar(document, equipamentos); // Delega para o especialista
+            document.close();
+            return baos.toByteArray();
+        } catch (DocumentException | IOException e) {
+            throw new RuntimeException("Erro ao gerar o PDF de inventário.", e);
+        }
     }
 
     @Transactional
