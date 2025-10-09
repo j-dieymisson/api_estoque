@@ -1,5 +1,6 @@
 package com.api.estoque.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,11 +14,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.Customizer; // Importar este
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfigurations {
+
+    @Autowired
+    private SecurityFilter securityFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -38,11 +43,12 @@ public class SecurityConfigurations {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         // Endpoints Públicos (não precisam de login)
-                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/login").permitAll()
 
 
                         // Endpoints de Gestão (só para ADMIN)
-                        .requestMatchers(HttpMethod.GET, "/cargos").hasRole("ADMIN")
+                        .requestMatchers("/usuarios/**").hasRole("ADMIN")
+                        .requestMatchers("/cargos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/equipamentos").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/equipamentos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/equipamentos/**").hasRole("ADMIN")
@@ -56,7 +62,7 @@ public class SecurityConfigurations {
                         // só precisa de que o utilizador esteja autenticado.
                         .anyRequest().authenticated()
                 )
-                .httpBasic(Customizer.withDefaults())
+                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 }
