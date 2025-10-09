@@ -1,15 +1,18 @@
 package com.api.estoque.service;
 
+import com.api.estoque.exception.BusinessException;
 import com.api.estoque.exception.ResourceNotFoundException;
 import com.api.estoque.model.HistoricoGeracaoPdf;
+import com.api.estoque.model.HistoricoMovimentacao;
 import com.api.estoque.model.Solicitacao;
-import com.api.estoque.model.SolicitacaoItem;
 import com.api.estoque.model.Usuario;
 import com.api.estoque.repository.HistoricoGeracaoPdfRepository;
+import com.api.estoque.repository.HistoricoMovimentacaoRepository;
 import com.api.estoque.repository.SolicitacaoRepository;
-import com.lowagie.text.*;
-import com.lowagie.text.pdf.PdfPCell;
-import com.lowagie.text.pdf.PdfPTable;
+import com.api.estoque.service.pdf.RelatorioPdfGenerator;
+import com.api.estoque.service.pdf.TipoRelatorio;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
 import com.lowagie.text.pdf.PdfWriter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,81 +20,101 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class PdfService {
 
     private final SolicitacaoRepository solicitacaoRepository;
     private final HistoricoGeracaoPdfRepository historicoRepository;
+    private final HistoricoMovimentacaoRepository historicoMovimentacaoRepository;
 
-    public PdfService(SolicitacaoRepository solicitacaoRepository, HistoricoGeracaoPdfRepository historicoRepository) {
+    // Um mapa para encontrar rapidamente o gerador de PDF correto pelo seu tipo
+    private final Map<TipoRelatorio, RelatorioPdfGenerator<?>> geradores;
+
+    // O Spring injeta aqui uma LISTA de todos os beans que implementam a nossa interface
+    public PdfService(SolicitacaoRepository solicitacaoRepository,
+                      HistoricoGeracaoPdfRepository historicoRepository,
+                      HistoricoMovimentacaoRepository historicoMovimentacaoRepository,
+                      List<RelatorioPdfGenerator<?>> geradoresList) {
         this.solicitacaoRepository = solicitacaoRepository;
         this.historicoRepository = historicoRepository;
+        this.historicoMovimentacaoRepository = historicoMovimentacaoRepository;
+
+        // Transformamos a lista num mapa para acesso rápido (Tipo -> Gerador)
+        this.geradores = geradoresList.stream()
+                .collect(Collectors.toMap(RelatorioPdfGenerator::getTipo, Function.identity()));
     }
 
     @Transactional
     public byte[] gerarPdfSolicitacao(Long solicitacaoId, Usuario usuarioLogado) {
-        // 1. Busca os dados da solicitação que queremos imprimir
+        // 1. Busca os dados da solicitação
         Solicitacao solicitacao = solicitacaoRepository.findById(solicitacaoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Solicitação não encontrada com o ID: " + solicitacaoId));
 
-        // Formatação de datas para o relatório
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        // 2. Encontra o gerador de PDF específico para o tipo SOLICITACAO
+        RelatorioPdfGenerator<Solicitacao> gerador = (RelatorioPdfGenerator<Solicitacao>) getGerador(TipoRelatorio.SOLICITACAO);
 
+        // 3. Gera o PDF em memória usando o gerador encontrado
+        byte[] pdfBytes;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             Document document = new Document();
             PdfWriter.getInstance(document, baos);
             document.open();
 
-            // --- CABEÇALHO DO DOCUMENTO ---
-            Font fontTitulo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-            Paragraph titulo = new Paragraph("Relatório de Solicitação de Equipamento", fontTitulo);
-            titulo.setAlignment(Element.ALIGN_CENTER);
-            document.add(titulo);
-            document.add(new Paragraph("\n")); // Linha em branco
+            // Delega a criação do CONTEÚDO para a classe especialista
+            gerador.gerar(document, solicitacao);
 
-            // --- INFORMAÇÕES GERAIS DA SOLICITAÇÃO ---
-            document.add(new Paragraph("Número da Solicitação: " + solicitacao.getId()));
-            document.add(new Paragraph("Status: " + solicitacao.getStatus()));
-            document.add(new Paragraph("Solicitante: " + solicitacao.getUsuario().getNome()));
-            document.add(new Paragraph("Data da Solicitação: " + solicitacao.getDataSolicitacao().format(formatter)));
-            document.add(new Paragraph("Justificativa: " + solicitacao.getJustificativa()));
-            document.add(new Paragraph("\n\n"));
-
-            // --- TABELA DE ITENS ---
-            PdfPTable table = new PdfPTable(4); // 4 colunas
-            table.setWidthPercentage(100);
-
-            // Cabeçalhos da tabela
-            Font fontCabecalho = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
-            table.addCell(new PdfPCell(new Phrase("Item (ID)", fontCabecalho)));
-            table.addCell(new PdfPCell(new Phrase("Equipamento", fontCabecalho)));
-            table.addCell(new PdfPCell(new Phrase("Qtd. Solicitada", fontCabecalho)));
-            table.addCell(new PdfPCell(new Phrase("Qtd. Devolvida", fontCabecalho)));
-
-            // Preenche a tabela com os itens da solicitação
-            for (SolicitacaoItem item : solicitacao.getItens()) {
-                table.addCell(String.valueOf(item.getId()));
-                table.addCell(item.getEquipamento().getNome());
-                table.addCell(String.valueOf(item.getQuantidadeSolicitada()));
-                table.addCell(String.valueOf(item.getTotalDevolvido()));
-            }
-            document.add(table);
             document.close();
-
-            // --- AUDITORIA: Regista que o PDF foi gerado ---
-            HistoricoGeracaoPdf historico = new HistoricoGeracaoPdf();
-            historico.setSolicitacao(solicitacao);
-            historico.setUsuario(usuarioLogado);
-            historico.setDataGeracao(LocalDateTime.now());
-            historicoRepository.save(historico);
-
-            return baos.toByteArray();
-
+            pdfBytes = baos.toByteArray();
         } catch (DocumentException | IOException e) {
-            // Lança uma exceção se a geração do PDF ou o fecho do stream falhar
             throw new RuntimeException("Erro ao gerar o PDF da solicitação.", e);
         }
+
+        // 4. Regista a auditoria (continua a ser responsabilidade do serviço principal)
+        HistoricoGeracaoPdf historico = new HistoricoGeracaoPdf();
+        historico.setSolicitacao(solicitacao);
+        historico.setUsuario(usuarioLogado);
+        historico.setDataGeracao(LocalDateTime.now());
+        historicoRepository.save(historico);
+
+        return pdfBytes;
+    }
+
+    // Método auxiliar para encontrar o gerador no nosso mapa
+    private RelatorioPdfGenerator<?> getGerador(TipoRelatorio tipo) {
+        RelatorioPdfGenerator<?> gerador = geradores.get(tipo);
+        if (gerador == null) {
+            throw new BusinessException("Nenhum gerador de PDF encontrado para o tipo: " + tipo);
+        }
+        return gerador;
+    }
+
+    @Transactional
+    public byte[] gerarPdfHistoricoEquipamento(Long equipamentoId, Usuario usuarioLogado) {
+        // 1. Busca os dados: a lista de todas as movimentações para o equipamento
+        List<HistoricoMovimentacao> historico = historicoMovimentacaoRepository
+                .findAllByEquipamentoIdOrderByDataMovimentacaoDesc(equipamentoId);
+
+        // 2. Encontra o gerador de PDF específico
+        RelatorioPdfGenerator<List<HistoricoMovimentacao>> gerador =
+                (RelatorioPdfGenerator<List<HistoricoMovimentacao>>) getGerador(TipoRelatorio.HISTORICO_EQUIPAMENTO);
+
+        // 3. Gera o PDF em memória (a lógica de criar o Document, etc. é a mesma)
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            Document document = new Document();
+            PdfWriter.getInstance(document, baos);
+            document.open();
+            gerador.gerar(document, historico); // Delega para o especialista
+            document.close();
+            return baos.toByteArray();
+        } catch (DocumentException | IOException e) {
+            throw new RuntimeException("Erro ao gerar o PDF de histórico.", e);
+        }
+        // Nota: decidimos não auditar a geração de relatórios de histórico por agora,
+        // mas poderíamos adicionar essa lógica aqui facilmente se quiséssemos.
     }
 }
