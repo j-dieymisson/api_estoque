@@ -1,7 +1,9 @@
 package com.api.estoque.service;
 
 import com.api.estoque.dto.request.UsuarioRequest;
+import com.api.estoque.dto.request.UsuarioUpdateRequest;
 import com.api.estoque.dto.response.UsuarioResponse;
+import com.api.estoque.exception.BusinessException;
 import com.api.estoque.exception.ResourceNotFoundException;
 import com.api.estoque.model.Cargo;
 import com.api.estoque.model.Solicitacao;
@@ -10,11 +12,15 @@ import com.api.estoque.model.Usuario;
 import com.api.estoque.repository.CargoRepository;
 import com.api.estoque.repository.SolicitacaoRepository;
 import com.api.estoque.repository.UsuarioRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UsuarioService {
@@ -72,6 +78,11 @@ public class UsuarioService {
     @Transactional
     public UsuarioResponse criarUsuario(UsuarioRequest request) {
         // 1. Busca o cargo na base de dados a partir do ID recebido
+
+        if (usuarioRepository.findByNome(request.nome()).isPresent()) {
+            throw new BusinessException("Nome de utilizador já em uso.");
+        }
+
         Cargo cargo = cargoRepository.findById(request.cargoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cargo não encontrado com o ID: " + request.cargoId()));
 
@@ -91,6 +102,59 @@ public class UsuarioService {
 
         // 5. Mapeia a entidade para o DTO de resposta
         return mapToUsuarioResponse(novoUsuario);
+    }
+
+    // MÉTODO PARA LISTAR TODOS (com paginação)
+    @Transactional(readOnly = true)
+    public Page<UsuarioResponse> listarTodos(Pageable pageable) {
+        Page<Usuario> usuarios = usuarioRepository.findAll(pageable);
+        return usuarios.map(this::mapToUsuarioResponse);
+    }
+
+    // MÉTODO PARA BUSCAR POR ID
+    @Transactional(readOnly = true)
+    public UsuarioResponse buscarPorId(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilizador não encontrado com o ID: " + id));
+        return mapToUsuarioResponse(usuario);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UsuarioResponse> listarTodos(Optional<String> nome, Pageable pageable) {
+        Page<Usuario> usuarios;
+        if (nome.isPresent()) {
+            usuarios = usuarioRepository.findByNomeContainingIgnoreCase(nome.get(), pageable);
+        } else {
+            usuarios = usuarioRepository.findAll(pageable);
+        }
+        return usuarios.map(this::mapToUsuarioResponse);
+    }
+
+    @Transactional
+    public UsuarioResponse atualizarUsuario(Long id, UsuarioUpdateRequest request) {
+
+        Optional<UserDetails> usuarioExistente = usuarioRepository.findByNome(request.nome());
+        if (usuarioExistente.isPresent() && !((Usuario) usuarioExistente.get()).getId().equals(id)) {
+            // Lança erro se encontrou um utilizador com o mesmo nome E o ID é diferente do nosso
+            throw new BusinessException("Nome de utilizador já em uso.");
+        }
+        // 1. Busca o utilizador que será atualizado.
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilizador não encontrado com o ID: " + id));
+
+        // 2. Busca o novo cargo que será associado.
+        Cargo novoCargo = cargoRepository.findById(request.cargoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Cargo não encontrado com o ID: " + request.cargoId()));
+
+        // 3. Atualiza os dados da entidade com as informações do DTO.
+        usuario.setNome(request.nome());
+        usuario.setLogin(request.nome());
+        usuario.setEmail(request.email());
+        usuario.setCargo(novoCargo); // A importante alteração de cargo acontece aqui.
+
+        // O JPA guarda as alterações automaticamente.
+
+        return mapToUsuarioResponse(usuario);
     }
 
     // Adicione também um método auxiliar para o mapeamento

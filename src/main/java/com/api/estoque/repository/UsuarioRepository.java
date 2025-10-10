@@ -1,9 +1,17 @@
 package com.api.estoque.repository;
 
 import com.api.estoque.model.Usuario;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.userdetails.UserDetails;
+import java.util.Optional;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
-    UserDetails findByNome(String nome);
+
+    Optional<UserDetails> findByNome(String nome);
+
+
+    // Busca paginada de utilizadores cujo nome contém a string de pesquisa (ignorando maiúsculas/minúsculas)
+    Page<Usuario> findByNomeContainingIgnoreCase(String nome, Pageable pageable);
 }

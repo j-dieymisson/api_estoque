@@ -1,14 +1,19 @@
 package com.api.estoque.controller;
 
 import com.api.estoque.dto.request.UsuarioRequest;
+import com.api.estoque.dto.request.UsuarioUpdateRequest;
 import com.api.estoque.dto.response.UsuarioResponse;
 import com.api.estoque.service.UsuarioService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/usuarios")
@@ -41,4 +46,33 @@ public class UsuarioController {
         usuarioService.ativarUsuario(id);
         return ResponseEntity.ok().build();
     }
+
+    // ENDPOINT PARA LISTAR TODOS OS UTILIZADORES
+    @GetMapping
+    public ResponseEntity<Page<UsuarioResponse>> listar(
+            @PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao,
+            // Adicionamos o novo parâmetro opcional de pesquisa
+            @RequestParam(required = false) Optional<String> nome
+    ) {
+        Page<UsuarioResponse> paginaDeUsuarios = usuarioService.listarTodos(nome, paginacao);
+        return ResponseEntity.ok(paginaDeUsuarios);
+    }
+
+    // ENDPOINT PARA DETALHAR UM UTILIZADOR
+    @GetMapping("/{id}")
+    public ResponseEntity<UsuarioResponse> detalhar(@PathVariable Long id) {
+        UsuarioResponse response = usuarioService.buscarPorId(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UsuarioResponse> atualizar(
+            @PathVariable Long id,
+            @RequestBody @Valid UsuarioUpdateRequest request
+    ) {
+        UsuarioResponse response = usuarioService.atualizarUsuario(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+
 }

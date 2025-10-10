@@ -15,12 +15,9 @@ public class AuthenticationService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // O Spring Security chama este método quando um utilizador tenta fazer login.
-        // A nossa lógica é simplesmente procurar o utilizador na nossa tabela 'usuarios' pelo nome.
-        UserDetails user = repository.findByNome(username);
-        if (user == null) {
-            throw new UsernameNotFoundException("Utilizador não encontrado: " + username);
-        }
-        return user;
+        // O método do repositório agora devolve um Optional.
+        // Usamos .orElseThrow() para obter o utilizador ou lançar uma exceção se não for encontrado.
+        return repository.findByNome(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Utilizador não encontrado: " + username));
     }
 }
