@@ -297,11 +297,16 @@ public class SolicitacaoService {
     private SolicitacaoResponse mapToSolicitacaoResponse(Solicitacao solicitacao) {
         List<SolicitacaoItemResponse> itemResponses = new ArrayList<>();
         for (SolicitacaoItem item : solicitacao.getItens()) {
+
+            // 1. Calcula a nova informação
+            int pendente = item.getQuantidadeSolicitada() - item.getTotalDevolvido();
+
             itemResponses.add(new SolicitacaoItemResponse(
                     item.getId(),
                     item.getEquipamento().getNome(),
                     item.getQuantidadeSolicitada(),
-                    item.getTotalDevolvido()
+                    item.getTotalDevolvido(),
+                    pendente
             ));
         }
 
