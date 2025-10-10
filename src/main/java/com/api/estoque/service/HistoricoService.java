@@ -4,6 +4,7 @@ import com.api.estoque.dto.response.HistoricoResponse;
 import com.api.estoque.dto.response.HistoricoStatusSolicitacaoResponse;
 import com.api.estoque.model.HistoricoMovimentacao;
 import com.api.estoque.model.HistoricoStatusSolicitacao;
+import com.api.estoque.model.TipoMovimentacao;
 import com.api.estoque.repository.HistoricoMovimentacaoRepository;
 import com.api.estoque.repository.HistoricoStatusSolicitacaoRepository;
 import org.springframework.data.domain.Page;
@@ -34,19 +35,27 @@ public class HistoricoService {
             Long equipamentoId,
             Optional<LocalDate> dataInicio,
             Optional<LocalDate> dataFim,
+            Optional<TipoMovimentacao> tipo,
             Pageable pageable) {
 
         Page<HistoricoMovimentacao> historicoPage;
 
-        // Verifica se ambas as datas foram fornecidas
-        if (dataInicio.isPresent() && dataFim.isPresent()) {
-            // Converte LocalDate para LocalDateTime para abranger o dia inteiro
-            LocalDateTime inicio = dataInicio.get().atStartOfDay(); // Ex: 2025-10-09 -> 2025-10-09T00:00:00
-            LocalDateTime fim = dataFim.get().atTime(23, 59, 59);    // Ex: 2025-10-10 -> 2025-10-10T23:59:59
+        LocalDateTime inicio = dataInicio.map(LocalDate::atStartOfDay).orElse(null);
+        LocalDateTime fim = dataFim.map(d -> d.atTime(23, 59, 59)).orElse(null);
+        boolean datasPresentes = inicio != null && fim != null;
 
+        // Lógica de decisão ainda mais completa
+        if (tipo.isPresent() && datasPresentes) {
+            // Filtro por: TIPO e DATA
+            historicoPage = historicoRepository.findByEquipamentoIdAndTipoMovimentacaoAndDataMovimentacaoBetween(equipamentoId, tipo.get(), inicio, fim, pageable);
+        } else if (tipo.isPresent()) {
+            // Filtro por: Apenas TIPO
+            historicoPage = historicoRepository.findByEquipamentoIdAndTipoMovimentacao(equipamentoId, tipo.get(), pageable);
+        } else if (datasPresentes) {
+            // Filtro por: Apenas DATA (já existia)
             historicoPage = historicoRepository.findByEquipamentoIdAndDataMovimentacaoBetween(equipamentoId, inicio, fim, pageable);
         } else {
-            // Se as datas não forem fornecidas, usa o método antigo
+            // Sem filtros
             historicoPage = historicoRepository.findAllByEquipamentoIdOrderByDataMovimentacaoDesc(equipamentoId, pageable);
         }
 

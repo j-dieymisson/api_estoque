@@ -57,15 +57,25 @@ public class EquipamentoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<EquipamentoResponse> listarTodos(Optional<String> nome, Pageable pageable) {
+    public Page<EquipamentoResponse> listarTodos(Optional<String> nome,
+                                                 Optional<Long> categoriaId,
+                                                 Pageable pageable) {
         Page<Equipamento> equipamentos;
-        if (nome.isPresent()) {
-            // Se um nome foi fornecido, usa a nossa nova busca parcial
+        // Lógica para decidir qual método do repositório usar
+        if (nome.isPresent() && categoriaId.isPresent()) {
+            // Filtro por NOME e CATEGORIA
+            equipamentos = equipamentoRepository.findAllByAtivoTrueAndCategoriaIdAndNomeContainingIgnoreCase(categoriaId.get(), nome.get(), pageable);
+        } else if (categoriaId.isPresent()) {
+            // Filtro apenas por CATEGORIA
+            equipamentos = equipamentoRepository.findAllByAtivoTrueAndCategoriaId(categoriaId.get(), pageable);
+        } else if (nome.isPresent()) {
+            // Filtro apenas por NOME (já existia)
             equipamentos = equipamentoRepository.findAllByAtivoTrueAndNomeContainingIgnoreCase(nome.get(), pageable);
         } else {
-            // Se não, continua a retornar todos os equipamentos ativos
+            // Sem filtros
             equipamentos = equipamentoRepository.findAllByAtivoTrue(pageable);
         }
+
         return equipamentos.map(this::mapToEquipamentoResponse);
     }
 

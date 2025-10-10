@@ -1,6 +1,7 @@
 package com.api.estoque.controller;
 
 import com.api.estoque.dto.response.HistoricoResponse;
+import com.api.estoque.model.TipoMovimentacao;
 import com.api.estoque.model.Usuario;
 import com.api.estoque.service.HistoricoService;
 import com.api.estoque.service.PdfService;
@@ -36,11 +37,11 @@ public class HistoricoController {
     public ResponseEntity<Page<HistoricoResponse>> listarPorEquipamento(
             @PathVariable Long id,
             @PageableDefault(size = 10, sort = {"dataMovimentacao"}) Pageable paginacao,
-            // Adicionamos os novos parâmetros opcionais
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim,
+            @RequestParam(required = false) Optional<TipoMovimentacao> tipo // <-- NOVO PARÂMETRO
     ) {
-        Page<HistoricoResponse> historicoPage = historicoService.buscarPorEquipamentoId(id, dataInicio, dataFim, paginacao);
+        Page<HistoricoResponse> historicoPage = historicoService.buscarPorEquipamentoId(id, dataInicio, dataFim, tipo, paginacao);
         return ResponseEntity.ok(historicoPage);
     }
 

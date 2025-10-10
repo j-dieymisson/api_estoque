@@ -49,11 +49,12 @@ public class EquipamentoController {
     @GetMapping // Mapeia este método para requisições HTTP GET para /equipamentos
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EquipamentoResponse>> listar(
-
             @PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao,
-            @RequestParam(required = false) Optional<String> nome
+            @RequestParam(required = false) Optional<String> nome,
+            @RequestParam(required = false) Optional<Long> categoriaId // <-- ADICIONE ESTE PARÂMETRO
     ) {
-        Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarTodos(nome, paginacao);
+        // Passe todos os filtros para o serviço
+        Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarTodos(nome, categoriaId, paginacao);
         return ResponseEntity.ok(pageDeEquipamentos);
     }
 

@@ -1,6 +1,7 @@
 package com.api.estoque.repository;
 
 import com.api.estoque.model.HistoricoMovimentacao;
+import com.api.estoque.model.TipoMovimentacao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,5 +25,17 @@ public interface HistoricoMovimentacaoRepository extends JpaRepository<Historico
     // Este método pode ser apagado se você não o estiver a usar noutro sítio,
     // pois a versão paginada acima é mais flexível.
     List<HistoricoMovimentacao> findAllByEquipamentoIdOrderByDataMovimentacaoDesc(Long equipamentoId);
+
+    // Busca por Equipamento e Tipo de Movimentação
+    Page<HistoricoMovimentacao> findByEquipamentoIdAndTipoMovimentacao(Long equipamentoId, TipoMovimentacao tipo, Pageable pageable);
+
+    // Busca por Equipamento, Tipo e Data (para combinar todos os filtros)
+    Page<HistoricoMovimentacao> findByEquipamentoIdAndTipoMovimentacaoAndDataMovimentacaoBetween(
+            Long equipamentoId,
+            TipoMovimentacao tipo,
+            LocalDateTime inicio,
+            LocalDateTime fim,
+            Pageable pageable
+    );
 
 }
