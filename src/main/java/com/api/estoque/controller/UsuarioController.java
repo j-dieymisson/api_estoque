@@ -1,5 +1,6 @@
 package com.api.estoque.controller;
 
+import com.api.estoque.dto.request.AlterarSenhaRequest;
 import com.api.estoque.dto.request.UsuarioRequest;
 import com.api.estoque.dto.request.UsuarioUpdateRequest;
 import com.api.estoque.dto.response.UsuarioResponse;
@@ -72,6 +73,15 @@ public class UsuarioController {
     ) {
         UsuarioResponse response = usuarioService.atualizarUsuario(id, request);
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/alterar-senha")
+    public ResponseEntity<Void> alterarSenha(
+            @PathVariable Long id,
+            @RequestBody @Valid AlterarSenhaRequest request
+    ) {
+        usuarioService.alterarSenha(id, request);
+        return ResponseEntity.noContent().build(); // Retorna 204 No Content
     }
 
 

@@ -1,5 +1,6 @@
 package com.api.estoque.service;
 
+import com.api.estoque.dto.request.AlterarSenhaRequest;
 import com.api.estoque.dto.request.UsuarioRequest;
 import com.api.estoque.dto.request.UsuarioUpdateRequest;
 import com.api.estoque.dto.response.UsuarioResponse;
@@ -155,6 +156,17 @@ public class UsuarioService {
         // O JPA guarda as alterações automaticamente.
 
         return mapToUsuarioResponse(usuario);
+    }
+
+    @Transactional
+    public void alterarSenha(Long id, AlterarSenhaRequest request) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilizador não encontrado com o ID: " + id));
+
+        // Encripta a nova senha antes de a salvar
+        usuario.setSenha(passwordEncoder.encode(request.novaSenha()));
+
+        // O JPA guarda a alteração automaticamente no fim da transação.
     }
 
     // Adicione também um método auxiliar para o mapeamento
