@@ -13,7 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.config.Customizer; // Importar este
+import org.springframework.security.config.Customizer;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -58,8 +58,11 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/recusar").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/cancelar").hasRole("ADMIN") // Vamos proteger este também
                         .requestMatchers(HttpMethod.POST, "/solicitacoes/*/devolver-tudo").hasAnyRole("ADMIN", "GESTOR")
-                        // ===== Regra Final =====
+
+                                                // ===== Regra Final =====
                         // Qualquer outra requisição (como criar uma solicitação) exige apenas autenticação
+                        .requestMatchers(HttpMethod.GET, "/perfil").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)

@@ -205,7 +205,7 @@ public class UsuarioService {
     }
 
     // Adicione também um método auxiliar para o mapeamento
-    private UsuarioResponse mapToUsuarioResponse(Usuario usuario) {
+    public UsuarioResponse mapToUsuarioResponse(Usuario usuario) {
         return new UsuarioResponse(
                 usuario.getId(),
                 usuario.getNome(),
