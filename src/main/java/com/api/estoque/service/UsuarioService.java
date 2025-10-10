@@ -13,6 +13,7 @@ import com.api.estoque.model.Usuario;
 import com.api.estoque.repository.CargoRepository;
 import com.api.estoque.repository.SolicitacaoRepository;
 import com.api.estoque.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,6 +33,9 @@ public class UsuarioService {
     private final CargoRepository cargoRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("${api.security.super-admin.id}") // Injeta o valor do application.properties
+    private Long superAdminId;
+
     public UsuarioService(UsuarioRepository usuarioRepository,
                           SolicitacaoRepository solicitacaoRepository,
                           SolicitacaoService solicitacaoService,
@@ -46,6 +50,11 @@ public class UsuarioService {
 
     @Transactional
     public void desativarUsuario(Long id) {
+
+        if (id.equals(superAdminId)) {
+            throw new BusinessException("O administrador principal não pode ser desativado.");
+        }
+
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilizador não encontrado com o ID: " + id));
 
@@ -124,15 +133,27 @@ public class UsuarioService {
     public Page<UsuarioResponse> listarTodos(Optional<String> nome, Pageable pageable) {
         Page<Usuario> usuarios;
         if (nome.isPresent()) {
-            usuarios = usuarioRepository.findByNomeContainingIgnoreCase(nome.get(), pageable);
+            // Usa a nova busca por nome que exclui o super admin
+            usuarios = usuarioRepository.findByNomeContainingIgnoreCaseAndIdNot(nome.get(), superAdminId, pageable);
         } else {
-            usuarios = usuarioRepository.findAll(pageable);
+            // Usa a nova listagem geral que exclui o super admin
+            usuarios = usuarioRepository.findByIdNot(superAdminId, pageable);
         }
         return usuarios.map(this::mapToUsuarioResponse);
     }
 
     @Transactional
-    public UsuarioResponse atualizarUsuario(Long id, UsuarioUpdateRequest request) {
+    public UsuarioResponse atualizarUsuario(Long id,
+                                            UsuarioUpdateRequest request,
+                                            Usuario usuarioLogado) {
+
+        if (id.equals(superAdminId)) {
+            // Se for, verifica se a pessoa a fazer a alteração é o próprio super admin
+            if (!usuarioLogado.getId().equals(superAdminId)) {
+                // Se não for, bloqueia.
+                throw new BusinessException("Outros administradores não podem alterar os dados do administrador principal.");
+            }
+        }
 
         Optional<UserDetails> usuarioExistente = usuarioRepository.findByNome(request.nome());
         if (usuarioExistente.isPresent() && !((Usuario) usuarioExistente.get()).getId().equals(id)) {
@@ -142,6 +163,13 @@ public class UsuarioService {
         // 1. Busca o utilizador que será atualizado.
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilizador não encontrado com o ID: " + id));
+
+        if (usuario.getId().equals(superAdminId)) {
+            // Verifica se a requisição está a tentar alterar o cargo do super admin
+            if (!usuario.getCargo().getId().equals(request.cargoId())) {
+                throw new BusinessException("O cargo do administrador principal não pode ser alterado.");
+            }
+        }
 
         // 2. Busca o novo cargo que será associado.
         Cargo novoCargo = cargoRepository.findById(request.cargoId())
@@ -159,7 +187,14 @@ public class UsuarioService {
     }
 
     @Transactional
-    public void alterarSenha(Long id, AlterarSenhaRequest request) {
+    public void alterarSenha(Long id,
+                             AlterarSenhaRequest request,
+                             Usuario usuarioLogado) {
+
+        if (id.equals(superAdminId) && !usuarioLogado.getId().equals(superAdminId)) {
+            throw new BusinessException("A senha do administrador principal só pode ser alterada por ele mesmo.");
+        }
+
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilizador não encontrado com o ID: " + id));
 

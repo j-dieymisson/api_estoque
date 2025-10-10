@@ -4,12 +4,14 @@ import com.api.estoque.dto.request.AlterarSenhaRequest;
 import com.api.estoque.dto.request.UsuarioRequest;
 import com.api.estoque.dto.request.UsuarioUpdateRequest;
 import com.api.estoque.dto.response.UsuarioResponse;
+import com.api.estoque.model.Usuario;
 import com.api.estoque.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -69,19 +71,21 @@ public class UsuarioController {
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioResponse> atualizar(
             @PathVariable Long id,
-            @RequestBody @Valid UsuarioUpdateRequest request
+            @RequestBody @Valid UsuarioUpdateRequest request,
+            @AuthenticationPrincipal Usuario usuarioLogado
     ) {
-        UsuarioResponse response = usuarioService.atualizarUsuario(id, request);
+        UsuarioResponse response = usuarioService.atualizarUsuario(id, request, usuarioLogado);
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/alterar-senha")
     public ResponseEntity<Void> alterarSenha(
             @PathVariable Long id,
-            @RequestBody @Valid AlterarSenhaRequest request
+            @RequestBody @Valid AlterarSenhaRequest request,
+            @AuthenticationPrincipal Usuario usuarioLogado
     ) {
-        usuarioService.alterarSenha(id, request);
-        return ResponseEntity.noContent().build(); // Retorna 204 No Content
+        usuarioService.alterarSenha(id, request, usuarioLogado);
+        return ResponseEntity.noContent().build(); // Retorna 204
     }
 
 
