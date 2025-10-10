@@ -35,4 +35,8 @@ public interface EquipamentoRepository extends JpaRepository<Equipamento, Long> 
 
     // Conta todos os equipamentos cujo campo 'ativo' é true
     long countByAtivoTrue();
+
+    // Query customizada para somar a quantidade total de todas as unidades de equipamento
+    @Query("SELECT SUM(e.quantidadeTotal) FROM Equipamento e")
+    Long sumQuantidadeTotal();
 }

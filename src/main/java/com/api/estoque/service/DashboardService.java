@@ -64,12 +64,16 @@ public class DashboardService {
                 case SOLICITACOES_APROVADAS_HOJE:
                     dashboardData.put("solicitacoesAprovadasHoje", solicitacaoRepository.countByStatusAndDataSolicitacaoAfter(StatusSolicitacao.APROVADA, LocalDate.now().atStartOfDay()));
                     break;
-                case TOTAL_EQUIPAMENTOS_EM_USO:
+                case TOTAL_UNIDADES_EM_USO:
                     Long emUso = equipamentoRepository.sumEquipamentosEmUso();
-                    dashboardData.put("totalEquipamentosEmUso", emUso != null ? emUso : 0);
+                    dashboardData.put("totalUnidadesEmUso", emUso != null ? emUso : 0);
                     break;
                 case TOTAL_EQUIPAMENTOS_CADASTRADOS:
                     dashboardData.put("totalEquipamentosCadastrados", equipamentoRepository.count());
+                    break;
+                case TOTAL_UNIDADES_CADASTRADAS:
+                    Long totalUnidades = equipamentoRepository.sumQuantidadeTotal();
+                    dashboardData.put("totalUnidadesCadastradas", totalUnidades != null ? totalUnidades : 0);
                     break;
                 case SOLICITACOES_FINALIZADAS_MES:
                     YearMonth mesAtual = YearMonth.now();
@@ -86,6 +90,7 @@ public class DashboardService {
                 case TOTAL_CATEGORIAS:
                     dashboardData.put("totalCategorias", categoriaRepository.count());
                     break;
+
             }
         }
         return dashboardData;
