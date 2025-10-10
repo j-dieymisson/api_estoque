@@ -38,4 +38,9 @@ public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> 
 
     // 4. Busca por Utilizador, Status E Data (a mais completa)
     Page<Solicitacao> findAllByUsuarioIdAndStatusAndDataSolicitacaoBetween(Long usuarioId, StatusSolicitacao status, LocalDateTime inicio, LocalDateTime fim, Pageable pageable);
+
+    long countByStatus(StatusSolicitacao status);
+
+    long countByStatusAndDataSolicitacaoAfter(StatusSolicitacao status, LocalDateTime data);
+
 }

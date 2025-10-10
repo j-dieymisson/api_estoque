@@ -11,6 +11,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     Optional<UserDetails> findByNome(String nome);
 
+    long countByAtivoTrue();
 
     // Busca paginada de utilizadores cujo nome contém a string de pesquisa (ignorando maiúsculas/minúsculas)
     Page<Usuario> findByNomeContainingIgnoreCase(String nome, Pageable pageable);

@@ -5,6 +5,7 @@ import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import java.util.Set;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,6 +32,9 @@ public class Usuario implements UserDetails {
     @ManyToOne(fetch = FetchType.EAGER) // Muitos Utilizadores podem ter UM Cargo
     @JoinColumn(name = "cargo_id")
     private Cargo cargo;
+
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private Set<PreferenciaDashboard> preferenciasDashboard;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
