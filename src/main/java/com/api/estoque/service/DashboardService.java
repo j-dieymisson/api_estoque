@@ -4,14 +4,13 @@ import com.api.estoque.model.DashboardWidget;
 import com.api.estoque.model.PreferenciaDashboard;
 import com.api.estoque.model.StatusSolicitacao;
 import com.api.estoque.model.Usuario;
-import com.api.estoque.repository.EquipamentoRepository;
-import com.api.estoque.repository.PreferenciaDashboardRepository;
-import com.api.estoque.repository.SolicitacaoRepository;
-import com.api.estoque.repository.UsuarioRepository;
+import com.api.estoque.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,15 +25,18 @@ public class DashboardService {
     private final SolicitacaoRepository solicitacaoRepository;
     private final EquipamentoRepository equipamentoRepository;
     private final PreferenciaDashboardRepository preferenciaRepository;
+    private final CategoriaRepository categoriaRepository;
 
     public DashboardService(UsuarioRepository usuarioRepository,
                             SolicitacaoRepository solicitacaoRepository,
                             EquipamentoRepository equipamentoRepository,
-                            PreferenciaDashboardRepository preferenciaRepository) {
+                            PreferenciaDashboardRepository preferenciaRepository,
+                            CategoriaRepository categoriaRepository) {
         this.usuarioRepository = usuarioRepository;
         this.solicitacaoRepository = solicitacaoRepository;
         this.equipamentoRepository = equipamentoRepository;
         this.preferenciaRepository = preferenciaRepository;
+        this.categoriaRepository = categoriaRepository;
     }
 
     /**
@@ -65,6 +67,24 @@ public class DashboardService {
                 case TOTAL_EQUIPAMENTOS_EM_USO:
                     Long emUso = equipamentoRepository.sumEquipamentosEmUso();
                     dashboardData.put("totalEquipamentosEmUso", emUso != null ? emUso : 0);
+                    break;
+                case TOTAL_EQUIPAMENTOS_CADASTRADOS:
+                    dashboardData.put("totalEquipamentosCadastrados", equipamentoRepository.count());
+                    break;
+                case SOLICITACOES_FINALIZADAS_MES:
+                    YearMonth mesAtual = YearMonth.now();
+                    LocalDateTime inicioDoMes = mesAtual.atDay(1).atStartOfDay();
+                    LocalDateTime fimDoMes = mesAtual.atEndOfMonth().atTime(23, 59, 59);
+                    dashboardData.put("solicitacoesFinalizadasMes", solicitacaoRepository.countByStatusAndDataSolicitacaoBetween(StatusSolicitacao.FINALIZADA, inicioDoMes, fimDoMes));
+                    break;
+                case SOLICITACOES_TOTAIS:
+                    dashboardData.put("solicitacoesTotais", solicitacaoRepository.countByStatusNot(StatusSolicitacao.RASCUNHO));
+                    break;
+                case EQUIPAMENTOS_ATIVOS:
+                    dashboardData.put("equipamentosAtivos", equipamentoRepository.countByAtivoTrue());
+                    break;
+                case TOTAL_CATEGORIAS:
+                    dashboardData.put("totalCategorias", categoriaRepository.count());
                     break;
             }
         }

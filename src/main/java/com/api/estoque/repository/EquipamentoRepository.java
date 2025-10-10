@@ -32,4 +32,7 @@ public interface EquipamentoRepository extends JpaRepository<Equipamento, Long> 
     // Query customizada para somar a diferença entre total e disponível
     @Query("SELECT SUM(e.quantidadeTotal - e.quantidadeDisponivel) FROM Equipamento e WHERE e.ativo = true")
     Long sumEquipamentosEmUso();
+
+    // Conta todos os equipamentos cujo campo 'ativo' é true
+    long countByAtivoTrue();
 }

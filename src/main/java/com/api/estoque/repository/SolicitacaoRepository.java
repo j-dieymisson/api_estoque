@@ -43,4 +43,10 @@ public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> 
 
     long countByStatusAndDataSolicitacaoAfter(StatusSolicitacao status, LocalDateTime data);
 
+    // Conta todas as solicitações cujo status NÃO SEJA o fornecido
+    long countByStatusNot(StatusSolicitacao status);
+
+    // Conta todas as solicitações com um status específico dentro de um intervalo de datas
+    long countByStatusAndDataSolicitacaoBetween(StatusSolicitacao status, LocalDateTime inicio, LocalDateTime fim);
+
 }
