@@ -23,8 +23,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/solicitacoes")
@@ -148,5 +150,14 @@ public class SolicitacaoController {
                 usuarioLogado, status, dataInicio, dataFim, paginacao);
 
         return ResponseEntity.ok(paginaDeSolicitacoes);
+    }
+
+    @GetMapping("/status")
+    public ResponseEntity<List<String>> listarStatus() {
+        // Pega em todos os valores do Enum StatusSolicitacao, converte-os para String e devolve como uma lista
+        List<String> status = Arrays.stream(StatusSolicitacao.values())
+                .map(Enum::name)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(status);
     }
 }
