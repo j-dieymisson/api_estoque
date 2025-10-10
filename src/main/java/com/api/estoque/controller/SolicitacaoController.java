@@ -134,4 +134,19 @@ public class SolicitacaoController {
                 .headers(headers)
                 .body(pdfBytes);
     }
+
+    @GetMapping("/minhas")
+    public ResponseEntity<Page<SolicitacaoResponse>> listarMinhas(
+            @PageableDefault(size = 10, sort = {"dataSolicitacao"}) Pageable paginacao,
+            @AuthenticationPrincipal Usuario usuarioLogado, // Pega o utilizador do token
+            // Os filtros continuam a ser opcionais
+            @RequestParam(required = false) Optional<StatusSolicitacao> status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim
+    ) {
+        Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarMinhasSolicitacoes(
+                usuarioLogado, status, dataInicio, dataFim, paginacao);
+
+        return ResponseEntity.ok(paginaDeSolicitacoes);
+    }
 }

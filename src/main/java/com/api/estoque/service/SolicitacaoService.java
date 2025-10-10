@@ -528,4 +528,21 @@ public class SolicitacaoService {
             solicitacao.adicionarItem(novoItem);
         }
     }
+
+    @Transactional(readOnly = true)
+    public Page<SolicitacaoResponse> listarMinhasSolicitacoes(
+            Usuario usuarioLogado,
+            Optional<StatusSolicitacao> status,
+            Optional<LocalDate> dataInicio,
+            Optional<LocalDate> dataFim,
+            Pageable pageable) {
+
+        // A grande diferença é que agora o 'usuarioId' não é opcional,
+        // vem diretamente do utilizador autenticado.
+        Optional<Long> usuarioId = Optional.of(usuarioLogado.getId());
+
+        // Reutilizamos a nossa lógica de listagem super poderosa que já existe!
+        // Não precisamos de reescrever nada.
+        return listarTodas(status, usuarioId, dataInicio, dataFim, pageable);
+    }
 }
