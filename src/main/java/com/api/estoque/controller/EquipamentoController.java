@@ -12,7 +12,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -47,7 +46,6 @@ public class EquipamentoController {
     }
 
     @GetMapping // Mapeia este método para requisições HTTP GET para /equipamentos
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EquipamentoResponse>> listar(
             @PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao,
             @RequestParam(required = false) Optional<String> nome,
@@ -74,7 +72,6 @@ public class EquipamentoController {
     }
 
     @GetMapping("/todos")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EquipamentoResponse>> listarTodosAdmin(
             @PageableDefault(size = 10, sort = {"id"}) Pageable paginacao
     ) {
@@ -98,7 +95,6 @@ public class EquipamentoController {
     }
 
     @GetMapping("/disponiveis")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EquipamentoResponse>> listarDisponiveis(
             @PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao
     ) {
@@ -107,7 +103,6 @@ public class EquipamentoController {
     }
 
     @GetMapping("/relatorio-pdf")
-    @PreAuthorize("hasRole('ADMIN')") // Apenas um admin pode gerar um relatório completo de inventário
     public ResponseEntity<byte[]> gerarRelatorioPdf() {
         byte[] pdfBytes = pdfService.gerarPdfListaEquipamentos();
 

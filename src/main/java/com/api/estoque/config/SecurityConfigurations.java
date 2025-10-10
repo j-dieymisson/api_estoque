@@ -6,35 +6,22 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
 public class SecurityConfigurations {
 
     @Autowired
     private SecurityFilter securityFilter;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        // Esta é a forma mais simples e moderna de obter o AuthenticationManager
-        // que o Spring Boot auto-configura para usar o nosso AuthenticationService.
-        return configuration.getAuthenticationManager();
-    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -44,15 +31,16 @@ public class SecurityConfigurations {
                 .authorizeHttpRequests(authorize -> authorize
                         // ===== Endpoints Públicos Essenciais para o Arranque =====
                         .requestMatchers(HttpMethod.POST, "/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/cargos").permitAll() // <-- TORNAR PÚBLICO para sabermos os IDs
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+
 
                         // ===== Regras de Admin (Exigem login como Admin) =====
                         // Qualquer outra ação em /cargos (que não seja o GET público) exige ser ADMIN
-                        .requestMatchers("/cargos/**").hasRole("ADMIN")
-                        .requestMatchers("/equipamentos/**").hasRole("ADMIN")
-                        .requestMatchers("/usuarios/**").hasRole("ADMIN") // Qualquer outra ação em /usuarios exige ser ADMIN
-                        .requestMatchers("/dashboard/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/equipamentos", "/categorias").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/equipamentos/**", "/categorias/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/equipamentos/**", "/categorias/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/equipamentos/**").hasRole("ADMIN")
+                        .requestMatchers("/usuarios/**", "/cargos/**", "/dashboard/**").hasRole("ADMIN")
 
                         // ===== Regras de Gestor/Admin =====
                         .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/aprovar").hasAnyRole("ADMIN", "GESTOR")
@@ -60,7 +48,7 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/cancelar").hasRole("ADMIN") // Vamos proteger este também
                         .requestMatchers(HttpMethod.POST, "/solicitacoes/*/devolver-tudo").hasAnyRole("ADMIN", "GESTOR")
 
-                                                // ===== Regra Final =====
+                        // ===== Regra Final =====
                         // Qualquer outra requisição (como criar uma solicitação) exige apenas autenticação
                         .requestMatchers(HttpMethod.GET, "/perfil").authenticated()
 
@@ -69,4 +57,15 @@ public class SecurityConfigurations {
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
 }
