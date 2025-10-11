@@ -1,0 +1,89 @@
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0 text-gray-800">Catálogo de Equipamentos</h1>
+        <button class="btn btn-primary admin-only" data-bs-toggle="modal" data-bs-target="#modalEquipamento">
+            <i class="bi bi-plus-circle-fill me-2"></i> Adicionar Equipamento
+        </button>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form id="form-filtros-equipamentos" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label for="filtro-nome" class="form-label">Nome do Equipamento</label>
+                    <input type="text" class="form-control" id="filtro-nome" placeholder="Ex: Monitor Dell">
+                </div>
+                <div class="col-md-4">
+                    <label for="filtro-categoria" class="form-label">Categoria</label>
+                    <select id="filtro-categoria" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                    <button type="button" class="btn btn-secondary" id="btn-limpar-filtros-equipamentos">Limpar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="tabela-equipamentos">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Categoria</th>
+                        <th>Qtd. Total</th>
+                        <th>Qtd. Disponível</th>
+                        <th class="admin-only">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody id="corpo-tabela-equipamentos">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEquipamento" tabindex="-1" aria-labelledby="modalEquipamentoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEquipamentoLabel">Adicionar Novo Equipamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-equipamento">
+                    <input type="hidden" id="equipamento-id">
+                    <div class="mb-3">
+                        <label for="equipamento-nome" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="equipamento-nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="equipamento-descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="equipamento-descricao" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="equipamento-qtd-total" class="form-label">Quantidade Total</label>
+                            <input type="number" class="form-control" id="equipamento-qtd-total" required min="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="equipamento-categoria" class="form-label">Categoria</label>
+                            <select class="form-select" id="equipamento-categoria" required></select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary" form="form-equipamento">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="/js/pages/equipamentos.js"></script>
