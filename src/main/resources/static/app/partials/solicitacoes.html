@@ -1,0 +1,57 @@
+<div class="container-fluid">
+    <h1 class="h3 mb-3">Minhas Solicitações</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
+        </div>
+        <div class="card-body">
+            <form id="form-filtros-solicitacoes" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="filtro-status" class="form-label">Status</label>
+                    <select id="filtro-status" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                    <label for="filtro-data-inicio" class="form-label">Data Início</label>
+                    <input type="date" class="form-control" id="filtro-data-inicio">
+                </div>
+                <div class="col-md-3">
+                    <label for="filtro-data-fim" class="form-label">Data Fim</label>
+                    <input type="date" class="form-control" id="filtro-data-fim">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                    <button type="button" class="btn btn-secondary" id="btn-limpar-filtros">Limpar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Resultados</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="tabela-solicitacoes" width="100%" cellspacing="0">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Justificativa</th>
+                        <th>Data Solicitação</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody id="corpo-tabela-solicitacoes">
+                    <tr>
+                        <td colspan="5" class="text-center">A carregar...</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/pages/solicitacoes.js"></script>
