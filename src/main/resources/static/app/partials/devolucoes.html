@@ -1,53 +1,29 @@
-// devolucoes.js - Lógica para a página de histórico de devoluções
+<div class="container-fluid">
+    <h1 class="h3 mb-3 text-gray-800">Histórico de Devoluções</h1>
 
-(async function() {
-console.log("A executar o script da página de devoluções...");
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Todas as Devoluções Registadas</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="tabela-devolucoes">
+                    <thead>
+                    <tr>
+                        <th>ID Devolução</th>
+                        <th>ID Solicitação</th>
+                        <th>Equipamento</th>
+                        <th>Qtd. Devolvida</th>
+                        <th>Data da Devolução</th>
+                        <th>Observação</th>
+                    </tr>
+                    </thead>
+                    <tbody id="corpo-tabela-devolucoes">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
-const corpoTabela = document.getElementById('corpo-tabela-devolucoes');
-
-if (!corpoTabela) {
-console.error("Elemento da tabela de devoluções não encontrado!");
-return;
-}
-
-// Função para buscar e renderizar as devoluções na tabela
-async function carregarDevolucoes(page = 0, size = 10) {
-corpoTabela.innerHTML = '<tr><td colspan="6" class="text-center">A carregar...</td></tr>';
-try {
-const params = { page, size, sort: 'dataDevolucao,desc' };
-// Usa a apiClient para buscar a lista paginada de devoluções
-const response = await apiClient.get('/devolucoes', { params });
-const devolucoes = response.data.content;
-
-corpoTabela.innerHTML = ''; // Limpa a tabela
-
-if (devolucoes.length === 0) {
-corpoTabela.innerHTML = '<tr><td colspan="6" class="text-center">Nenhuma devolução registada.</td></tr>';
-return;
-}
-
-devolucoes.forEach(dev => {
-const tr = document.createElement('tr');
-tr.innerHTML = `
-<td>${dev.id}</td>
-<td>${dev.solicitacaoId}</td>
-<td>${dev.nomeEquipamento}</td>
-<td>${dev.quantidadeDevolvida}</td>
-<td>${new Date(dev.dataDevolucao).toLocaleString('pt-BR')}</td>
-<td>${dev.observacao || ''}</td>
-`;
-corpoTabela.appendChild(tr);
-});
-
-// Adicionar lógica de paginação aqui no futuro
-} catch (error) {
-console.error("Erro ao carregar devoluções:", error);
-showToast("Não foi possível carregar o histórico de devoluções.", "Erro", true);
-corpoTabela.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Falha ao carregar devoluções.</td></tr>';
-}
-}
-
-// --- Inicialização ---
-carregarDevolucoes();
-
-})();
+<script src="/js/pages/devolucoes.js"></script>
