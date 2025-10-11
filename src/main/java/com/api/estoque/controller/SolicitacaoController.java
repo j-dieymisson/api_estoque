@@ -9,7 +9,10 @@ import com.api.estoque.model.Usuario;
 import com.api.estoque.service.HistoricoService;
 import com.api.estoque.service.PdfService;
 import com.api.estoque.service.SolicitacaoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -30,6 +33,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/solicitacoes")
+@Tag(name = "Solicitações", description = "Endpoints para gerir o ciclo de vida completo das solicitações de equipamentos")
 public class SolicitacaoController {
 
     private final SolicitacaoService solicitacaoService;
@@ -55,13 +59,13 @@ public class SolicitacaoController {
         return ResponseEntity.created(uri).body(response);
     }
 
-    @PatchMapping("/{id}/aprovar") // Ex: PATCH http://localhost:8080/solicitacoes/1/aprovar
+    @PatchMapping("/{id}/aprovar")
     public ResponseEntity<SolicitacaoResponse> aprovar(@PathVariable Long id) {
         SolicitacaoResponse response = solicitacaoService.aprovarSolicitacao(id);
         return ResponseEntity.ok(response); // Retorna 200 OK com a solicitação atualizada
     }
 
-    @PatchMapping("/{id}/recusar") // Ex: PATCH http://localhost:8080/solicitacoes/1/recusar
+    @PatchMapping("/{id}/recusar")
     public ResponseEntity<SolicitacaoResponse> recusar(@PathVariable Long id) {
         SolicitacaoResponse response = solicitacaoService.recusarSolicitacao(id);
         return ResponseEntity.ok(response);
@@ -138,7 +142,11 @@ public class SolicitacaoController {
     }
 
     @GetMapping("/minhas")
+    @Operation(
+            summary = "Listar as minhas solicitações",
+            description = "Retorna uma lista paginada de todas as solicitações pertencentes ao utilizador autenticado. Permite filtrar por status e por data.")
     public ResponseEntity<Page<SolicitacaoResponse>> listarMinhas(
+            @ParameterObject
             @PageableDefault(size = 10, sort = {"dataSolicitacao"}) Pageable paginacao,
             @AuthenticationPrincipal Usuario usuarioLogado, // Pega o utilizador do token
             // Os filtros continuam a ser opcionais
