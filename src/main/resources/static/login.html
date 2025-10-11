@@ -1,24 +1,37 @@
 <!DOCTYPE html>
-<html lang="pt-br">
-<head>
+<html lang="pt-br" data-bs-theme="dark"> <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - API Estoque</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
 </head>
-<body class="bg-light">
+<body class="bg-body-tertiary">
 
 <div class="container">
-    <div class="row justify-content-center mt-5">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h3 class="card-title text-center">API Estoque</h3>
-                    <p class="text-center">Por favor, faça o login.</p>
+    <div class="row justify-content-center align-items-center vh-100">
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <h3 class="card-title text-center mb-4">API Estoque</h3>
 
-                    <div class="d-grid">
-                        <button class="btn btn-danger" type="button">Este é um botão Bootstrap</button>
+                    <form id="form-login">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome de Utilizador</label>
+                            <input type="text" class="form-control" id="nome" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="senha" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="senha" required>
+                        </div>
+                        <div class="d-grid mt-4">
+                            <button class="btn btn-primary" type="submit">Entrar</button>
+                        </div>
+                    </form>
+
+                    <div id="mensagem-erro" class="alert alert-danger mt-3 d-none" role="alert">
+                        Login ou senha inválidos.
                     </div>
+
                 </div>
             </div>
         </div>
@@ -27,7 +40,6 @@
 
 <script src="/js/bootstrap.bundle.min.js"></script>
 <script src="/js/axios.min.js"></script>
-
 <script src="/js/login.js"></script>
 </body>
 </html>

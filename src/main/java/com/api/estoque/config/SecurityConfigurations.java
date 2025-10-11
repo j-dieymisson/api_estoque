@@ -32,7 +32,7 @@ public class SecurityConfigurations {
                         // ===== Endpoints Públicos Essenciais para o Arranque =====
                         .requestMatchers(HttpMethod.POST, "/login").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
-                        .requestMatchers("/login.html", "/login.js", "/css/**", "/js/**").permitAll()
+                        .requestMatchers("/login.html", "/index.html", "/css/**", "/js/**").permitAll()
 
 
                         // ===== Regras de Admin (Exigem login como Admin) =====
