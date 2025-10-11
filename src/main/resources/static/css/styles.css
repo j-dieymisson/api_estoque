@@ -1,0 +1,23 @@
+/* src/main/resources/static/css/styles.css */
+:root {
+    --cor-primaria: #0d6efd;
+    --cor-fundo-sidebar: #212529;
+    --cor-texto-sidebar: #adb5bd;
+    --cor-hover-sidebar: #fff;
+}
+
+body {
+    display: flex;
+}
+
+.sidebar {
+    width: 280px;
+    background-color: var(--cor-fundo-sidebar);
+    min-height: 100vh;
+    /* Adicionaremos mais estilos aqui para o colapso e para os ícones */
+}
+
+.content {
+    flex-grow: 1; /* Faz com que esta área ocupe todo o espaço restante */
+    padding: 2rem;
+}

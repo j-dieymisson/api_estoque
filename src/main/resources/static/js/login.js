@@ -1,4 +1,4 @@
-// Este é o nosso ficheiro login.js
+// src/main/resources/static/js/login.js
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // 3. Redireciona para a página principal (que ainda não existe)
             alert("Login realizado com sucesso! A redirecionar...");
-            window.location.href = '/index.html'; // Vamos criar esta página a seguir
+            window.location.href = '/app/index.html'; // Vamos criar esta página a seguir
 
         } catch (error) {
             // Se a API devolver um erro (como 401 ou 403)...
