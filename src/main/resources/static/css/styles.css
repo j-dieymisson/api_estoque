@@ -1,11 +1,11 @@
-/* Definição de variáveis de cores globais */
+/* Definição de variáveis de cores e tamanhos globais */
 :root {
     --cor-primaria: #0d6efd;
     --cor-fundo-sidebar: #212529;
     --cor-texto-sidebar: #adb5bd;
     --cor-hover-sidebar: #fff;
     --largura-sidebar: 280px;
-    --largura-sidebar-colapsada: 80px;
+    --largura-sidebar-colapsada: 88px; /* Espaço suficiente para os ícones e padding */
 }
 
 body {
@@ -16,17 +16,12 @@ body {
 
 /* --- ESTRUTURA PRINCIPAL --- */
 
-.sidebar {
-    width: var(--largura-sidebar);
-    background-color: var(--cor-fundo-sidebar);
-    transition: width 0.3s ease; /* Animação suave */
-}
-
 .main-wrapper {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    transition: margin-left 0.3s ease;
 }
 
 .main-header {
@@ -41,15 +36,23 @@ body {
 
 /* --- ESTILOS DA SIDEBAR --- */
 
+.sidebar {
+    width: var(--largura-sidebar);
+    background-color: var(--cor-fundo-sidebar);
+    transition: width 0.3s ease; /* Animação suave para colapsar */
+}
+
 .sidebar .nav-link {
     color: var(--cor-texto-sidebar);
-    border-radius: .25rem;
+    border-radius: .375rem;
     margin-bottom: .25rem;
+    white-space: nowrap; /* Impede que o texto quebre em duas linhas */
+    overflow: hidden; /* Esconde o texto que transborda */
 }
 
 .sidebar .nav-link:hover {
     color: var(--cor-hover-sidebar);
-    background-color: var(--cor-primaria);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .sidebar .nav-link.active {
@@ -57,34 +60,45 @@ body {
     background-color: var(--cor-primaria);
 }
 
-/* --- LÓGICA DE COLAPSAR (Ainda sem JS) --- */
+.sidebar .nav-link .bi {
+    font-size: 1.25rem; /* Aumenta um pouco o tamanho dos ícones */
+}
+
+/* --- LÓGICA DE COLAPSAR (Controlada por JS) --- */
 
 .sidebar.collapsed {
     width: var(--largura-sidebar-colapsada);
 }
 
-.sidebar.collapsed .sidebar-text,
-.sidebar.collapsed hr,
-.sidebar.collapsed h4 {
+.sidebar.collapsed .sidebar-text {
     display: none; /* Esconde o texto quando colapsado */
 }
 
 .sidebar.collapsed .nav-link,
-.sidebar.collapsed .btn-danger {
+.sidebar.collapsed #btn-logout {
     text-align: center;
+    padding-left: .5rem;
+    padding-right: .5rem;
 }
 
-.sidebar.collapsed .nav-link i,
-.sidebar.collapsed .btn-danger i {
+.sidebar.collapsed .nav-link .bi,
+.sidebar.collapsed #btn-logout .bi {
     margin-right: 0 !important;
+}
+
+.sidebar.collapsed .d-flex.align-items-center.mb-4 h4 {
+    display: none;
+}
+.sidebar.collapsed .d-flex.align-items-center.mb-4 {
+    justify-content: center;
 }
 
 
 /* --- RESPONSIVIDADE PARA MOBILE --- */
 
 @media (max-width: 767.98px) {
+    /* Em ecrãs pequenos, a sidebar principal do desktop desaparece */
     .sidebar {
-        /* Escondemos a sidebar por padrão em mobile */
         display: none !important;
     }
 }

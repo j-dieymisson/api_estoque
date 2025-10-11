@@ -1,0 +1,141 @@
+// dashboard.js - Lógica específica para a página de dashboard
+
+// Usamos uma função anónima auto-executável (IIFE) para não poluir o escopo global
+// e podermos usar async/await no nível superior.
+(async function() {
+    console.log("A executar o script do dashboard...");
+
+    const widgetContainer = document.getElementById('dashboard-widgets-container');
+    const checkboxesContainer = document.getElementById('widgets-checkboxes-container');
+    const formPreferencias = document.getElementById('form-preferencias');
+
+    if (!widgetContainer || !checkboxesContainer || !formPreferencias) {
+        console.error("Um ou mais elementos essenciais do dashboard não foram encontrados!");
+        return;
+    }
+
+    // Mapeamento de chaves da API para texto e ícones (para deixar os cartões mais bonitos)
+    const widgetDetails = {
+        totalUsuariosAtivos: { title: "Utilizadores Ativos", icon: "bi-people-fill" },
+        solicitacoesPendentes: { title: "Solicitações Pendentes", icon: "bi-hourglass-split" },
+        solicitacoesAprovadasHoje: { title: "Aprovadas Hoje", icon: "bi-check-circle-fill" },
+        totalUnidadesEmUso: { title: "Unidades em Uso", icon: "bi-box-arrow-up-right" },
+        totalTiposDeEquipamento: { title: "Tipos de Equipamento", icon: "bi-pc-display" },
+        tiposDeEquipamentoAtivos: { title: "Equipamentos Ativos", icon: "bi-power" },
+        totalUnidadesCadastradas: { title: "Total de Unidades", icon: "bi-box-seam" },
+        solicitacoesFinalizadasMes: { title: "Finalizadas no Mês", icon: "bi-calendar2-check" },
+        solicitacoesTotais: { title: "Total de Solicitações", icon: "bi-card-list" },
+        totalCategorias: { title: "Total de Categorias", icon: "bi-tags-fill" },
+    };
+
+    // Função para criar o HTML de um "card" de estatística
+    function createWidgetCard(key, value) {
+        const details = widgetDetails[key] || { title: key.replace(/_/g, ' '), icon: "bi-question-circle" };
+        return `
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-start-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col me-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">${details.title}</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">${value}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi ${details.icon} h2 text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Função para renderizar os cartões do dashboard com base nos dados da API
+    async function renderizarWidgets() {
+        widgetContainer.innerHTML = `<div class="col-12 text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">A carregar...</span></div></div>`;
+        try {
+            const response = await apiClient.get('/dashboard');
+            const data = response.data;
+            widgetContainer.innerHTML = '';
+
+            if (Object.keys(data).length === 0) {
+                widgetContainer.innerHTML = '<div class="col-12"><div class="alert alert-info">Nenhum widget selecionado. Escolha as suas preferências abaixo e salve.</div></div>';
+                return;
+            }
+
+            for (const key in data) {
+                if (data.hasOwnProperty(key)) {
+                    widgetContainer.innerHTML += createWidgetCard(key, data[key]);
+                }
+            }
+        } catch (error) {
+            console.error("Erro ao carregar os dados do dashboard:", error);
+            widgetContainer.innerHTML = '<div class="col-12"><div class="alert alert-danger">Não foi possível carregar os dados do dashboard.</div></div>';
+        }
+    }
+
+    // Função para buscar e renderizar as checkboxes de preferências
+    async function renderizarPreferencias() {
+        checkboxesContainer.innerHTML = `<div class="col-12 text-center"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">A carregar...</span></div></div>`;
+        try {
+            // Fazemos duas chamadas em paralelo para ser mais rápido
+            const [widgetsDisponiveisRes, perfilRes] = await Promise.all([
+                apiClient.get('/dashboard/widgets-disponiveis'),
+                apiClient.get('/perfil')
+            ]);
+
+            const widgetsDisponiveis = widgetsDisponiveisRes.data;
+            const preferenciasAtuais = perfilRes.data.preferenciasDashboard.map(p => p.widgetNome);
+            checkboxesContainer.innerHTML = '';
+
+            widgetsDisponiveis.forEach(widgetName => {
+                const isChecked = preferenciasAtuais.includes(widgetName);
+                const details = widgetDetails[widgetName] || { title: widgetName };
+                const checkboxHtml = `
+                    <div class="col-md-4 col-sm-6">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" value="${widgetName}" id="check-${widgetName}" ${isChecked ? 'checked' : ''}>
+                            <label class="form-check-label" for="check-${widgetName}">
+                                ${details.title}
+                            </label>
+                        </div>
+                    </div>
+                `;
+                checkboxesContainer.innerHTML += checkboxHtml;
+            });
+        } catch (error) {
+            console.error("Erro ao carregar as preferências:", error);
+            checkboxesContainer.innerHTML = '<div class="col-12"><div class="alert alert-danger">Não foi possível carregar as opções de configuração.</div></div>';
+        }
+    }
+
+    // Função para salvar as novas preferências
+    async function salvarPreferencias(event) {
+        event.preventDefault();
+        const checkboxes = checkboxesContainer.querySelectorAll('input[type="checkbox"]');
+        const widgetsSelecionados = [];
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                widgetsSelecionados.push(cb.value);
+            }
+        });
+
+        try {
+            await apiClient.put('/dashboard/preferencias', widgetsSelecionados);
+            showToast('Preferências salvas com sucesso!', 'Sucesso');
+            // Após salvar, renderiza novamente os widgets para refletir a mudança
+            await renderizarWidgets();
+        } catch (error) {
+            console.error("Erro ao salvar as preferências:", error);
+            showToast('Não foi possível salvar as preferências.', 'Erro', true);
+        }
+    }
+
+    // --- Inicialização ---
+    formPreferencias.addEventListener('submit', salvarPreferencias);
+
+    // Inicia o carregamento das duas secções da página
+    renderizarWidgets();
+    renderizarPreferencias();
+
+})();

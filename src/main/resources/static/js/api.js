@@ -35,8 +35,8 @@ apiClient.interceptors.response.use(
         // Verificamos se o erro é de autenticação (401 ou 403)
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
             console.error("Erro de autenticação/autorização. A redirecionar para o login.");
-            // Se o token for inválido ou o utilizador não tiver permissão,
-            // limpamos o token antigo e forçamos o logout.
+            // Se o token for inválido ou o utilizador não tiver permissão para uma ação específica,
+            // a forma mais segura é forçar o logout.
             localStorage.removeItem('authToken');
             window.location.href = '/login.html';
         }
