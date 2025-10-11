@@ -1,23 +1,90 @@
-/* src/main/resources/static/css/styles.css */
+/* Definição de variáveis de cores globais */
 :root {
     --cor-primaria: #0d6efd;
     --cor-fundo-sidebar: #212529;
     --cor-texto-sidebar: #adb5bd;
     --cor-hover-sidebar: #fff;
+    --largura-sidebar: 280px;
+    --largura-sidebar-colapsada: 80px;
 }
 
 body {
     display: flex;
+    min-height: 100vh;
+    overflow-x: hidden; /* Previne scroll horizontal */
 }
 
+/* --- ESTRUTURA PRINCIPAL --- */
+
 .sidebar {
-    width: 280px;
+    width: var(--largura-sidebar);
     background-color: var(--cor-fundo-sidebar);
+    transition: width 0.3s ease; /* Animação suave */
+}
+
+.main-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
     min-height: 100vh;
-    /* Adicionaremos mais estilos aqui para o colapso e para os ícones */
+}
+
+.main-header {
+    background-color: var(--bs-dark-bg-subtle);
+    border-bottom: 1px solid var(--bs-border-color);
 }
 
 .content {
-    flex-grow: 1; /* Faz com que esta área ocupe todo o espaço restante */
-    padding: 2rem;
+    flex-grow: 1;
+}
+
+
+/* --- ESTILOS DA SIDEBAR --- */
+
+.sidebar .nav-link {
+    color: var(--cor-texto-sidebar);
+    border-radius: .25rem;
+    margin-bottom: .25rem;
+}
+
+.sidebar .nav-link:hover {
+    color: var(--cor-hover-sidebar);
+    background-color: var(--cor-primaria);
+}
+
+.sidebar .nav-link.active {
+    color: #fff;
+    background-color: var(--cor-primaria);
+}
+
+/* --- LÓGICA DE COLAPSAR (Ainda sem JS) --- */
+
+.sidebar.collapsed {
+    width: var(--largura-sidebar-colapsada);
+}
+
+.sidebar.collapsed .sidebar-text,
+.sidebar.collapsed hr,
+.sidebar.collapsed h4 {
+    display: none; /* Esconde o texto quando colapsado */
+}
+
+.sidebar.collapsed .nav-link,
+.sidebar.collapsed .btn-danger {
+    text-align: center;
+}
+
+.sidebar.collapsed .nav-link i,
+.sidebar.collapsed .btn-danger i {
+    margin-right: 0 !important;
+}
+
+
+/* --- RESPONSIVIDADE PARA MOBILE --- */
+
+@media (max-width: 767.98px) {
+    .sidebar {
+        /* Escondemos a sidebar por padrão em mobile */
+        display: none !important;
+    }
 }

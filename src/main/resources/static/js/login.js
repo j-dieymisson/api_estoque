@@ -38,8 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // 2. Guarda o token no localStorage do browser
             localStorage.setItem('authToken', token);
 
-            // 3. Redireciona para a página principal (que ainda não existe)
-            alert("Login realizado com sucesso! A redirecionar...");
             window.location.href = '/app/index.html'; // Vamos criar esta página a seguir
 
         } catch (error) {

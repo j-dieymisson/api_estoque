@@ -5,30 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - API Estoque</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
 
-<nav class="sidebar">
-    <h4 class="text-white text-center mt-3">API Estoque</h4>
+<nav class="sidebar d-none d-md-flex flex-column p-3">
+    <div class="d-flex align-items-center mb-4">
+        <i class="bi bi-box-seam-fill h4 me-2"></i>
+        <h4 class="m-0 sidebar-text">CEPRA</h4>
+    </div>
+    <hr>
+    <ul class="nav nav-pills flex-column mb-auto" id="menu-principal">
+        <li class="nav-item">
+            <a href="#" class="nav-link active" data-page="dashboard.html">
+                <i class="bi bi-speedometer2 me-2"></i>
+                <span class="sidebar-text">Dashboard</span>
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-link" data-page="solicitacoes.html">
+                <i class="bi bi-card-list me-2"></i>
+                <span class="sidebar-text">Minhas Solicitações</span>
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-link" data-page="equipamentos.html">
+                <i class="bi bi-pc-display me-2"></i>
+                <span class="sidebar-text">Equipamentos</span>
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-link" data-page="usuarios.html">
+                <i class="bi bi-people-fill me-2"></i>
+                <span class="sidebar-text">Gestão de Utilizadores</span>
+            </a>
+        </li>
+    </ul>
+    <hr>
+    <button id="btn-logout" class="btn btn-danger">
+        <i class="bi bi-box-arrow-right me-2"></i>
+        <span class="sidebar-text">Logout</span>
+    </button>
 </nav>
 
-<main class="content">
-    <header class="mb-4">
-        <h3>Página Principal</h3>
-        <p>Bem-vindo ao sistema!</p>
+<div class="offcanvas offcanvas-start bg-dark" tabindex="-1" id="sidebar-mobile">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title text-white">CEPRA</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <ul class="nav nav-pills flex-column mb-auto" id="menu-mobile">
+            <li class="nav-item"><a href="#" class="nav-link active" data-page="dashboard.html"><i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span></a></li>
+            <li><a href="#" class="nav-link" data-page="solicitacoes.html"><i class="bi bi-card-list me-2"></i><span>Minhas Solicitações</span></a></li>
+            <li><a href="#" class="nav-link" data-page="equipamentos.html"><i class="bi bi-pc-display me-2"></i><span>Equipamentos</span></a></li>
+            <li><a href="#" class="nav-link" data-page="usuarios.html"><i class="bi bi-people-fill me-2"></i><span>Gestão de Utilizadores</span></a></li>
+        </ul>
+    </div>
+</div>
+
+<div class="main-wrapper">
+    <header class="main-header d-flex justify-content-between align-items-center p-3 shadow-sm">
+        <div>
+            <button class="btn d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar-mobile">
+                <i class="bi bi-list"></i>
+            </button>
+            <button class="btn d-none d-md-block" id="btn-desktop-toggle">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+        <div class="me-3">
+            <span>Bem-vindo, </span><strong id="nome-usuario">...</strong>
+        </div>
     </header>
 
-    <div id="main-content-area">
-        <p>Esta é a área de conteúdo principal.</p>
-    </div>
+    <main class="content p-4" id="main-content-area">
+    </main>
 
-    <footer class="mt-5 text-muted text-center text-small">
+    <footer class="mt-auto p-3 text-muted text-center text-small">
         <p>&copy; 2025 API Estoque</p>
     </footer>
-</main>
+</div>
+
 
 <script src="/js/bootstrap.bundle.min.js"></script>
 <script src="/js/axios.min.js"></script>
-<script src="/js/main.js"></script> </body>
+<script src="/js/main.js"></script>
+</body>
 </html>
