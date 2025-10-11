@@ -39,13 +39,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Guarda o token no localStorage do browser
                 localStorage.setItem('authToken', token);
 
-                // Mostra uma notificação de sucesso
-                showToast('Login realizado com sucesso! A redirecionar...', 'Sucesso');
 
                 // Espera um pouco para o utilizador ver o toast antes de redirecionar
                 setTimeout(() => {
                     window.location.href = '/app/index.html';
-                }, 1000);
+                });
 
             } catch (error) {
                 console.error("Erro no login:", error.response);

@@ -8,6 +8,8 @@
     const widgetContainer = document.getElementById('dashboard-widgets-container');
     const checkboxesContainer = document.getElementById('widgets-checkboxes-container');
     const formPreferencias = document.getElementById('form-preferencias');
+    const modalPreferenciasEl = document.getElementById('modal-preferencias');
+    const modalPreferencias = new bootstrap.Modal(modalPreferenciasEl);
 
     if (!widgetContainer || !checkboxesContainer || !formPreferencias) {
         console.error("Um ou mais elementos essenciais do dashboard não foram encontrados!");
@@ -28,9 +30,18 @@
         totalCategorias: { title: "Total de Categorias", icon: "bi-tags-fill" },
     };
 
+    function formatWidgetTitle(key) {
+        // 1. Coloca espaço antes de letras maiúsculas (exceto a primeira)
+        let formatted = key.replace(/([A-Z])/g, ' $1');
+        // 2. Coloca a primeira letra em maiúscula
+        formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+            // 3. Remove espaços extras que podem surgir no início
+        return formatted.trim();
+    }
+
     // Função para criar o HTML de um "card" de estatística
     function createWidgetCard(key, value) {
-        const details = widgetDetails[key] || { title: key.replace(/_/g, ' '), icon: "bi-question-circle" };
+        const details = widgetDetails[key] || { title: formatWidgetTitle(key), icon: "bi-question-circle" };
         return `
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card border-start-primary shadow h-100 py-2">
@@ -74,6 +85,29 @@
         }
     }
 
+    //Função para converter camelCase (Ex: "totalUsuariosAtivos" para "Total Usuarios Ativos")
+   function formatWidgetTitle(key) {
+       // 1. Converte a chave (que pode ser SNAKE_CASE ou camelCase) em minúsculas
+       let formatted = key.toLowerCase();
+
+       // 2. Substitui todos os underscores (_) por espaços (lidando com SNAKE_CASE)
+       formatted = formatted.replace(/_/g, ' ');
+
+       // 3. Coloca a primeira letra de cada palavra em maiúscula (para formar "Produto Exemplo")
+       formatted = formatted.split(' ').map(word => {
+           if (!word) return ''; // Ignora se a palavra estiver vazia
+           return word.charAt(0).toUpperCase() + word.slice(1);
+       }).join(' ');
+
+       // 4. Se a chave original era camelCase (sem underscores), esta regra ainda garante que "produtoExemplo" vire "Produto Exemplo"
+       if (key.indexOf('_') === -1) {
+           formatted = key.replace(/([A-Z])/g, ' $1').trim();
+           formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+       }
+
+       return formatted;
+   }
+
     // Função para buscar e renderizar as checkboxes de preferências
     async function renderizarPreferencias() {
         checkboxesContainer.innerHTML = `<div class="col-12 text-center"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">A carregar...</span></div></div>`;
@@ -81,18 +115,19 @@
             // Fazemos duas chamadas em paralelo para ser mais rápido
             const [widgetsDisponiveisRes, perfilRes] = await Promise.all([
                 apiClient.get('/dashboard/widgets-disponiveis'),
-                apiClient.get('/perfil')
+                apiClient.get('/dashboard/preferencias')
             ]);
 
             const widgetsDisponiveis = widgetsDisponiveisRes.data;
-            const preferenciasAtuais = perfilRes.data.preferenciasDashboard.map(p => p.widgetNome);
+             const preferenciasAtuais = perfilRes.data;
             checkboxesContainer.innerHTML = '';
 
             widgetsDisponiveis.forEach(widgetName => {
                 const isChecked = preferenciasAtuais.includes(widgetName);
-                const details = widgetDetails[widgetName] || { title: widgetName };
+                 const details = widgetDetails[widgetName] || { title: formatWidgetTitle(widgetName) };
+                 const displayTitle = details.title;
                 const checkboxHtml = `
-                    <div class="col-md-4 col-sm-6">
+                    <div class="col-md-6 col-sm-6">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" value="${widgetName}" id="check-${widgetName}" ${isChecked ? 'checked' : ''}>
                             <label class="form-check-label" for="check-${widgetName}">
@@ -123,6 +158,9 @@
         try {
             await apiClient.put('/dashboard/preferencias', widgetsSelecionados);
             showToast('Preferências salvas com sucesso!', 'Sucesso');
+
+             modalPreferencias.hide();
+
             // Após salvar, renderiza novamente os widgets para refletir a mudança
             await renderizarWidgets();
         } catch (error) {

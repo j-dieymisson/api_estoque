@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/dashboard")
@@ -50,5 +51,16 @@ public class DashboardController {
     ) {
         dashboardService.atualizarPreferencias(usuarioLogado, widgets);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/preferencias")
+    public ResponseEntity<List<String>> listarPreferencias(
+            @AuthenticationPrincipal Usuario usuarioLogado
+    ) {
+        List<String> preferencias = usuarioLogado.getPreferenciasDashboard().stream()
+                .map(pref -> pref.getWidgetNome().name())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(preferencias);
     }
 }
