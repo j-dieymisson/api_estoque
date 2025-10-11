@@ -87,16 +87,27 @@ document.addEventListener('DOMContentLoaded', function() {
     async function carregarPerfil() {
         try {
             const response = await axios.get('/perfil');
-            const nomeUsuario = response.data.nome;
-            if (nomeUsuarioSpan) {
-                nomeUsuarioSpan.textContent = nomeUsuario;
+            const usuario = response.data; // Temos o objeto completo do utilizador
+
+                if (nomeUsuarioSpan) {
+                    nomeUsuarioSpan.textContent = usuario.nome;
+                }
+
+                // Pega no nome do cargo que veio da API
+                const cargo = usuario.nomeCargo;
+
+                // Se o cargo NÃO for 'ADMIN', esconde os links de admin
+                if (cargo !== 'ADMIN') {
+                    document.querySelectorAll('.admin-only').forEach(item => {
+                        item.style.display = 'none'; // Esconde os itens de menu
+                    });
+                }
+
+
+            } catch (error) {
+                console.error("Erro ao carregar o perfil:", error.response);
+                fazerLogout();
             }
-        } catch (error) {
-            console.error("Erro ao carregar o perfil:", error);
-            if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-                fazerLogout(); // Se o token for inválido, faz logout
-            }
-        }
     }
 
     function fazerLogout() {
