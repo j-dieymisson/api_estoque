@@ -1,0 +1,92 @@
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">Detalhe da Solicitação #<span id="detalhe-id">...</span></h1>
+            <span id="detalhe-status-badge" class="badge">A carregar...</span>
+        </div>
+        <button class="btn btn-secondary" id="btn-voltar-lista"><i class="bi bi-arrow-left me-2"></i>Voltar para a Lista</button>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Informações Gerais</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Solicitante:</strong> <span id="detalhe-solicitante">...</span></p>
+                    <p><strong>Data da Solicitação:</strong> <span id="detalhe-data-solicitacao">...</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Previsão de Entrega:</strong> <span id="detalhe-data-entrega">...</span></p>
+                    <p><strong>Previsão de Devolução:</strong> <span id="detalhe-data-devolucao">...</span></p>
+                </div>
+                <div class="col-12">
+                    <p><strong>Justificativa:</strong></p>
+                    <p id="detalhe-justificativa">...</p>
+                </div>
+            </div>
+            <div id="acoes-solicitacao" class="mt-3 border-top pt-3">
+                <button id="btn-aprovar" class="btn btn-success d-none"><i class="bi bi-check-lg me-2"></i>Aprovar</button>
+                <button id="btn-recusar" class="btn btn-danger d-none"><i class="bi bi-x-lg me-2"></i>Recusar</button>
+                <button id="btn-cancelar" class="btn btn-warning d-none"><i class="bi bi-x-circle me-2"></i>Cancelar Solicitação</button>
+                <button id="btn-devolver-tudo" class="btn btn-primary d-none"><i class="bi bi-arrow-return-left me-2"></i>Devolver Tudo</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Itens Solicitados</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <th>Equipamento</th>
+                        <th>Qtd. Solicitada</th>
+                        <th>Qtd. Devolvida</th>
+                        <th>Qtd. Pendente</th>
+                        <th>Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody id="corpo-tabela-itens-detalhe">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-devolucao" tabindex="-1" aria-labelledby="modalDevolucaoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="form-devolucao">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalDevolucaoLabel">Registrar Devolução</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="devolucao-item-id">
+                    <p>Equipamento: <strong id="devolucao-nome-equipamento"></strong></p>
+                    <p>Quantidade Pendente: <strong id="devolucao-qtd-pendente"></strong></p>
+                    <div class="mb-3">
+                        <label for="devolucao-qtd" class="form-label">Quantidade a Devolver</label>
+                        <input type="number" class="form-control" id="devolucao-qtd" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="devolucao-obs" class="form-label">Observação (Opcional)</label>
+                        <textarea class="form-control" id="devolucao-obs" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Registrar Devolução</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="/js/pages/solicitacao-detalhe.js"></script>

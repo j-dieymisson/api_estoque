@@ -15,41 +15,68 @@
         return;
     }
 
+    // Função para obter a classe de cor do badge com base no status
+        function getBadgeClassForStatus(status) {
+            switch (status) {
+                case 'PENDENTE':
+                    return 'bg-warning text-dark'; // Usamos text-dark para melhor contraste em fundo amarelo
+                case 'APROVADA':
+                    return 'bg-success';
+                case 'FINALIZADA':
+                    return 'bg-secondary';
+                case 'RECUSADA':
+                case 'CANCELADA':
+                    return 'bg-danger';
+                case 'RASCUNHO':
+                    return 'bg-info text-dark';
+                default:
+                    return 'bg-primary';
+            }
+        }
     // Função para buscar e renderizar as solicitações na tabela
     async function carregarSolicitacoes(params = {}) {
-        corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">A carregar...</span></div></td></tr>';
-        try {
-            // Usa a apiClient para buscar as solicitações do utilizador logado
-            const response = await apiClient.get('/solicitacoes/minhas', { params });
-            const solicitacoes = response.data.content;
+            corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div></td></tr>';
+            try {
+                const response = await apiClient.get('/solicitacoes/minhas', { params });
+                const solicitacoes = response.data.content;
+                corpoTabela.innerHTML = '';
 
-            corpoTabela.innerHTML = ''; // Limpa a tabela
+                if (solicitacoes.length === 0) {
+                    corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma solicitação encontrada.</td></tr>';
+                    return;
+                }
 
-            if (solicitacoes.length === 0) {
-                corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma solicitação encontrada.</td></tr>';
-                return;
-            }
-
-            solicitacoes.forEach(sol => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${sol.id}</td>
-                    <td>${sol.justificativa}</td>
-                    <td>${new Date(sol.dataSolicitacao).toLocaleDateString('pt-BR')}</td>
-                    <td><span class="badge bg-primary">${sol.status}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-info" title="Ver Detalhes">
+                solicitacoes.forEach(sol => {
+                    const tr = document.createElement('tr');
+                    let acoesHtml = `
+                        <button class="btn btn-sm btn-info btn-detalhes" data-id="${sol.id}" title="Ver Detalhes">
                             <i class="bi bi-eye-fill"></i>
                         </button>
-                    </td>
-                `;
-                corpoTabela.appendChild(tr);
-            });
-        } catch (error) {
-            console.error("Erro ao carregar solicitações:", error);
-            corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Falha ao carregar solicitações.</td></tr>';
+                    `;
+
+                    // Adiciona o botão de cancelar APENAS se o status for PENDENTE
+                    if (sol.status === 'PENDENTE') {
+                        acoesHtml += `
+                            <button class="btn btn-sm btn-danger btn-cancelar ms-1" data-id="${sol.id}" title="Cancelar Solicitação">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        `;
+                    }
+
+                    tr.innerHTML = `
+                        <td>${sol.id}</td>
+                        <td>${sol.justificativa}</td>
+                        <td>${new Date(sol.dataSolicitacao).toLocaleDateString('pt-BR')}</td>
+                        <td><span class="badge ${getBadgeClassForStatus(sol.status)}">${sol.status}</span></td>
+                        <td>${acoesHtml}</td>
+                    `;
+                    corpoTabela.appendChild(tr);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar solicitações:", error);
+                corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Falha ao carregar solicitações.</td></tr>';
+            }
         }
-    }
 
     // Função para preencher o <select> de status
     async function carregarFiltroStatus() {
@@ -93,6 +120,37 @@
         formFiltros.reset();
         carregarSolicitacoes(); // Carrega a lista sem filtros
     });
+
+    // Botões de ação na tabela
+    corpoTabela.addEventListener('click', function(event) {
+            const target = event.target.closest('button');
+            if (!target) return;
+
+            const solicitacaoId = target.dataset.id;
+
+            if (target.classList.contains('btn-cancelar')) {
+                // Usa a nossa nova função de modal!
+                showConfirmModal(
+                    'Confirmar Cancelamento',
+                    `Tem a certeza que quer cancelar a solicitação ID ${solicitacaoId}?`,
+                    async () => { // Esta é a função que será executada se o utilizador confirmar
+                        try {
+                            await apiClient.patch(`/solicitacoes/${solicitacaoId}/cancelar`);
+                            showToast('Solicitação cancelada com sucesso!', 'Sucesso');
+                            carregarSolicitacoes(); // Atualiza a tabela
+                        } catch (error) {
+                            console.error("Erro ao cancelar solicitação:", error);
+                            showToast(error.response?.data?.message || 'Não foi possível cancelar a solicitação.', 'Erro', true);
+                        }
+                    }
+                );
+            }
+
+            if (target.classList.contains('btn-detalhes')) {
+                // No futuro, aqui chamaremos a função para carregar a página de detalhes
+                console.log(`Abrir detalhes da solicitação ${solicitacaoId}`);
+            }
+        });
 
 
     // --- Inicialização ---

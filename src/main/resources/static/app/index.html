@@ -48,15 +48,9 @@
                 <i class="bi bi-card-list me-2"></i><span class="sidebar-text">Solicitações</span>
             </a>
         </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link" data-page="devolucoes.html">
-                <i class="bi bi-arrow-return-left me-2"></i><span class="sidebar-text">Devoluções</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link" data-page="historico.html">
-                <i class="bi bi-clock-history me-2"></i><span class="sidebar-text">Histórico</span>
-            </a>
+        <li class="nav-item admin-only gestor-only"> <a href="#" class="nav-link" data-page="historico.html">
+            <i class="bi bi-clock-history me-2"></i><span class="sidebar-text">Histórico</span>
+        </a>
         </li>
     </ul>
     <hr>
@@ -72,10 +66,9 @@
         <ul class="nav nav-pills flex-column mb-auto" id="menu-mobile">
             <li class="nav-item admin-only"><a href="#" class="nav-link active" data-page="dashboard.html"><i class="bi bi-speedometer2 me-2"></i><span>Dashboard</span></a></li>
             <li class="nav-item admin-only"><a href="#" class="nav-link" data-page="funcionarios.html"><i class="bi bi-people-fill me-2"></i><span>Funcionários</span></a></li>
-            <li><a href="#" class="nav-link" data-page="equipamentos.html"><i class="bi bi-pc-display me-2"></i><span>Equipamentos</span></a></li>
-            <li><a href="#" class="nav-link" data-page="solicitacoes.html"><i class="bi bi-card-list me-2"></i><span>Solicitações</span></a></li>
-            <li><a href="#" class="nav-link" data-page="devolucoes.html"><i class="bi bi-arrow-return-left me-2"></i><span>Devoluções</span></a></li>
-            <li><a href="#" class="nav-link" data-page="historico.html"><i class="bi bi-clock-history me-2"></i><span>Histórico</span></a></li>
+            <li class="nav-item"><a href="#" class="nav-link" data-page="equipamentos.html"><i class="bi bi-pc-display me-2"></i><span>Equipamentos</span></a></li>
+            <li class="nav-item"><a href="#" class="nav-link" data-page="solicitacoes.html"><i class="bi bi-card-list me-2"></i><span>Solicitações</span></a></li>
+            <li class="nav-item admin-only gestor-only"><a href="#" class="nav-link" data-page="historico.html"><i class="bi bi-clock-history me-2"></i><span>Histórico</span></a></li>
         </ul>
     </div>
 </div>
@@ -97,6 +90,24 @@
     <footer class="mt-auto p-3 text-muted text-center text-small">
         <p>&copy; 2025 API Estoque</p>
     </footer>
+</div>
+
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Confirmar Ação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                Tem a certeza que deseja executar esta ação?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmModalButton">Confirmar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 

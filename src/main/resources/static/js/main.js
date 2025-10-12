@@ -14,8 +14,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.querySelector('.sidebar');
     const btnLogout = document.getElementById('btn-logout');
     const menus = [document.getElementById('menu-principal'), document.getElementById('menu-mobile')];
+    const confirmModalEl = document.getElementById('confirmModal');
+    const confirmModal = new bootstrap.Modal(confirmModalEl);
+    const confirmModalTitle = document.getElementById('confirmModalLabel');
+    const confirmModalBody = document.getElementById('confirmModalBody');
+    const confirmModalButton = document.getElementById('confirmModalButton');
 
     let currentScript = null;
+
+    window.showConfirmModal = function(title, message, onConfirmCallback) {
+            confirmModalTitle.textContent = title;
+            confirmModalBody.textContent = message;
+
+            confirmModalButton.onclick = () => {
+                onConfirmCallback();
+                confirmModal.hide();
+            };
+
+            confirmModal.show();
+        }
 
     async function loadPage(pageUrl) {
         try {
@@ -105,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             localStorage.removeItem('authToken');
             window.location.href = '/login.html';
-        }, 1000);
+        },);
     }
 
     if (btnDesktopToggle && sidebar) {
