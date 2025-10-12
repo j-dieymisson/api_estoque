@@ -29,6 +29,9 @@ public interface EquipamentoRepository extends JpaRepository<Equipamento, Long> 
     // Busca equipamentos ativos apenas por categoria (quando o nome não é fornecido)
     Page<Equipamento> findAllByAtivoTrueAndCategoriaId(Long categoriaId, Pageable pageable);
 
+    // Adicione este novo método
+    Page<Equipamento> findByIdAndAtivoTrue(Long id, Pageable pageable);
+
     // Query customizada para somar a diferença entre total e disponível
     @Query("SELECT SUM(e.quantidadeTotal - e.quantidadeDisponivel) FROM Equipamento e WHERE e.ativo = true")
     Long sumEquipamentosEmUso();

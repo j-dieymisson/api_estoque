@@ -49,10 +49,11 @@ public class EquipamentoController {
     public ResponseEntity<Page<EquipamentoResponse>> listar(
             @PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao,
             @RequestParam(required = false) Optional<String> nome,
-            @RequestParam(required = false) Optional<Long> categoriaId // <-- ADICIONE ESTE PARÂMETRO
+            @RequestParam(required = false) Optional<Long> categoriaId,
+            @RequestParam(required = false) Optional<Long> id
     ) {
         // Passe todos os filtros para o serviço
-        Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarTodos(nome, categoriaId, paginacao);
+        Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarTodos(nome, categoriaId, id, paginacao);
         return ResponseEntity.ok(pageDeEquipamentos);
     }
 

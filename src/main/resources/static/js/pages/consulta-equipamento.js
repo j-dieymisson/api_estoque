@@ -1,27 +1,31 @@
-// consulta-equipamento.js - Lógica para a página de resultados de histórico de equipamento
+// consulta-equipamento.js - Versão refatorada e corrigida
 
 (function() {
     console.log("A executar o script da página de consulta de equipamento...");
 
-    // O ID do equipamento é passado através do objeto global 'window.pageContext'
+    // O ID é passado pelo nosso router no main.js
     const equipamentoId = window.pageContext?.id;
 
     if (!equipamentoId) {
-        document.getElementById('main-content-area').innerHTML = '<div class="alert alert-danger">ID do equipamento não fornecido.</div>';
+        document.getElementById('main-content-area').innerHTML = '<div class="alert alert-danger">ID do equipamento não fornecido. Volte e tente novamente.</div>';
         return;
     }
 
-    // --- Seletores ---
+    // --- Seletores de Elementos ---
     const cabecalhoNome = document.getElementById('equipamento-nome-cabecalho');
     const corpoTabela = document.getElementById('corpo-tabela-hist-equipamento');
     const paginacaoContainer = document.getElementById('paginacao-hist-equipamento');
     const btnVoltar = document.getElementById('btn-voltar-consulta-eq');
+    const detalheNome = document.getElementById('detalhe-eq-nome');
+    const detalheCategoria = document.getElementById('detalhe-eq-categoria');
+    const detalheQtdTotal = document.getElementById('detalhe-eq-qtd-total');
+    const detalheQtdDisp = document.getElementById('detalhe-eq-qtd-disp');
 
     // --- Funções de Renderização ---
     function renderizarTabela(movimentacoes) {
         corpoTabela.innerHTML = '';
         if (!movimentacoes || movimentacoes.length === 0) {
-            corpoTabela.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum registo encontrado.</td></tr>';
+            corpoTabela.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum registo de movimentação encontrado para este equipamento.</td></tr>';
             return;
         }
         movimentacoes.forEach(h => {
@@ -51,47 +55,54 @@
     }
 
     // --- Lógica Principal ---
-    async function carregarHistorico(page = 0) {
-        corpoTabela.innerHTML = '<tr><td colspan="7" class="text-center">A carregar...</td></tr>';
+    async function carregarDados(page = 0) {
+        corpoTabela.innerHTML = '<tr><td colspan="7" class="text-center">A carregar histórico...</td></tr>';
+        cabecalhoNome.textContent = `Consulta para Equipamento ID: ${equipamentoId}`;
+
         try {
-            // Buscamos o nome do equipamento e o seu histórico em paralelo
-            const [equipamentoRes, historicoRes] = await Promise.all([
-                apiClient.get(`/equipamentos/${equipamentoId}`),
-                apiClient.get(`/historico/equipamento/${equipamentoId}`, { params: { page, size: 10 } })
-            ]);
-
-            const equipamento = equipamentoRes.data;
+            // 1. Busca o histórico (informação principal)
+            const historicoRes = await apiClient.get(`/historico/equipamento/${equipamentoId}`, {
+                params: { page, size: 10, sort: 'dataMovimentacao,desc' }
+            });
             const pageData = historicoRes.data;
-
-            // Atualiza o cabeçalho da página
-            cabecalhoNome.textContent = `Histórico para: ${equipamento.nome}`;
-
-            // Renderiza a tabela e a paginação
             renderizarTabela(pageData.content);
             renderizarPaginacao(pageData);
 
-        } catch (error) {
-            console.error("Erro ao carregar histórico do equipamento:", error);
+            // 2. Tenta buscar os detalhes do equipamento para enriquecer a página
+            try {
+                const equipamentoRes = await apiClient.get(`/equipamentos/${equipamentoId}`);
+                const equipamento = equipamentoRes.data;
+                cabecalhoNome.textContent = `Consulta: ${equipamento.nome}`;
+                detalheNome.textContent = equipamento.nome;
+                detalheCategoria.textContent = equipamento.nomeCategoria;
+                detalheQtdTotal.textContent = equipamento.quantidadeTotal;
+                detalheQtdDisp.textContent = equipamento.quantidadeDisponivel;
+            } catch (detailError) {
+                console.warn("Não foi possível buscar os detalhes do equipamento (pode ser falta de permissão), mas o histórico foi carregado.");
+            }
+        } catch (mainError) {
+            console.error("Erro ao carregar histórico do equipamento:", mainError);
             showToast('Não foi possível carregar o histórico.', 'Erro', true);
             cabecalhoNome.textContent = 'Erro ao Carregar Histórico';
-            corpoTabela.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Falha ao carregar dados.</td></tr>';
+            corpoTabela.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Falha ao carregar dados. Verifique o ID ou as suas permissões.</td></tr>';
         }
     }
 
     // --- Event Listeners ---
-    btnVoltar.addEventListener('click', () => {
-        window.navigateTo('consultas.html');
-    });
+    if(btnVoltar) {
+        btnVoltar.addEventListener('click', () => window.navigateTo('consultas.html'));
+    }
 
-    paginacaoContainer.addEventListener('click', (event) => {
-        const link = event.target.closest('a.page-link');
-        if (link && !link.parentElement.classList.contains('disabled')) {
-            event.preventDefault();
-            carregarHistorico(parseInt(link.dataset.page));
-        }
-    });
+    if(paginacaoContainer) {
+        paginacaoContainer.addEventListener('click', (event) => {
+            const link = event.target.closest('a.page-link');
+            if (link && !link.parentElement.classList.contains('disabled')) {
+                event.preventDefault();
+                carregarDados(parseInt(link.dataset.page));
+            }
+        });
+    }
 
     // --- Inicialização ---
-    carregarHistorico(0); // Carrega a primeira página do histórico ao iniciar
-
+    carregarDados(0); // Chama a função principal para carregar os dados
 })();

@@ -1,137 +1,269 @@
-// equipamentos.js - Lógica para a página de gestão de equipamentos
+// equipamentos.js - Lógica completa para a página de gestão de equipamentos
 
 (async function() {
     console.log("A executar o script da página de equipamentos...");
 
-    // Seletores dos elementos principais
+    // --- Seletores Globais ---
     const corpoTabela = document.getElementById('corpo-tabela-equipamentos');
+    const paginacaoContainer = document.getElementById('paginacao-equipamentos');
+    let currentUserRole = null;
+    let currentPage = 0;
+
+    // --- Seletores de Filtros ---
     const formFiltros = document.getElementById('form-filtros-equipamentos');
+    const filtroId = document.getElementById('filtro-id');
     const filtroNome = document.getElementById('filtro-nome');
     const filtroCategoria = document.getElementById('filtro-categoria');
     const btnLimparFiltros = document.getElementById('btn-limpar-filtros-equipamentos');
 
-    // Seletores do Modal
-    const modalEquipamento = new bootstrap.Modal(document.getElementById('modalEquipamento'));
+    // --- Seletores do Modal de Equipamento (Criar/Editar) ---
+    const modalEquipamentoEl = document.getElementById('modalEquipamento');
+    const modalEquipamento = new bootstrap.Modal(modalEquipamentoEl);
     const formEquipamento = document.getElementById('form-equipamento');
-    const modalTitle = document.getElementById('modalEquipamentoLabel');
+    const modalEquipamentoLabel = document.getElementById('modalEquipamentoLabel');
     const equipamentoIdInput = document.getElementById('equipamento-id');
     const equipamentoNomeInput = document.getElementById('equipamento-nome');
     const equipamentoDescricaoInput = document.getElementById('equipamento-descricao');
     const equipamentoQtdTotalInput = document.getElementById('equipamento-qtd-total');
     const equipamentoCategoriaSelect = document.getElementById('equipamento-categoria');
+    const btnAdicionarEquipamento = document.getElementById('btn-adicionar-equipamento');
 
+    // --- Seletores do Modal de Categorias ---
+    const modalCategoriasEl = document.getElementById('modal-categorias');
+    const modalCategorias = new bootstrap.Modal(modalCategoriasEl);
+    const btnGerirCategorias = document.getElementById('btn-gerir-categorias');
+    const listaCategoriasContainer = document.getElementById('lista-categorias');
+    const formCategoria = document.getElementById('form-categoria');
+    const categoriaIdInput = document.getElementById('categoria-id');
+    const categoriaNomeInput = document.getElementById('categoria-nome');
+    const btnCancelarEdicaoCategoria = document.getElementById('btn-cancelar-edicao-categoria');
 
-    // Função para buscar e renderizar os equipamentos na tabela
-    async function carregarEquipamentos(params = {}) {
-        corpoTabela.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div></td></tr>';
-        try {
-            // A listagem de equipamentos é para todos, mas as ações de admin são protegidas
-            const response = await apiClient.get('/equipamentos', { params });
-            const equipamentos = response.data.content;
-            corpoTabela.innerHTML = '';
-
-            if (equipamentos.length === 0) {
-                corpoTabela.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum equipamento encontrado.</td></tr>';
-                return;
-            }
-
-            equipamentos.forEach(eq => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${eq.id}</td>
-                    <td>${eq.nome}</td>
-                    <td>${eq.nomeCategoria}</td>
-                    <td>${eq.quantidadeTotal}</td>
-                    <td>${eq.quantidadeDisponivel}</td>
-                    <td class="admin-only">
-                        <button class="btn btn-sm btn-warning" title="Editar">
-                            <i class="bi bi-pencil-fill"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" title="Desativar">
-                            <i class="bi bi-trash-fill"></i>
-                        </button>
-                    </td>
-                `;
-                corpoTabela.appendChild(tr);
-            });
-        } catch (error) {
-            console.error("Erro ao carregar equipamentos:", error);
-            corpoTabela.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Falha ao carregar equipamentos.</td></tr>';
+    // --- Funções de Renderização ---
+    function renderizarTabelaEquipamentos(equipamentos) {
+        corpoTabela.innerHTML = '';
+        if (!equipamentos || equipamentos.length === 0) {
+            corpoTabela.innerHTML = `<tr><td colspan="${currentUserRole === 'ADMIN' ? 6 : 5}" class="text-center">Nenhum equipamento encontrado.</td></tr>`;
+            return;
         }
+        equipamentos.forEach(eq => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${eq.id}</td>
+                <td>${eq.nome}</td>
+                <td>${eq.nomeCategoria}</td>
+                <td>${eq.quantidadeTotal}</td>
+                <td>${eq.quantidadeDisponivel}</td>
+                ${currentUserRole === 'ADMIN' ? `
+                <td>
+                    <button class="btn btn-sm btn-warning btn-editar" data-id="${eq.id}" title="Editar"><i class="bi bi-pencil-fill"></i></button>
+                    <button class="btn btn-sm btn-danger btn-desativar" data-id="${eq.id}" title="Desativar"><i class="bi bi-trash-fill"></i></button>
+                </td>` : ''}
+            `;
+            corpoTabela.appendChild(tr);
+        });
     }
 
-    // Função para preencher os <select> de categorias
-    async function carregarCategorias() {
-        try {
-            const response = await apiClient.get('/categorias?ativa=true');
-            const categorias = response.data;
-
-            // Limpa as opções existentes
-            filtroCategoria.innerHTML = '<option value="">Todas</option>';
-            equipamentoCategoriaSelect.innerHTML = '<option value="">Selecione...</option>';
-
-            categorias.forEach(cat => {
-                const optionFiltro = new Option(cat.nome, cat.id);
-                const optionModal = new Option(cat.nome, cat.id);
-                filtroCategoria.appendChild(optionFiltro);
-                equipamentoCategoriaSelect.appendChild(optionModal);
-            });
-        } catch (error) {
-            console.error("Erro ao carregar categorias:", error);
-        }
+    function renderizarPaginacao(pageData) {
+        paginacaoContainer.innerHTML = '';
+        if (!pageData || pageData.totalPages <= 1) return;
+        let html = '<ul class="pagination pagination-sm justify-content-center">';
+        html += `<li class="page-item ${pageData.first ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${pageData.number - 1}">Anterior</a></li>`;
+        html += `<li class="page-item disabled"><span class="page-link">Página ${pageData.number + 1} de ${pageData.totalPages}</span></li>`;
+        html += `<li class="page-item ${pageData.last ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${pageData.number + 1}">Próximo</a></li>`;
+        html += '</ul>';
+        paginacaoContainer.innerHTML = html;
     }
 
-    // --- Lógica do Formulário do Modal ---
-    async function salvarEquipamento(event) {
-        event.preventDefault();
-
-        const equipamentoData = {
-            nome: equipamentoNomeInput.value,
-            descricao: equipamentoDescricaoInput.value,
-            quantidadeTotal: parseInt(equipamentoQtdTotalInput.value, 10),
-            categoriaId: parseInt(equipamentoCategoriaSelect.value, 10),
-        };
-
-        try {
-            // Por agora, estamos a implementar apenas a criação (POST)
-            await apiClient.post('/equipamentos', equipamentoData);
-
-            showToast('Equipamento salvo com sucesso!', 'Sucesso');
-            modalEquipamento.hide(); // Fecha o modal
-            carregarEquipamentos(); // Recarrega a tabela
-        } catch (error) {
-            console.error("Erro ao salvar equipamento:", error.response.data);
-            showToast(error.response.data.message || 'Não foi possível salvar o equipamento.', 'Erro', true);
+    function renderizarListaCategorias(categorias) {
+        listaCategoriasContainer.innerHTML = '';
+        if (!categorias || categorias.length === 0) {
+            listaCategoriasContainer.innerHTML = '<li class="list-group-item">Nenhuma categoria encontrada.</li>';
+            return;
         }
+        categorias.forEach(cat => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.innerHTML = `
+                <span>${cat.nome}</span>
+                <div>
+                    <button class="btn btn-sm btn-outline-warning btn-editar-categoria" data-id="${cat.id}" data-nome="${cat.nome}"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger btn-apagar-categoria ms-2" data-id="${cat.id}"><i class="bi bi-trash"></i></button>
+                </div>
+            `;
+            listaCategoriasContainer.appendChild(li);
+        });
     }
 
-    // --- Event Listeners ---
-    formFiltros.addEventListener('submit', function(event) {
-        event.preventDefault();
+    // --- Funções de Busca de Dados ---
+    async function carregarEquipamentos(page = 0) {
+        currentPage = page;
+        corpoTabela.innerHTML = `<tr><td colspan="${currentUserRole === 'ADMIN' ? 6 : 5}" class="text-center">A carregar...</td></tr>`;
         const params = {
+            page, size: 10, sort: 'nome,asc',
+            id: filtroId.value || null,
             nome: filtroNome.value || null,
             categoriaId: filtroCategoria.value || null,
         };
-        Object.keys(params).forEach(key => params[key] == null && delete params[key]);
-        carregarEquipamentos(params);
-    });
+        Object.keys(params).forEach(key => (params[key] == null || params[key] === '') && delete params[key]);
+        try {
+            const response = await apiClient.get('/equipamentos', { params });
+            renderizarTabelaEquipamentos(response.data.content);
+            renderizarPaginacao(response.data);
+        } catch (error) {
+            corpoTabela.innerHTML = `<tr><td colspan="${currentUserRole === 'ADMIN' ? 6 : 5}" class="text-center text-danger">Falha ao carregar equipamentos.</td></tr>`;
+        }
+    }
 
-    btnLimparFiltros.addEventListener('click', function() {
-        formFiltros.reset();
-        carregarEquipamentos();
-    });
+    async function carregarCategorias() {
+        try {
+            const response = await apiClient.get('/categorias');
+            const categorias = response.data;
+            filtroCategoria.innerHTML = '<option value="">Todas</option>';
+            equipamentoCategoriaSelect.innerHTML = '<option value="">Selecione...</option>';
+            categorias.forEach(cat => {
+                filtroCategoria.appendChild(new Option(cat.nome, cat.id));
+                equipamentoCategoriaSelect.appendChild(new Option(cat.nome, cat.id));
+            });
+            renderizarListaCategorias(categorias);
+        } catch (error) { console.error("Erro ao carregar categorias:", error); }
+    }
 
-    formEquipamento.addEventListener('submit', salvarEquipamento);
-
-    // Limpa o formulário do modal sempre que ele é fechado
-    document.getElementById('modalEquipamento').addEventListener('hidden.bs.modal', function () {
+    // --- Lógica dos Modais ---
+    function abrirModalParaCriarEquipamento() {
         formEquipamento.reset();
-        modalTitle.textContent = 'Adicionar Novo Equipamento';
-    });
+        equipamentoIdInput.value = '';
+        modalEquipamentoLabel.textContent = 'Adicionar Novo Equipamento';
+        modalEquipamento.show();
+    }
 
+    async function abrirModalParaEditarEquipamento(id) {
+        formEquipamento.reset();
+        try {
+            const response = await apiClient.get(`/equipamentos/${id}`);
+            const eq = response.data;
+            equipamentoIdInput.value = eq.id;
+            equipamentoNomeInput.value = eq.nome;
+            equipamentoDescricaoInput.value = eq.descricao;
+            equipamentoQtdTotalInput.value = eq.quantidadeTotal;
+            equipamentoCategoriaSelect.value = eq.categoriaId;
+            modalEquipamentoLabel.textContent = `Editar Equipamento: ${eq.nome}`;
+            modalEquipamento.show();
+        } catch (error) { showToast("Não foi possível carregar os dados do equipamento.", "Erro", true); }
+    }
 
-    // --- Inicialização da Página ---
-    carregarCategorias();
-    carregarEquipamentos();
+    async function salvarEquipamento(event) {
+        event.preventDefault();
+        const id = equipamentoIdInput.value;
+        const isUpdate = !!id;
+        const data = {
+            nome: equipamentoNomeInput.value,
+            descricao: equipamentoDescricaoInput.value,
+            quantidadeTotal: parseInt(equipamentoQtdTotalInput.value),
+            categoriaId: parseInt(equipamentoCategoriaSelect.value),
+        };
+        try {
+            if (isUpdate) {
+                await apiClient.put(`/equipamentos/${id}`, data);
+                showToast('Equipamento atualizado com sucesso!', 'Sucesso');
+            } else {
+                await apiClient.post('/equipamentos', data);
+                showToast('Equipamento criado com sucesso!', 'Sucesso');
+            }
+            modalEquipamento.hide();
+            carregarEquipamentos(isUpdate ? currentPage : 0);
+        } catch (error) { showToast(error.response?.data?.message || 'Erro ao salvar.', 'Erro', true); }
+    }
 
+    async function salvarCategoria(event) {
+        event.preventDefault();
+        const id = categoriaIdInput.value;
+        const nome = categoriaNomeInput.value;
+        const isUpdate = !!id;
+        try {
+            if (isUpdate) {
+                await apiClient.put(`/categorias/${id}`, { nome });
+                showToast('Categoria atualizada!', 'Sucesso');
+            } else {
+                await apiClient.post('/categorias', { nome });
+                showToast('Categoria criada!', 'Sucesso');
+            }
+            formCategoria.reset();
+            categoriaIdInput.value = '';
+            btnCancelarEdicaoCategoria.style.display = 'none';
+            carregarCategorias();
+        } catch (error) { showToast(error.response?.data?.message || 'Erro ao salvar.', 'Erro', true); }
+    }
+
+    // --- Inicialização e Event Listeners ---
+    async function init() {
+        try {
+            const response = await apiClient.get('/perfil');
+            currentUserRole = response.data.nomeCargo;
+            document.querySelectorAll('.admin-only').forEach(el => {
+                el.style.display = currentUserRole === 'ADMIN' ? '' : 'none';
+            });
+        } catch (e) { return; }
+
+        await carregarCategorias();
+        await carregarEquipamentos();
+
+        if (formFiltros) formFiltros.addEventListener('submit', (e) => { e.preventDefault(); carregarEquipamentos(0); });
+        if (btnLimparFiltros) btnLimparFiltros.addEventListener('click', () => { formFiltros.reset(); carregarEquipamentos(0); });
+        if (btnAdicionarEquipamento) btnAdicionarEquipamento.addEventListener('click', abrirModalParaCriarEquipamento);
+        if (btnGerirCategorias) btnGerirCategorias.addEventListener('click', () => modalCategorias.show());
+        if (formEquipamento) formEquipamento.addEventListener('submit', salvarEquipamento);
+        if (formCategoria) formCategoria.addEventListener('submit', salvarCategoria);
+        if (btnCancelarEdicaoCategoria) btnCancelarEdicaoCategoria.addEventListener('click', () => {
+            formCategoria.reset();
+            categoriaIdInput.value = '';
+            btnCancelarEdicaoCategoria.style.display = 'none';
+        });
+
+        corpoTabela.addEventListener('click', function(event) {
+            const target = event.target.closest('button');
+            if (!target) return;
+            const id = target.dataset.id;
+            if (target.classList.contains('btn-editar')) {
+                abrirModalParaEditarEquipamento(id);
+            } else if (target.classList.contains('btn-desativar')) {
+                showConfirmModal('Desativar Equipamento', `Tem a certeza?`, async () => {
+                    try {
+                        await apiClient.delete(`/equipamentos/${id}`);
+                        showToast('Equipamento desativado.', 'Sucesso');
+                        carregarEquipamentos(currentPage);
+                    } catch(error) { showToast(error.response?.data?.message, 'Erro', true); }
+                });
+            }
+        });
+
+        listaCategoriasContainer.addEventListener('click', function(event) {
+            const target = event.target.closest('button');
+            if (!target) return;
+            const id = target.dataset.id;
+            if (target.classList.contains('btn-editar-categoria')) {
+                categoriaIdInput.value = id;
+                categoriaNomeInput.value = target.dataset.nome;
+                btnCancelarEdicaoCategoria.style.display = 'inline-block';
+                categoriaNomeInput.focus();
+            } else if (target.classList.contains('btn-apagar-categoria')) {
+                showConfirmModal('Apagar Categoria', `Tem a certeza?`, async () => {
+                    try {
+                        await apiClient.delete(`/categorias/${id}`);
+                        showToast('Categoria apagada.', 'Sucesso');
+                        carregarCategorias();
+                    } catch(error) { showToast(error.response?.data?.message, 'Erro', true); }
+                });
+            }
+        });
+
+        paginacaoContainer.addEventListener('click', (event) => {
+            const link = event.target.closest('a.page-link');
+            if (link && !link.parentElement.classList.contains('disabled')) {
+                event.preventDefault();
+                carregarEquipamentos(parseInt(link.dataset.page));
+            }
+        });
+    }
+
+    init();
 })();

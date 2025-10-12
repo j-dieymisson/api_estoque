@@ -8,6 +8,24 @@
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Detalhes do Equipamento</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Nome:</strong> <span id="detalhe-eq-nome">...</span></p>
+                    <p><strong>Categoria:</strong> <span id="detalhe-eq-categoria">...</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Quantidade Total:</strong> <span id="detalhe-eq-qtd-total">...</span></p>
+                    <p><strong>Quantidade Disponível:</strong> <span id="detalhe-eq-qtd-disp">...</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">Histórico de Movimentações</h6>
         </div>
         <div class="card-body">
@@ -15,17 +33,10 @@
                 <table class="table table-bordered">
                     <thead>
                     <tr>
-                        <th>Data</th>
-                        <th>Tipo</th>
-                        <th>Qtd.</th>
-                        <th>Stock Anterior</th>
-                        <th>Stock Posterior</th>
-                        <th>Responsável</th>
-                        <th>Solicitação ID</th>
+                        <th>Data</th><th>Tipo</th><th>Qtd.</th><th>Stock Anterior</th><th>Stock Posterior</th><th>Responsável</th><th>Solicitação ID</th>
                     </tr>
                     </thead>
-                    <tbody id="corpo-tabela-hist-equipamento">
-                    </tbody>
+                    <tbody id="corpo-tabela-hist-equipamento"></tbody>
                 </table>
             </div>
             <nav id="paginacao-hist-equipamento" class="d-flex justify-content-center"></nav>

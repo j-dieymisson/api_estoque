@@ -59,17 +59,21 @@ public class EquipamentoService {
     @Transactional(readOnly = true)
     public Page<EquipamentoResponse> listarTodos(Optional<String> nome,
                                                  Optional<Long> categoriaId,
+                                                 Optional<Long> id,
                                                  Pageable pageable) {
         Page<Equipamento> equipamentos;
         // Lógica para decidir qual método do repositório usar
-        if (nome.isPresent() && categoriaId.isPresent()) {
+        if (id.isPresent()) {
+            // Filtro por ID
+            equipamentos = equipamentoRepository.findByIdAndAtivoTrue(id.get(), pageable);
+        } else if (nome.isPresent() && categoriaId.isPresent()) {
             // Filtro por NOME e CATEGORIA
             equipamentos = equipamentoRepository.findAllByAtivoTrueAndCategoriaIdAndNomeContainingIgnoreCase(categoriaId.get(), nome.get(), pageable);
         } else if (categoriaId.isPresent()) {
             // Filtro apenas por CATEGORIA
             equipamentos = equipamentoRepository.findAllByAtivoTrueAndCategoriaId(categoriaId.get(), pageable);
         } else if (nome.isPresent()) {
-            // Filtro apenas por NOME (já existia)
+            // Filtro apenas por NOME
             equipamentos = equipamentoRepository.findAllByAtivoTrueAndNomeContainingIgnoreCase(nome.get(), pageable);
         } else {
             // Sem filtros
