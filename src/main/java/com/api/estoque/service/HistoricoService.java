@@ -70,6 +70,33 @@ public class HistoricoService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public Page<HistoricoResponse> listarTodasMovimentacoes(
+            Optional<TipoMovimentacao> tipo,
+            Optional<Long> equipamentoId,
+            Optional<Long> usuarioId,
+            Optional<LocalDate> dataInicio,
+            Optional<LocalDate> dataFim,
+            Pageable pageable) {
+
+        // Prepara as datas para a query, abrangendo o dia inteiro
+        LocalDateTime inicio = dataInicio.map(LocalDate::atStartOfDay).orElse(null);
+        LocalDateTime fim = dataFim.map(d -> d.atTime(23, 59, 59)).orElse(null);
+
+        // Chama o nosso novo método de busca dinâmica do repositório
+        Page<HistoricoMovimentacao> movimentacoes = historicoRepository.findByFilters(
+                tipo.orElse(null),
+                equipamentoId.orElse(null),
+                usuarioId.orElse(null),
+                inicio,
+                fim,
+                pageable
+        );
+
+        // Mapeia o resultado para o DTO de resposta
+        return movimentacoes.map(this::mapToHistoricoResponse);
+    }
+
     private HistoricoResponse mapToHistoricoResponse(HistoricoMovimentacao historico) {
         return new HistoricoResponse(
                 historico.getId(),

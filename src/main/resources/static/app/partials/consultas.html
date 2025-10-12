@@ -1,0 +1,51 @@
+<div class="container-fluid">
+    <h1 class="h3 mb-3 text-gray-800">Centro de Consultas</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Rastrear Histórico de um Equipamento</h6>
+        </div>
+        <div class="card-body">
+            <form id="form-busca-equipamento">
+                <div class="row align-items-end">
+                    <div class="col-md-4">
+                        <label for="equipamento-id-busca" class="form-label">ID do Equipamento</label>
+                        <input type="number" class="form-control" id="equipamento-id-busca" required min="1">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary">Buscar Histórico</button>
+                    </div>
+                </div>
+            </form>
+            <hr>
+            <div id="resultado-historico-equipamento">
+                <p class="text-muted">Insira um ID de equipamento para ver o seu histórico completo.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Consultar Solicitações por Funcionário</h6>
+        </div>
+        <div class="card-body">
+            <form id="form-busca-solicitacao-usuario">
+                <div class="row align-items-end">
+                    <div class="col-md-4">
+                        <label for="usuario-id-busca" class="form-label">ID do Funcionário</label>
+                        <input type="number" class="form-control" id="usuario-id-busca" required min="1">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary">Buscar Solicitações</button>
+                    </div>
+                </div>
+            </form>
+            <hr>
+            <div id="resultado-solicitacoes-usuario">
+                <p class="text-muted">Insira um ID de funcionário para ver todas as suas solicitações.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/pages/consultas.js"></script>

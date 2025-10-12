@@ -10,6 +10,7 @@
     const formPreferencias = document.getElementById('form-preferencias');
     const modalPreferenciasEl = document.getElementById('modal-preferencias');
     const modalPreferencias = new bootstrap.Modal(modalPreferenciasEl);
+    const feedAtividadesContainer = document.getElementById('feed-atividades');
 
     if (!widgetContainer || !checkboxesContainer || !formPreferencias) {
         console.error("Um ou mais elementos essenciais do dashboard não foram encontrados!");
@@ -60,6 +61,59 @@
             </div>
         `;
     }
+
+    // Formata uma entrada de histórico para uma string legível
+        function formatarEntradaFeed(historico) {
+            const data = new Date(historico.dataMovimentacao).toLocaleString('pt-BR');
+            const responsavel = historico.usuarioResponsavel;
+            const tipo = historico.tipoMovimentacao;
+
+            // Formato simples sugerido por si
+            if (tipo === 'SAIDA' && historico.solicitacaoId) {
+                return `<strong>${data}:</strong> ${responsavel} fez a <strong>${tipo}</strong> (Solicitação #${historico.solicitacaoId}).`;
+            }
+            if (tipo === 'DEVOLUCAO' && historico.solicitacaoId) {
+                return `<strong>${data}:</strong> ${responsavel} fez a <strong>${tipo}</strong> de ${Math.abs(historico.quantidade)}x ${historico.equipamentoNome} (Solicitação #${historico.solicitacaoId}).`;
+            }
+            if (tipo === 'AJUSTE_MANUAL') {
+                return `<strong>${data}:</strong> ${responsavel} fez um <strong>AJUSTE MANUAL</strong> de ${historico.quantidade} no stock de ${historico.equipamentoNome}.`;
+            }
+            // Fallback para outros tipos
+            return `<strong>${data}:</strong> Movimentação de ${historico.equipamentoNome} por ${responsavel}.`;
+        }
+
+        // Busca os dados da API e renderiza o feed
+        async function carregarFeedDeAtividades() {
+            if (!feedAtividadesContainer) return;
+
+            try {
+                const response = await apiClient.get('/historico/movimentacoes', {
+                    params: {
+                        size: 5, // Pede apenas os 5 registos mais recentes
+                        sort: 'dataMovimentacao,desc'
+                    }
+                });
+
+                const atividades = response.data.content;
+                feedAtividadesContainer.innerHTML = ''; // Limpa o "loading"
+
+                if (atividades.length === 0) {
+                    feedAtividadesContainer.innerHTML = '<li class="list-group-item">Nenhuma atividade recente.</li>';
+                    return;
+                }
+
+                atividades.forEach(atividade => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.innerHTML = formatarEntradaFeed(atividade);
+                    feedAtividadesContainer.appendChild(li);
+                });
+
+            } catch (error) {
+                console.error("Erro ao carregar o feed de atividades:", error);
+                feedAtividadesContainer.innerHTML = '<li class="list-group-item text-danger">Não foi possível carregar as atividades.</li>';
+            }
+        }
 
     // Função para renderizar os cartões do dashboard com base nos dados da API
     async function renderizarWidgets() {
@@ -175,5 +229,6 @@
     // Inicia o carregamento das duas secções da página
     renderizarWidgets();
     renderizarPreferencias();
+    carregarFeedDeAtividades();
 
 })();

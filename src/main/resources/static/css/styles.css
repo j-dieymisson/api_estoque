@@ -1,8 +1,8 @@
 /* Definição de variáveis de cores e tamanhos globais */
 :root {
-    --cor-primaria: #0d6efd;
-    --cor-fundo-sidebar: #212529;
-    --cor-texto-sidebar: #adb5bd;
+    /*--cor-primaria: #0d6efd;*/
+    /*--cor-fundo-sidebar: #212529;*/
+    /*--cor-texto-sidebar: #adb5bd;*/
     --cor-hover-sidebar: #fff;
     --largura-sidebar: 280px;
     --largura-sidebar-colapsada: 88px; /* Espaço suficiente para os ícones e padding */

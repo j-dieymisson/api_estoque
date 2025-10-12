@@ -7,6 +7,7 @@ import com.api.estoque.service.HistoricoService;
 import com.api.estoque.service.PdfService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -57,6 +58,21 @@ public class HistoricoController {
         headers.setContentDispositionFormData("attachment", "historico_equipamento_" + id + ".pdf");
 
         return ResponseEntity.ok().headers(headers).body(pdfBytes);
+    }
+
+    @GetMapping("/movimentacoes")
+    public ResponseEntity<Page<HistoricoResponse>> listarTodasMovimentacoes(
+            @PageableDefault(size = 10, sort = {"dataMovimentacao"}, direction = Sort.Direction.DESC) Pageable paginacao,
+            @RequestParam(required = false) Optional<TipoMovimentacao> tipo,
+            @RequestParam(required = false) Optional<Long> equipamentoId,
+            @RequestParam(required = false) Optional<Long> usuarioId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim
+    ) {
+        Page<HistoricoResponse> pagina = historicoService.listarTodasMovimentacoes(
+                tipo, equipamentoId, usuarioId, dataInicio, dataFim, paginacao
+        );
+        return ResponseEntity.ok(pagina);
     }
 
 }

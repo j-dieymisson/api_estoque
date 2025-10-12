@@ -5,6 +5,8 @@ import com.api.estoque.model.TipoMovimentacao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +23,20 @@ public interface HistoricoMovimentacaoRepository extends JpaRepository<Historico
             LocalDateTime fim,
             Pageable pageable
     );
+
+    @Query("SELECT h FROM HistoricoMovimentacao h WHERE " +
+            "(:tipo IS NULL OR h.tipoMovimentacao = :tipo) AND " +
+            "(:equipamentoId IS NULL OR h.equipamento.id = :equipamentoId) AND " +
+            "(:usuarioId IS NULL OR h.usuarioResponsavel.id = :usuarioId) AND " +
+            "(:inicio IS NULL OR h.dataMovimentacao >= :inicio) AND " +
+            "(:fim IS NULL OR h.dataMovimentacao <= :fim)")
+    Page<HistoricoMovimentacao> findByFilters(
+            @Param("tipo") TipoMovimentacao tipo,
+            @Param("equipamentoId") Long equipamentoId,
+            @Param("usuarioId") Long usuarioId,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fim") LocalDateTime fim,
+            Pageable pageable);
 
     // Este método pode ser apagado se você não o estiver a usar noutro sítio,
     // pois a versão paginada acima é mais flexível.
