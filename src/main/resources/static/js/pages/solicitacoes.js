@@ -53,8 +53,6 @@
                             <i class="bi bi-eye-fill"></i>
                         </button>
                     `;
-
-                    // Adiciona o botão de cancelar APENAS se o status for PENDENTE
                     if (sol.status === 'PENDENTE') {
                         acoesHtml += `
                             <button class="btn btn-sm btn-danger btn-cancelar ms-1" data-id="${sol.id}" title="Cancelar Solicitação">
@@ -146,10 +144,9 @@
                 );
             }
 
-            if (target.classList.contains('btn-detalhes')) {
-                // No futuro, aqui chamaremos a função para carregar a página de detalhes
-                console.log(`Abrir detalhes da solicitação ${solicitacaoId}`);
-            }
+           if (target.classList.contains('btn-detalhes')) {
+                       window.navigateTo('solicitacao-detalhe.html', { id: solicitacaoId });
+                   }
         });
 
 

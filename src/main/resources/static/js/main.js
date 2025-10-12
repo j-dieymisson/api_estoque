@@ -34,6 +34,21 @@ document.addEventListener('DOMContentLoaded', function() {
             confirmModal.show();
         }
 
+    window.navigateTo = function(pageUrl, context = {}) {
+            // Guarda o 'contexto' (como o ID que queremos passar) numa variável global temporária
+            window.pageContext = context;
+
+            // Simula um clique no link do menu correspondente para reutilizar a nossa lógica
+            const link = document.querySelector(`#menu-principal a[data-page='${pageUrl}']`);
+            if (link) {
+                link.click();
+            } else {
+                // Se não houver link no menu, carrega a página diretamente
+                loadPage(pageUrl);
+                marcarLinkAtivo(pageUrl);
+            }
+        }
+
     async function loadPage(pageUrl) {
         try {
             if (!pageUrl || pageUrl === '#') {
