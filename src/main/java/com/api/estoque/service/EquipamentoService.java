@@ -157,6 +157,14 @@ public class EquipamentoService {
         return equipamentos.map(this::mapToEquipamentoResponse);
     }
 
+    @Transactional(readOnly = true)
+    public EquipamentoResponse buscarPorId(Long id) {
+        Equipamento equipamento = equipamentoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + id));
+
+        return mapToEquipamentoResponse(equipamento);
+    }
+
     @Transactional
     public EquipamentoResponse ajustarEstoque(Long id, AjusteEstoqueRequest request) {
         Equipamento equipamento = equipamentoRepository.findById(id)

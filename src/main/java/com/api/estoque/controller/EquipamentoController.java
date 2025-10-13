@@ -113,4 +113,11 @@ public class EquipamentoController {
 
         return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }
+
+
+    @GetMapping("/{id}")
+    public ResponseEntity<EquipamentoResponse> detalhar(@PathVariable Long id) {
+        EquipamentoResponse response = equipamentoService.buscarPorId(id);
+        return ResponseEntity.ok(response);
+    }
 }

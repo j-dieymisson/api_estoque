@@ -2,10 +2,10 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0 text-gray-800">Catálogo de Equipamentos</h1>
         <div>
-            <button class="btn btn-info admin-only" id="btn-gerir-categorias">
+            <button class="btn btn-info admin-only" id="btn-gerir-categorias" style="display: none;">
                 <i class="bi bi-tags-fill me-2"></i> Gerir Categorias
             </button>
-            <button class="btn btn-primary admin-only" id="btn-adicionar-equipamento">
+            <button class="btn btn-primary admin-only" id="btn-adicionar-equipamento" style="display: none;">
                 <i class="bi bi-plus-circle-fill me-2"></i> Adicionar Equipamento
             </button>
         </div>
@@ -45,7 +45,8 @@
                 <table class="table table-bordered table-hover" id="tabela-equipamentos">
                     <thead>
                     <tr>
-                        <th>ID</th><th>Nome</th><th>Categoria</th><th>Qtd. Total</th><th>Qtd. Disponível</th><th class="admin-only">Ações</th>
+                        <th>ID</th><th>Nome</th><th>Categoria</th><th>Qtd. Total</th><th>Qtd. Disponível</th>
+                        <th class="admin-only" style="display: none;">Ações</th>
                     </tr>
                     </thead>
                     <tbody id="corpo-tabela-equipamentos"></tbody>
@@ -56,26 +57,39 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalEquipamento" tabindex="-1">
+<div class="modal fade" id="modalEquipamento" tabindex="-1" aria-labelledby="modalEquipamentoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="form-equipamento">
+                <div class="modal-header"><h5 class="modal-title" id="modalEquipamentoLabel">Adicionar Equipamento</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="equipamento-id">
+                    <div class="mb-3"><label for="equipamento-nome" class="form-label">Nome</label><input type="text" class="form-control" id="equipamento-nome" required></div>
+                    <div class="mb-3"><label for="equipamento-descricao" class="form-label">Descrição</label><textarea class="form-control" id="equipamento-descricao" rows="3"></textarea></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label for="equipamento-qtd-total" class="form-label">Quantidade Total</label><input type="number" class="form-control" id="equipamento-qtd-total" required min="0"></div>
+                        <div class="col-md-6 mb-3"><label for="equipamento-categoria" class="form-label">Categoria</label><select class="form-select" id="equipamento-categoria" required></select></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button><button type="submit" class="btn btn-primary">Salvar</button></div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <div class="modal fade" id="modal-categorias" tabindex="-1" aria-labelledby="modalCategoriasLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalCategoriasLabel">Gerir Categorias</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+            <div class="modal-header"><h5 class="modal-title" id="modalCategoriasLabel">Gerir Categorias</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
             <div class="modal-body">
                 <h6>Categorias Existentes</h6>
-                <ul class="list-group mb-4" id="lista-categorias">
-                </ul>
+                <ul class="list-group mb-4" id="lista-categorias"></ul>
                 <hr>
                 <h6>Adicionar / Editar Categoria</h6>
                 <form id="form-categoria">
                     <input type="hidden" id="categoria-id">
                     <div class="input-group">
-                        <input type="text" class="form-control" id="categoria-nome" placeholder="Nome da nova categoria" required>
+                        <input type="text" class="form-control" id="categoria-nome" placeholder="Nome da categoria" required>
                         <button class="btn btn-primary" type="submit">Salvar</button>
                         <button class="btn btn-secondary" type="button" id="btn-cancelar-edicao-categoria" style="display: none;">Cancelar Edição</button>
                     </div>
