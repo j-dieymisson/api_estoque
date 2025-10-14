@@ -1,5 +1,10 @@
 <div class="container-fluid">
-    <h1 class="h3 mb-3">Minhas Solicitações</h1>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0 text-gray-800">Minhas Solicitações</h1>
+        <button class="btn btn-primary" id="btn-nova-solicitacao">
+            <i class="bi bi-plus-circle-fill me-2"></i> Nova Solicitação
+        </button>
+    </div>
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
@@ -37,7 +42,7 @@
                     <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Justificativa</th>
+                        <th class="admin-only" style="display: none;">Solicitante</th>
                         <th>Data Solicitação</th>
                         <th>Status</th>
                         <th>Ações</th>
@@ -50,6 +55,7 @@
                     </tbody>
                 </table>
             </div>
+            <nav id="paginacao-solicitacoes" class="d-flex justify-content-center"></nav>
         </div>
     </div>
 </div>

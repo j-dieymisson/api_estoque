@@ -1,157 +1,142 @@
-// solicitacoes.js - Lógica específica para a página "Minhas Solicitações"
+// solicitacoes.js - Versão final, corrigida e simplificada
+setTimeout(() => {
+    (async function() {
+        console.log("A executar o script da página de solicitações...");
 
-(async function() {
-    console.log("A executar o script da página de solicitações...");
+        // --- Seletores e Variáveis ---
+        const corpoTabela = document.getElementById('corpo-tabela-solicitacoes');
+        const paginacaoContainer = document.getElementById('paginacao-solicitacoes');
+        const formFiltros = document.getElementById('form-filtros-solicitacoes');
+        const filtroStatusSelect = document.getElementById('filtro-status');
+        const filtroDataInicio = document.getElementById('filtro-data-inicio');
+        const filtroDataFim = document.getElementById('filtro-data-fim');
+        const btnLimparFiltros = document.getElementById('btn-limpar-filtros');
+        const btnNovaSolicitacao = document.getElementById('btn-nova-solicitacao');
+        let currentUserRole = null;
+        let currentPage = 0;
 
-    const corpoTabela = document.getElementById('corpo-tabela-solicitacoes');
-    const filtroStatusSelect = document.getElementById('filtro-status');
-    const filtroDataInicio = document.getElementById('filtro-data-inicio');
-    const filtroDataFim = document.getElementById('filtro-data-fim');
-    const formFiltros = document.getElementById('form-filtros-solicitacoes');
-    const btnLimparFiltros = document.getElementById('btn-limpar-filtros');
-
-    if (!corpoTabela || !formFiltros) {
-        console.error("Elementos essenciais da página de solicitações não foram encontrados!");
-        return;
-    }
-
-    // Função para obter a classe de cor do badge com base no status
+        // --- Funções Auxiliares ---
         function getBadgeClassForStatus(status) {
-            switch (status) {
-                case 'PENDENTE':
-                    return 'bg-warning text-dark'; // Usamos text-dark para melhor contraste em fundo amarelo
-                case 'APROVADA':
-                    return 'bg-success';
-                case 'FINALIZADA':
-                    return 'bg-secondary';
-                case 'RECUSADA':
-                case 'CANCELADA':
-                    return 'bg-danger';
-                case 'RASCUNHO':
-                    return 'bg-info text-dark';
-                default:
-                    return 'bg-primary';
-            }
+            const map = { 'PENDENTE': 'bg-warning text-dark', 'APROVADA': 'bg-success', 'FINALIZADA': 'bg-secondary', 'RECUSADA': 'bg-danger', 'CANCELADA': 'bg-danger', 'RASCUNHO': 'bg-info text-dark' };
+            return map[status] || 'bg-primary';
         }
-    // Função para buscar e renderizar as solicitações na tabela
-    async function carregarSolicitacoes(params = {}) {
-            corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div></td></tr>';
+
+        function renderizarPaginacao(pageData) {
+            paginacaoContainer.innerHTML = '';
+            if (!pageData || pageData.totalPages <= 1) return;
+            let html = '<ul class="pagination pagination-sm justify-content-center">';
+            html += `<li class="page-item ${pageData.first ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${pageData.number - 1}">Anterior</a></li>`;
+            html += `<li class="page-item disabled"><span class="page-link">Página ${pageData.number + 1} de ${pageData.totalPages}</span></li>`;
+            html += `<li class="page-item ${pageData.last ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${pageData.number + 1}">Próximo</a></li>`;
+            html += '</ul>';
+            paginacaoContainer.innerHTML = html;
+        }
+
+        function renderizarTabela(pageData) {
+            const solicitacoes = pageData.content;
+            const isAdminOuGestor = currentUserRole === 'ADMIN' || currentUserRole === 'GESTOR';
+            const colspan = isAdminOuGestor ? 5 : 4;
+            corpoTabela.innerHTML = '';
+
+            if (!solicitacoes || solicitacoes.length === 0) {
+                corpoTabela.innerHTML = `<tr><td colspan="${colspan}" class="text-center">Nenhuma solicitação encontrada.</td></tr>`;
+                return;
+            }
+
+            solicitacoes.forEach(sol => {
+                const tr = document.createElement('tr');
+                // LÓGICA SIMPLIFICADA: Apenas o botão de detalhes, como você pediu
+                const acoesHtml = `<button class="btn btn-sm btn-outline-primary btn-detalhes" data-id="${sol.id}" title="Ver Detalhes"><i class="bi bi-eye-fill"></i></button>`;
+                const solicitanteHtml = isAdminOuGestor ? `<td>${sol.nomeUsuario}</td>` : '';
+
+                tr.innerHTML = `
+                    <td>${sol.id}</td>
+                    ${solicitanteHtml}
+                    <td>${new Date(sol.dataSolicitacao).toLocaleDateString('pt-BR')}</td>
+                    <td><span class="badge ${getBadgeClassForStatus(sol.status)}">${sol.status}</span></td>
+                    <td>${acoesHtml}</td>
+                `;
+                corpoTabela.appendChild(tr);
+            });
+            renderizarPaginacao(pageData);
+        }
+
+        // --- Funções Principais ---
+        async function carregarSolicitacoes(page = 0) {
+            currentPage = page;
+            const isAdminOuGestor = currentUserRole === 'ADMIN' || currentUserRole === 'GESTOR';
+            const colspan = isAdminOuGestor ? 6 : 5;
+            corpoTabela.innerHTML = `<tr><td colspan="${colspan}" class="text-center">A carregar...</td></tr>`;
+
+            const endpoint = isAdminOuGestor ? '/solicitacoes' : '/solicitacoes/minhas';
+
+            const params = {
+                page, size: 5, sort: 'dataSolicitacao,desc',
+                status: filtroStatusSelect.value || null,
+                dataInicio: filtroDataInicio.value || null,
+                dataFim: filtroDataFim.value || null,
+            };
+            Object.keys(params).forEach(key => (params[key] == null || params[key] === '') && delete params[key]);
+
             try {
-                const response = await apiClient.get('/solicitacoes/minhas', { params });
-                const solicitacoes = response.data.content;
-                corpoTabela.innerHTML = '';
-
-                if (solicitacoes.length === 0) {
-                    corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma solicitação encontrada.</td></tr>';
-                    return;
-                }
-
-                solicitacoes.forEach(sol => {
-                    const tr = document.createElement('tr');
-                    let acoesHtml = `
-                        <button class="btn btn-sm btn-info btn-detalhes" data-id="${sol.id}" title="Ver Detalhes">
-                            <i class="bi bi-eye-fill"></i>
-                        </button>
-                    `;
-                    if (sol.status === 'PENDENTE') {
-                        acoesHtml += `
-                            <button class="btn btn-sm btn-danger btn-cancelar ms-1" data-id="${sol.id}" title="Cancelar Solicitação">
-                                <i class="bi bi-x-lg"></i>
-                            </button>
-                        `;
-                    }
-
-                    tr.innerHTML = `
-                        <td>${sol.id}</td>
-                        <td>${sol.justificativa}</td>
-                        <td>${new Date(sol.dataSolicitacao).toLocaleDateString('pt-BR')}</td>
-                        <td><span class="badge ${getBadgeClassForStatus(sol.status)}">${sol.status}</span></td>
-                        <td>${acoesHtml}</td>
-                    `;
-                    corpoTabela.appendChild(tr);
-                });
+                const response = await apiClient.get(endpoint, { params });
+                renderizarTabela(response.data);
             } catch (error) {
                 console.error("Erro ao carregar solicitações:", error);
-                corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Falha ao carregar solicitações.</td></tr>';
+                corpoTabela.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-danger">Falha ao carregar.</td></tr>`;
             }
         }
 
-    // Função para preencher o <select> de status
-    async function carregarFiltroStatus() {
-        try {
-            const response = await apiClient.get('/solicitacoes/status');
-            const statusList = response.data;
-
-            filtroStatusSelect.innerHTML = '<option value="">Todos</option>'; // Opção padrão
-            statusList.forEach(status => {
-                const option = document.createElement('option');
-                option.value = status;
-                option.textContent = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-                filtroStatusSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error("Erro ao carregar os status para o filtro:", error);
+        async function carregarFiltroStatus() {
+            try {
+                const response = await apiClient.get('/solicitacoes/status');
+                filtroStatusSelect.innerHTML = '<option value="">Todos</option>';
+                response.data.forEach(status => {
+                    const option = new Option(status.charAt(0).toUpperCase() + status.slice(1).toLowerCase(), status);
+                    filtroStatusSelect.appendChild(option);
+                });
+            } catch (error) { console.error("Erro ao carregar os status para o filtro:", error); }
         }
-    }
 
-    // --- Event Listeners ---
+        // --- Inicialização e Event Listeners ---
+        async function init() {
+            try {
+                const response = await apiClient.get('/perfil');
+                currentUserRole = response.data.nomeCargo;
 
-    // Quando o formulário de filtros é submetido
-    formFiltros.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const params = {
-            status: filtroStatusSelect.value || null,
-            dataInicio: filtroDataInicio.value || null,
-            dataFim: filtroDataFim.value || null,
-            // Adicionamos page e size para futuras implementações de paginação
-            page: 0,
-            size: 10
-        };
-        // Remove parâmetros nulos para não os enviar na URL
-        Object.keys(params).forEach(key => params[key] == null && delete params[key]);
+                const thSolicitante = document.querySelector('#tabela-solicitacoes th.admin-only');
+                            if (currentUserRole === 'ADMIN' || currentUserRole === 'GESTOR') {
+                                if (thSolicitante) thSolicitante.style.display = 'table-cell'; // Mostra a coluna
+                            } else {
+                                if (thSolicitante) thSolicitante.style.display = 'none'; // Garante que está escondida
+                            }
 
-        carregarSolicitacoes(params);
-    });
 
-    // Quando o botão de limpar é clicado
-    btnLimparFiltros.addEventListener('click', function() {
-        formFiltros.reset();
-        carregarSolicitacoes(); // Carrega a lista sem filtros
-    });
+                await carregarFiltroStatus();
+                await carregarSolicitacoes(0);
+            } catch(e) { console.error("Erro na inicialização da página de solicitações", e); }
+        }
 
-    // Botões de ação na tabela
-    corpoTabela.addEventListener('click', function(event) {
-            const target = event.target.closest('button');
-            if (!target) return;
+        if (formFiltros) formFiltros.addEventListener('submit', (e) => { e.preventDefault(); carregarSolicitacoes(0); });
+        if (btnLimparFiltros) btnLimparFiltros.addEventListener('click', () => { formFiltros.reset(); carregarSolicitacoes(0); });
+        if (btnNovaSolicitacao) btnNovaSolicitacao.addEventListener('click', () => window.navigateTo('solicitacao-form.html'));
 
-            const solicitacaoId = target.dataset.id;
-
-            if (target.classList.contains('btn-cancelar')) {
-                // Usa a nossa nova função de modal!
-                showConfirmModal(
-                    'Confirmar Cancelamento',
-                    `Tem a certeza que quer cancelar a solicitação ID ${solicitacaoId}?`,
-                    async () => { // Esta é a função que será executada se o utilizador confirmar
-                        try {
-                            await apiClient.patch(`/solicitacoes/${solicitacaoId}/cancelar`);
-                            showToast('Solicitação cancelada com sucesso!', 'Sucesso');
-                            carregarSolicitacoes(); // Atualiza a tabela
-                        } catch (error) {
-                            console.error("Erro ao cancelar solicitação:", error);
-                            showToast(error.response?.data?.message || 'Não foi possível cancelar a solicitação.', 'Erro', true);
-                        }
-                    }
-                );
+        if (corpoTabela) corpoTabela.addEventListener('click', function(event) {
+            const target = event.target.closest('button.btn-detalhes');
+            if (target) {
+                const solicitacaoId = target.dataset.id;
+                window.navigateTo('solicitacao-detalhe.html', { id: solicitacaoId });
             }
-
-           if (target.classList.contains('btn-detalhes')) {
-                       window.navigateTo('solicitacao-detalhe.html', { id: solicitacaoId });
-                   }
         });
 
+        if (paginacaoContainer) paginacaoContainer.addEventListener('click', (event) => {
+            const link = event.target.closest('a.page-link');
+            if (link && !link.parentElement.classList.contains('disabled')) {
+                event.preventDefault();
+                carregarSolicitacoes(parseInt(link.dataset.page));
+            }
+        });
 
-    // --- Inicialização ---
-    carregarFiltroStatus(); // Carrega as opções do filtro
-    carregarSolicitacoes(); // Carrega a lista inicial de solicitações
-
-})();
+        init();
+    })();
+}, 0);

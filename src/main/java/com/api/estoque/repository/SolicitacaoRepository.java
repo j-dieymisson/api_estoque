@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,5 +49,33 @@ public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> 
 
     // Conta todas as solicitações com um status específico dentro de um intervalo de datas
     long countByStatusAndDataSolicitacaoBetween(StatusSolicitacao status, LocalDateTime inicio, LocalDateTime fim);
+
+    // Substitua o seu método findAdminView por este:
+    @Query("SELECT s FROM Solicitacao s WHERE " +
+            "((s.status != com.api.estoque.model.StatusSolicitacao.RASCUNHO) OR (s.usuario.id = :usuarioId)) AND " + // <-- Nome do parâmetro alterado para :usuarioId
+            "(:status IS NULL OR s.status = :status) AND " +
+            "(:inicio IS NULL OR s.dataSolicitacao >= :inicio) AND " +
+            "(:fim IS NULL OR s.dataSolicitacao <= :fim)")
+    Page<Solicitacao> findAdminView(
+            @Param("usuarioId") Long usuarioId, // <-- Nome do parâmetro alterado aqui também
+            @Param("status") StatusSolicitacao status,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fim") LocalDateTime fim,
+            Pageable pageable
+    );
+
+    // Substitua o seu método findMyView por este:
+    @Query("SELECT s FROM Solicitacao s WHERE " +
+            "s.usuario.id = :usuarioId AND " +
+            "(:status IS NULL OR s.status = :status) AND " +
+            "(:inicio IS NULL OR s.dataSolicitacao >= :inicio) AND " +
+            "(:fim IS NULL OR s.dataSolicitacao <= :fim)")
+    Page<Solicitacao> findMyView(
+            @Param("usuarioId") Long usuarioId,
+            @Param("status") StatusSolicitacao status,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fim") LocalDateTime fim,
+            Pageable pageable
+    );
 
 }

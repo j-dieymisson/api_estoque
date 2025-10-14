@@ -2,9 +2,11 @@ package com.api.estoque.controller;
 
 import com.api.estoque.dto.request.SolicitacaoRequest;
 import com.api.estoque.dto.response.SolicitacaoResponse;
+import com.api.estoque.model.Usuario;
 import com.api.estoque.service.SolicitacaoService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -24,10 +26,11 @@ public class RascunhoController {
     @PostMapping
     public ResponseEntity<SolicitacaoResponse> criar(
             @RequestBody @Valid SolicitacaoRequest request,
+            @AuthenticationPrincipal Usuario usuarioLogado,
             UriComponentsBuilder uriBuilder
     ) {
         // Chama o novo método de serviço para criar um rascunho
-        SolicitacaoResponse response = solicitacaoService.criarRascunho(request);
+        SolicitacaoResponse response = solicitacaoService.criarRascunho(request, usuarioLogado);
 
         // A URI do novo rascunho ainda pode apontar para o recurso de solicitação, pois é o mesmo objeto
         URI uri = uriBuilder.path("/solicitacoes/{id}").buildAndExpand(response.id()).toUri();
@@ -53,9 +56,10 @@ public class RascunhoController {
     @PutMapping("/{id}")
     public ResponseEntity<SolicitacaoResponse> atualizar(
             @PathVariable Long id,
-            @RequestBody @Valid SolicitacaoRequest request
+            @RequestBody @Valid SolicitacaoRequest request,
+            @AuthenticationPrincipal Usuario usuarioLogado
     ) {
-        SolicitacaoResponse response = solicitacaoService.atualizarRascunho(id, request);
+        SolicitacaoResponse response = solicitacaoService.atualizarRascunho(id, request,usuarioLogado);
         return ResponseEntity.ok(response);
     }
 

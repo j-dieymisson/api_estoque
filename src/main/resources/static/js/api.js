@@ -1,9 +1,7 @@
 // api.js
 
 // Cria uma instância central do Axios com configurações padrão
-const apiClient = axios.create({
-    baseURL: 'http://localhost:8080', // A URL base da nossa API
-});
+const apiClient = axios.create({});
 
 // --- Interceptor de Requisição ---
 // Este código é executado ANTES de cada requisição ser enviada.

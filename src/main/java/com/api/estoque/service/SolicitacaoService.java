@@ -27,6 +27,7 @@ public class SolicitacaoService {
     private final HistoricoMovimentacaoRepository historicoRepository;
     private final HistoricoStatusSolicitacaoRepository historicoStatusRepository;
     private final DevolucaoRepository devolucaoRepository;
+    private final SolicitacaoItemRepository solicitacaoItemRepository;
 
 
     public SolicitacaoService(SolicitacaoRepository solicitacaoRepository,
@@ -34,7 +35,8 @@ public class SolicitacaoService {
                               EquipamentoRepository equipamentoRepository,
                               HistoricoMovimentacaoRepository historicoRepository,
                               HistoricoStatusSolicitacaoRepository historicoStatusRepository,
-                              DevolucaoRepository devolucaoRepository
+                              DevolucaoRepository devolucaoRepository,
+                              SolicitacaoItemRepository solicitacaoItemRepository
     ) {
         this.solicitacaoRepository = solicitacaoRepository;
         this.usuarioRepository = usuarioRepository;
@@ -42,21 +44,28 @@ public class SolicitacaoService {
         this.historicoRepository = historicoRepository;
         this.historicoStatusRepository = historicoStatusRepository;
         this.devolucaoRepository = devolucaoRepository;
+        this.solicitacaoItemRepository = solicitacaoItemRepository;
     }
 
     @Transactional
-    public SolicitacaoResponse criarSolicitacao(SolicitacaoRequest request) {
-        // 1. Busca o usuário que está fazendo a solicitação
-        Usuario usuario = usuarioRepository.findById(request.usuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com o ID: " + request.usuarioId()));
+    public SolicitacaoResponse criarSolicitacao(SolicitacaoRequest request, Usuario usuarioLogado) {
+        // Para uma solicitação final, as datas são obrigatórias
+        if (request.dataPrevisaoEntrega() == null || request.dataPrevisaoDevolucao() == null) {
+            throw new BusinessException("As datas de previsão de entrega e devolução são obrigatórias para submeter uma solicitação.");
+        }
+        // Validação extra: data de devolução não pode ser antes da de entrega
+        if (request.dataPrevisaoDevolucao().isBefore(request.dataPrevisaoEntrega())) {
+            throw new BusinessException("A data de previsão de devolução não pode ser anterior à data de entrega.");
+        }
 
-        if (!usuario.isAtivo()) {
-            throw new BusinessException("Usuário está inativo e não pode criar solicitações.");
+        // Já não precisamos de buscar o utilizador, ele já veio como parâmetro
+        if (!usuarioLogado.isAtivo()) {
+            throw new BusinessException("Utilizador está inativo e não pode criar solicitações.");
         }
 
         // 2. Cria o objeto principal da solicitação
         Solicitacao novaSolicitacao = new Solicitacao();
-        novaSolicitacao.setUsuario(usuario);
+        novaSolicitacao.setUsuario(usuarioLogado);
         novaSolicitacao.setDataSolicitacao(LocalDateTime.now());
         novaSolicitacao.setStatus(StatusSolicitacao.PENDENTE); // Toda nova solicitação começa como pendente
         novaSolicitacao.setJustificativa(request.justificativa());
@@ -160,16 +169,14 @@ public class SolicitacaoService {
     }
 
     @Transactional
-    public SolicitacaoResponse criarRascunho(SolicitacaoRequest request) {
-        Usuario usuario = usuarioRepository.findById(request.usuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Utilizador não encontrado com o ID: " + request.usuarioId()));
+    public SolicitacaoResponse criarRascunho(SolicitacaoRequest request, Usuario usuarioLogado) {
 
-        if (!usuario.isAtivo()) {
+        if (!usuarioLogado.isAtivo()) {
             throw new BusinessException("Utilizador está inativo e não pode criar rascunhos.");
         }
 
         Solicitacao novoRascunho = new Solicitacao();
-        novoRascunho.setUsuario(usuario);
+        novoRascunho.setUsuario(usuarioLogado);
         novoRascunho.setDataSolicitacao(LocalDateTime.now());
         novoRascunho.setStatus(StatusSolicitacao.RASCUNHO);
         novoRascunho.setJustificativa(request.justificativa());
@@ -259,38 +266,40 @@ public class SolicitacaoService {
 
     // MÉTODO PARA ATUALIZAR
     @Transactional
-    public SolicitacaoResponse atualizarRascunho(Long id, SolicitacaoRequest request) {
-        Solicitacao rascunho = solicitacaoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Rascunho não encontrado com o ID: " + id));
+    public SolicitacaoResponse atualizarRascunho(Long rascunhoId, SolicitacaoRequest request, Usuario usuarioLogado) {
+        Solicitacao rascunho = solicitacaoRepository.findById(rascunhoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Rascunho não encontrado"));
 
+        if (!rascunho.getUsuario().getId().equals(usuarioLogado.getId())) {
+            throw new BusinessException("Você não tem permissão para editar este rascunho.");
+        }
         if (rascunho.getStatus() != StatusSolicitacao.RASCUNHO) {
-            throw new BusinessException("Apenas solicitações com status RASCUNHO podem ser editadas.");
+            throw new BusinessException("Apenas rascunhos podem ser editados.");
         }
 
+        // Atualiza os dados gerais
+        rascunho.setJustificativa(request.justificativa());
+        rascunho.setDataPrevisaoEntrega(request.dataPrevisaoEntrega());
+        rascunho.setDataPrevisaoDevolucao(request.dataPrevisaoDevolucao());
+
+        // 1. Apaga os itens antigos
+        solicitacaoItemRepository.deleteAll(rascunho.getItens());
         rascunho.getItens().clear();
 
+        // 2. Adiciona os novos itens (lógica copiada do 'criarRascunho')
         for (SolicitacaoItemRequest itemRequest : request.itens()) {
             Equipamento equipamento = equipamentoRepository.findById(itemRequest.equipamentoId())
                     .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + itemRequest.equipamentoId()));
 
-
-            if (equipamento.getQuantidadeDisponivel() < itemRequest.quantidade()) {
-                throw new BusinessException("Stock insuficiente para o equipamento: " + equipamento.getNome());
-            }
-
-
-            SolicitacaoItem novoItem = new SolicitacaoItem();
-            novoItem.setEquipamento(equipamento);
-            novoItem.setQuantidadeSolicitada(itemRequest.quantidade());
-            rascunho.adicionarItem(novoItem);
+            SolicitacaoItem item = new SolicitacaoItem();
+            item.setSolicitacao(rascunho);
+            item.setEquipamento(equipamento);
+            item.setQuantidadeSolicitada(itemRequest.quantidade());
+            rascunho.getItens().add(item);
         }
 
-        rascunho.setJustificativa(request.justificativa());
-
-        Solicitacao rascunhoSalvo = solicitacaoRepository.save(rascunho);
-        // Não precisamos de registar histórico aqui, pois o status não mudou.
-
-        return mapToSolicitacaoResponse(rascunhoSalvo);
+        solicitacaoRepository.save(rascunho);
+        return mapToSolicitacaoResponse(rascunho);
     }
 
 
@@ -303,6 +312,7 @@ public class SolicitacaoService {
 
             itemResponses.add(new SolicitacaoItemResponse(
                     item.getId(),
+                    item.getEquipamento().getId(),
                     item.getEquipamento().getNome(),
                     item.getQuantidadeSolicitada(),
                     item.getTotalDevolvido(),
@@ -335,50 +345,30 @@ public class SolicitacaoService {
         historicoStatusRepository.save(registo);
     }
 
+    // MÉTODO para a visão de Admin/Gestor
     @Transactional(readOnly = true)
-    public Page<SolicitacaoResponse> listarTodas(
+    public Page<SolicitacaoResponse> listarTodasSolicitacoes(
+            Usuario usuarioLogado, // Recebe o objeto Usuario
             Optional<StatusSolicitacao> status,
-            Optional<Long> usuarioId,
             Optional<LocalDate> dataInicio,
             Optional<LocalDate> dataFim,
             Pageable pageable) {
 
-        Page<Solicitacao> solicitacoes;
-
-        // Converte as datas para LocalDateTime para abranger o dia inteiro
         LocalDateTime inicio = dataInicio.map(LocalDate::atStartOfDay).orElse(null);
         LocalDateTime fim = dataFim.map(d -> d.atTime(23, 59, 59)).orElse(null);
-        boolean datasPresentes = inicio != null && fim != null;
 
-        // Lógica para decidir qual método do repositório chamar
-        if (usuarioId.isPresent() && status.isPresent() && datasPresentes) {
-            // Filtro por: Utilizador + Status + Data
-            solicitacoes = solicitacaoRepository.findAllByUsuarioIdAndStatusAndDataSolicitacaoBetween(usuarioId.get(), status.get(), inicio, fim, pageable);
-        } else if (usuarioId.isPresent() && datasPresentes) {
-            // Filtro por: Utilizador + Data
-            solicitacoes = solicitacaoRepository.findAllByUsuarioIdAndDataSolicitacaoBetween(usuarioId.get(), inicio, fim, pageable);
-        } else if (status.isPresent() && datasPresentes) {
-            // Filtro por: Status + Data
-            solicitacoes = solicitacaoRepository.findAllByStatusAndDataSolicitacaoBetween(status.get(), inicio, fim, pageable);
-        } else if (datasPresentes) {
-            // Filtro por: Apenas Data
-            solicitacoes = solicitacaoRepository.findAllByDataSolicitacaoBetween(inicio, fim, pageable);
-        } else if (usuarioId.isPresent() && status.isPresent()) {
-            // Filtro por: Utilizador + Status (já existia)
-            solicitacoes = solicitacaoRepository.findAllByUsuarioIdAndStatus(usuarioId.get(), status.get(), pageable);
-        } else if (usuarioId.isPresent()) {
-            // Filtro por: Apenas Utilizador (já existia)
-            solicitacoes = solicitacaoRepository.findAllByUsuarioId(usuarioId.get(), pageable);
-        } else if (status.isPresent()) {
-            // Filtro por: Apenas Status (já existia)
-            solicitacoes = solicitacaoRepository.findAllByStatus(status.get(), pageable);
-        } else {
-            // Sem filtros
-            solicitacoes = solicitacaoRepository.findAll(pageable);
-        }
+        // A chamada agora inclui o ID do utilizador, correspondendo à nova assinatura
+        Page<Solicitacao> solicitacoes = solicitacaoRepository.findAdminView(
+                usuarioLogado.getId(),
+                status.orElse(null),
+                inicio,
+                fim,
+                pageable
+        );
 
         return solicitacoes.map(this::mapToSolicitacaoResponse);
     }
+
     @Transactional(readOnly = true)
     public SolicitacaoResponse buscarPorId(Long id) {
         // Usa o método findById do repositório, que retorna um Optional
@@ -542,12 +532,18 @@ public class SolicitacaoService {
             Optional<LocalDate> dataFim,
             Pageable pageable) {
 
-        // A grande diferença é que agora o 'usuarioId' não é opcional,
-        // vem diretamente do utilizador autenticado.
-        Optional<Long> usuarioId = Optional.of(usuarioLogado.getId());
+        LocalDateTime inicio = dataInicio.map(LocalDate::atStartOfDay).orElse(null);
+        LocalDateTime fim = dataFim.map(d -> d.atTime(23, 59, 59)).orElse(null);
 
-        // Reutilizamos a nossa lógica de listagem super poderosa que já existe!
-        // Não precisamos de reescrever nada.
-        return listarTodas(status, usuarioId, dataInicio, dataFim, pageable);
+        // Agora chama a nova query, que foi feita especificamente para esta visão
+        Page<Solicitacao> solicitacoes = solicitacaoRepository.findMyView(
+                usuarioLogado.getId(),
+                status.orElse(null),
+                inicio,
+                fim,
+                pageable
+        );
+
+        return solicitacoes.map(this::mapToSolicitacaoResponse);
     }
 }

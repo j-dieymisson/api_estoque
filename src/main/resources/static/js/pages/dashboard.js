@@ -70,7 +70,7 @@
 
             // Formato simples sugerido por si
             if (tipo === 'SAIDA' && historico.solicitacaoId) {
-                return `<strong>${data}:</strong> ${responsavel} fez a <strong>${tipo}</strong> (Solicitação #${historico.solicitacaoId}).`;
+                return `<strong>${data}:</strong> ${responsavel} fez a <strong>${tipo}</strong> (Solicitação ${historico.solicitacaoId}).`;
             }
             if (tipo === 'DEVOLUCAO' && historico.solicitacaoId) {
                 return `<strong>${data}:</strong> ${responsavel} fez a <strong>${tipo}</strong> de ${Math.abs(historico.quantidade)}x ${historico.equipamentoNome} (Solicitação #${historico.solicitacaoId}).`;

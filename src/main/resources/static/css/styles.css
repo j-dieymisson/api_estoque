@@ -1,8 +1,8 @@
 /* Definição de variáveis de cores e tamanhos globais */
 :root {
-    /*--cor-primaria: #0d6efd;*/
-    /*--cor-fundo-sidebar: #212529;*/
-    /*--cor-texto-sidebar: #adb5bd;*/
+    --cor-primaria: #0d6efd;
+    --cor-fundo-sidebar: #212529;
+    --cor-texto-sidebar: #adb5bd;
     --cor-hover-sidebar: #fff;
     --largura-sidebar: 280px;
     --largura-sidebar-colapsada: 88px; /* Espaço suficiente para os ícones e padding */
@@ -101,4 +101,18 @@ body {
     .sidebar {
         display: none !important;
     }
-}
+ /* Reduz o tamanho da fonte para o conteúdo caber melhor, imitando o seu "zoom-out" */
+ .table-responsive .table {
+         /* Reduz o tamanho da fonte para o conteúdo caber melhor */
+         font-size: 0.4rem;
+
+         /* Impede que o texto quebre, mantendo o layout limpo */
+         white-space: nowrap;
+     }
+
+     /* Reduz o espaçamento interno (padding) das células */
+     .table-responsive .table td,
+     .table-responsive .table th {
+         padding: 0.20rem 0.2rem;
+     }
+ }

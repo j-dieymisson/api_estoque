@@ -7,26 +7,25 @@
     </div>
 
     <div class="card shadow mb-4">
-        <div class="card-header py-3">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
             <h6 class="m-0 font-weight-bold text-primary">Lista de Funcionários</h6>
+            <form id="form-pesquisa-funcionario" class="d-none d-sm-inline-block form-inline w-50">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="input-pesquisa-nome" placeholder="Pesquisar por nome...">
+                    <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+                </div>
+            </form>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered" id="tabela-funcionarios">
+                <table class="table table-bordered table-hover" id="tabela-funcionarios">
                     <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Cargo</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                    </tr>
+                    <tr><th>ID</th><th>Nome</th><th>Email</th><th>Cargo</th><th>Status</th><th>Ações</th></tr>
                     </thead>
-                    <tbody id="corpo-tabela-funcionarios">
-                    </tbody>
+                    <tbody id="corpo-tabela-funcionarios"></tbody>
                 </table>
             </div>
+            <nav id="paginacao-funcionarios" class="d-flex justify-content-center"></nav>
         </div>
     </div>
 </div>
@@ -34,39 +33,27 @@
 <div class="modal fade" id="modal-funcionario" tabindex="-1" aria-labelledby="modalFuncionarioLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalFuncionarioLabel">Adicionar Novo Funcionário</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="form-funcionario">
+            <form id="form-funcionario">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalFuncionarioLabel">Adicionar Funcionário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
                     <input type="hidden" id="funcionario-id">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="funcionario-nome" class="form-label">Nome</label>
-                            <input type="text" class="form-control" id="funcionario-nome" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="funcionario-email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="funcionario-email" required>
-                        </div>
+                        <div class="col-md-6 mb-3"><label for="funcionario-nome" class="form-label">Nome</label><input type="text" class="form-control" id="funcionario-nome" required></div>
+                        <div class="col-md-6 mb-3"><label for="funcionario-email" class="form-label">Email</label><input type="email" class="form-control" id="funcionario-email" required></div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="funcionario-cargo" class="form-label">Cargo</label>
-                            <select class="form-select" id="funcionario-cargo" required></select>
-                        </div>
-                        <div class="col-md-6 mb-3" id="campo-senha">
-                            <label for="funcionario-senha" class="form-label">Senha</label>
-                            <input type="password" class="form-control" id="funcionario-senha" minlength="6">
-                        </div>
+                        <div class="col-md-6 mb-3"><label for="funcionario-cargo" class="form-label">Cargo</label><select class="form-select" id="funcionario-cargo" required></select></div>
+                        <div class="col-md-6 mb-3" id="campo-senha"><label for="funcionario-senha" class="form-label">Senha</label><input type="password" class="form-control" id="funcionario-senha" minlength="6"></div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <button type="submit" class="btn btn-primary" form="form-funcionario">Salvar</button>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -74,23 +61,23 @@
 <div class="modal fade" id="modal-alterar-senha" tabindex="-1" aria-labelledby="modalSenhaLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalSenhaLabel">Alterar Senha</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="form-alterar-senha">
+            <form id="form-alterar-senha">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalSenhaLabel">Alterar Senha</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
                     <input type="hidden" id="alterar-senha-usuario-id">
                     <div class="mb-3">
                         <label for="nova-senha" class="form-label">Nova Senha</label>
                         <input type="password" class="form-control" id="nova-senha" required minlength="6">
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <button type="submit" class="btn btn-primary" form="form-alterar-senha">Salvar Nova Senha</button>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Nova Senha</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

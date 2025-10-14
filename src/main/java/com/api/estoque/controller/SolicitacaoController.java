@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -52,9 +53,10 @@ public class SolicitacaoController {
     @PostMapping
     public ResponseEntity<SolicitacaoResponse> criar(
             @RequestBody @Valid SolicitacaoRequest request,
+            @AuthenticationPrincipal Usuario usuarioLogado,
             UriComponentsBuilder uriBuilder
     ) {
-        SolicitacaoResponse response = solicitacaoService.criarSolicitacao(request);
+        SolicitacaoResponse response = solicitacaoService.criarSolicitacao(request, usuarioLogado);
         URI uri = uriBuilder.path("/solicitacoes/{id}").buildAndExpand(response.id()).toUri();
         return ResponseEntity.created(uri).body(response);
     }
@@ -80,14 +82,16 @@ public class SolicitacaoController {
 
     @GetMapping
     public ResponseEntity<Page<SolicitacaoResponse>> listar(
-            @PageableDefault(size = 10, sort = {"dataSolicitacao"}) Pageable paginacao,
+            @AuthenticationPrincipal Usuario usuarioLogado,
+            @PageableDefault(size = 5, sort = {"dataSolicitacao"}, direction = Sort.Direction.DESC) Pageable paginacao,
             @RequestParam(required = false) Optional<StatusSolicitacao> status,
-            @RequestParam(required = false) Optional<Long> usuarioId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim
     ) {
-        // Passe todos os parâmetros para o serviço
-        Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarTodas(status, usuarioId, dataInicio, dataFim, paginacao);
+        Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarTodasSolicitacoes(
+                usuarioLogado,
+                status, dataInicio, dataFim, paginacao
+        );
         return ResponseEntity.ok(paginaDeSolicitacoes);
     }
 
@@ -148,6 +152,8 @@ public class SolicitacaoController {
     public ResponseEntity<Page<SolicitacaoResponse>> listarMinhas(
             @ParameterObject
             @PageableDefault(size = 10, sort = {"dataSolicitacao"}) Pageable paginacao,
+
+
             @AuthenticationPrincipal Usuario usuarioLogado, // Pega o utilizador do token
             // Os filtros continuam a ser opcionais
             @RequestParam(required = false) Optional<StatusSolicitacao> status,

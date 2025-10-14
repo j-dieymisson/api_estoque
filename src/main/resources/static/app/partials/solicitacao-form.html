@@ -1,0 +1,102 @@
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800" id="form-solicitacao-titulo">Nova Solicitação de Equipamento</h1>
+        <button class="btn btn-secondary" id="btn-voltar-lista-solicitacoes"><i class="bi bi-arrow-left me-2"></i>Voltar para a Lista</button>
+    </div>
+
+    <form id="form-solicitacao">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Dados Gerais da Solicitação</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="solicitacao-justificativa" class="form-label">Justificativa</label>
+                    <textarea class="form-control" id="solicitacao-justificativa" rows="3" required></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="solicitacao-data-entrega" class="form-label">Data de Previsão de Entrega</label>
+                        <input type="date" class="form-control" id="solicitacao-data-entrega" >
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="solicitacao-data-devolucao" class="form-label">Data de Previsão de Devolução</label>
+                        <input type="date" class="form-control" id="solicitacao-data-devolucao" >
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Itens da Solicitação ("Carrinho")</h6>
+                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modal-adicionar-item">
+                    <i class="bi bi-plus-lg"></i> Adicionar Item
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Equipamento</th>
+                            <th>Quantidade</th>
+                            <th>Ação</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tabela-itens-selecionados">
+                        <tr><td colspan="3" class="text-center text-muted">Nenhum item adicionado.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="text-end">
+            <div id="acoes-criar"> <button type="button" class="btn btn-secondary" id="btn-salvar-rascunho">Salvar como Rascunho</button>
+                <button type="submit" class="btn btn-primary">Enviar Solicitação</button>
+            </div>
+            <div id="acoes-editar-rascunho" class="d-none"> <button type="button" class="btn btn-danger" id="btn-apagar-rascunho">Apagar Rascunho</button>
+                <button type="button" class="btn btn-secondary" id="btn-atualizar-rascunho">Atualizar Rascunho</button>
+                <button type="button" class="btn btn-success" id="btn-enviar-rascunho">Enviar Solicitação</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+<div class="modal fade" id="modal-adicionar-item" tabindex="-1" aria-labelledby="modalItemLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalItemLabel">Adicionar Item à Solicitação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-busca-item-modal" class="row g-3 mb-3">
+                    <div class="col-sm-6"><input type="text" class="form-control" id="busca-item-nome" placeholder="Buscar por nome..."></div>
+                    <div class="col-sm-4"><select id="busca-item-categoria" class="form-select"></select></div>
+                    <div class="col-sm-2"><button type="submit" class="btn btn-primary w-100">Buscar</button></div>
+                </form>
+
+                <ul class="list-group mb-3" id="lista-busca-equipamentos" style="max-height: 200px; overflow-y: auto;"></ul>
+
+                <div id="area-adicionar-quantidade" class="d-none card bg-body-tertiary p-3">
+                    <h6>Item Selecionado</h6>
+                    <p><strong>Nome:</strong> <span id="item-selecionado-nome"></span></p>
+                    <p><strong>Disponível:</strong> <span id="item-selecionado-disponivel"></span></p>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-sm-6">
+                            <label for="item-quantidade" class="form-label">Quantidade a solicitar</label>
+                            <input type="number" class="form-control" id="item-quantidade" min="1" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <button type="button" class="btn btn-success w-100" id="btn-confirmar-adicionar-item">Adicionar ao Pedido</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/pages/solicitacao-form.js"></script>
