@@ -92,6 +92,7 @@ public class EquipamentoService {
                 equipamento.getQuantidadeTotal(),
                 equipamento.getQuantidadeDisponivel(),
                 equipamento.isAtivo(),
+                equipamento.getCategoria().getId(),
                 equipamento.getCategoria().getNome() // Pega o nome da categoria associada
         );
     }
@@ -113,9 +114,44 @@ public class EquipamentoService {
         // Isso será feito pelo método de "ajuste de stock".
         equipamento.setNome(request.nome());
         equipamento.setDescricao(request.descricao());
-        equipamento.setCategoria(categoria); // Associa a nova categoria
+        equipamento.setCategoria(categoria);
+        int quantidadeEmUso = equipamento.getQuantidadeTotal() - equipamento.getQuantidadeDisponivel();
+        if (request.quantidadeTotal() < quantidadeEmUso & request.quantidadeTotal() != equipamento.getQuantidadeTotal() ) {
+            throw new BusinessException(
+                    "Ajuste de stock inválido. A nova quantidade total (" + request.quantidadeTotal() + ") " +
+                            "não pode ser menor que a quantidade de itens atualmente em utilização (" + quantidadeEmUso + ")."
+            );
+        }
+        //BUSCAR UM RESPONSÁVEL
+        Usuario responsavel = usuarioRepository.findById(1L)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilizador padrão (ID 1) não encontrado..."));
 
-        // O JPA guardará as alterações automaticamente no final da transação.
+        // 1. Captura as quantidades ANTES da alteração
+        int quantidadeTotalAntiga = equipamento.getQuantidadeTotal();
+        int quantidadeDisponivelAntiga = equipamento.getQuantidadeDisponivel();
+
+        // 2. Calcula a diferença com base na mudança da QUANTIDADE TOTAL
+        int diferenca = request.quantidadeTotal() - quantidadeTotalAntiga;
+
+        // 3. Atualiza as quantidades no equipamento
+        equipamento.setQuantidadeTotal(request.quantidadeTotal());
+        equipamento.setQuantidadeDisponivel(quantidadeDisponivelAntiga + diferenca);
+
+        // 4. Captura a quantidade DEPOIS da alteração
+        int quantidadeDisponivelPosterior = equipamento.getQuantidadeDisponivel();
+
+        // Regista a movimentação de AJUSTE no histórico
+        // Nota: O utilizador responsável aqui será o que estiver autenticado no futuro. Por agora, podemos deixar nulo ou usar um utilizador padrão.
+        HistoricoMovimentacao registoHistorico = HistoricoMovimentacao.builder()
+                .dataMovimentacao(LocalDateTime.now())
+                .tipoMovimentacao(TipoMovimentacao.AJUSTE_MANUAL)
+                .quantidade(diferenca) // A diferença pode ser positiva ou negativa
+                .quantidadeAnterior(quantidadeDisponivelAntiga)
+                .quantidadePosterior(quantidadeDisponivelPosterior)
+                .equipamento(equipamento)
+                .usuarioResponsavel(responsavel)
+                .build();
+        historicoRepository.save(registoHistorico);
 
         // 4. Mapeia a entidade atualizada para a resposta. Reutilizamos o nosso método auxiliar.
         return mapToEquipamentoResponse(equipamento);
@@ -171,7 +207,7 @@ public class EquipamentoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + id));
 
         int quantidadeEmUso = equipamento.getQuantidadeTotal() - equipamento.getQuantidadeDisponivel();
-        if (request.novaQuantidade() < quantidadeEmUso) {
+        if (request.novaQuantidade() < quantidadeEmUso & request.novaQuantidade() != equipamento.getQuantidadeTotal() ) {
             throw new BusinessException(
                     "Ajuste de stock inválido. A nova quantidade total (" + request.novaQuantidade() + ") " +
                             "não pode ser menor que a quantidade de itens atualmente em utilização (" + quantidadeEmUso + ")."

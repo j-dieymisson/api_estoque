@@ -53,16 +53,24 @@ setTimeout(() => {
                 const tr = document.createElement('tr');
                 let acoesHtml = '';
                 if (hasAdminRole) {
-                    acoesHtml = `
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary btn-editar" data-id="${eq.id}" title="Editar/Ajustar Stock"><i class="bi bi-pencil-fill"></i></button>
-                            <button class="btn btn-sm btn-outline-secondary btn-desativar ms-1" data-id="${eq.id}" title="Desativar"><i class="bi bi-toggle-off"></i></button>
-                        </td>`;
-                }
-                tr.innerHTML = `<td>${eq.id}</td><td>${eq.nome}</td><td>${eq.nomeCategoria}</td><td>${eq.quantidadeTotal}</td><td>${eq.quantidadeDisponivel}</td>${acoesHtml}`;
-                corpoTabela.appendChild(tr);
-            });
-        }
+                 const botaoEditar = `<button class="btn btn-sm btn-outline-primary btn-editar" data-id="${eq.id}" title="Editar/Ajustar Stock"><i class="bi bi-pencil-fill"></i></button>`;
+                    const botaoAtivarDesativar = eq.ativo
+                                    ? `<button class="btn btn-sm btn-outline-secondary btn-desativar ms-1" data-id="${eq.id}" title="Desativar"><i class="bi bi-toggle-off"></i></button>`
+                                    : `<button class="btn btn-sm btn-outline-success btn-ativar ms-1" data-id="${eq.id}" title="Ativar"><i class="bi bi-toggle-on"></i></button>`;
+
+                                acoesHtml = `<td>${botaoEditar} ${botaoAtivarDesativar}</td>`;
+                            }
+                                     tr.innerHTML = `
+                                         <td>${eq.id}</td>
+                                         <td>${eq.nome}</td>
+                                         <td>${eq.nomeCategoria}</td>
+                                         <td>${eq.quantidadeTotal}</td>
+                                         <td>${eq.quantidadeDisponivel}</td>
+                                         ${acoesHtml}
+                                     `;
+                                     corpoTabela.appendChild(tr);
+                                 });
+                             }
 
         function renderizarPaginacao(pageData) { /* ... (código existente da página de Consultas) ... */ }
 
@@ -122,7 +130,17 @@ setTimeout(() => {
                                     await apiClient.delete(`/equipamentos/${id}`);
                                     showToast('Equipamento desativado.', 'Sucesso');
                                     carregarEquipamentos(currentPage);
-                                } catch(error) { showToast(error.response?.data?.message, 'Erro', true); }
+                                    }catch(error) { showToast(error.response?.data?.message, 'Erro', true); }
+                            });
+                        } else if (target.classList.contains('btn-ativar')) { // <-- Esta parte é necessária
+                                              showConfirmModal('Ativar Equipamento', `Tem a certeza?`, async () => {
+                                  try {
+                                      await apiClient.patch(`/equipamentos/${id}/ativar`);
+                                      showToast('Equipamento ativado!', 'Sucesso');
+                                      carregarEquipamentos(currentPage);
+                                  } catch(error) {
+                                      showToast(error.response?.data?.message, 'Erro', true);
+                                }
                             });
                         }
                     });

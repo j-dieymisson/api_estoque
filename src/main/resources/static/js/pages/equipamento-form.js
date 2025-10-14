@@ -22,8 +22,10 @@ setTimeout(() => {
                 const response = await apiClient.get('/categorias?ativa=true');
                 categoriaSelect.innerHTML = '<option value="">Selecione uma categoria...</option>';
                 response.data.forEach(cat => {
+                if (cat.ativa || cat.id === categoriaSelecionadaId) {
                     const option = new Option(cat.nome, cat.id);
                     categoriaSelect.appendChild(option);
+                    }
                 });
                 if (categoriaSelecionadaId) {
                     categoriaSelect.value = categoriaSelecionadaId;
@@ -35,7 +37,7 @@ setTimeout(() => {
         }
 
         async function carregarDadosDoEquipamento() {
-            tituloForm.textContent = 'Editar Equipamento';
+            tituloForm.textContent = `Editar Equipamento Cod:${equipamentoId}`;
             try {
                 const response = await apiClient.get(`/equipamentos/${equipamentoId}`);
                 const eq = response.data;

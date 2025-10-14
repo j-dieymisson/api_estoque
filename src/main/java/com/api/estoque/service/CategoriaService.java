@@ -27,15 +27,18 @@ public class CategoriaService {
         this.equipamentoRepository = equipamentoRepository;
     }
 
-    @Transactional // Garante que a operação seja atômica (ou tudo funciona, ou nada é salvo)
+    @Transactional
     public CategoriaResponse criarCategoria(CategoriaRequest request) {
-        Categoria novaCategoria = new Categoria();
-        novaCategoria.setNome(request.nome());
-        novaCategoria.setAtiva(true); // Por padrão, uma nova categoria sempre nasce ativa
+        // VERIFICAÇÃO DE NOME DUPLICADO
+        if (categoriaRepository.existsByNomeIgnoreCase(request.nome())) {
+            throw new BusinessException("Já existe uma categoria com este nome.");
+        }
 
-        Categoria categoriaSalva = categoriaRepository.save(novaCategoria);
+        Categoria categoria = new Categoria();
+        categoria.setNome(request.nome());
+        categoriaRepository.save(categoria);
 
-        return new CategoriaResponse(categoriaSalva.getId(), categoriaSalva.getNome(), categoriaSalva.isAtiva());
+        return new CategoriaResponse(categoria.getId(), categoria.getNome(), categoria.isAtiva());
     }
 
     @Transactional(readOnly = true)
@@ -57,18 +60,17 @@ public class CategoriaService {
 
     @Transactional
     public CategoriaResponse atualizarCategoria(Long id, CategoriaRequest request) {
-        // 1. Busca a categoria que queremos atualizar. Se não encontrar, lança o erro 404.
         Categoria categoria = categoriaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com o ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada"));
 
-        // 2. Atualiza os dados da entidade com as informações do DTO.
-        // Por agora, apenas o nome pode ser alterado.
+        // VERIFICAÇÃO DE NOME DUPLICADO NA ATUALIZAÇÃO
+        if (categoriaRepository.existsByNomeIgnoreCaseAndIdNot(request.nome(), id)) {
+            throw new BusinessException("Já existe outra categoria com este nome.");
+        }
+
         categoria.setNome(request.nome());
+        categoriaRepository.save(categoria);
 
-        // 3. O JPA/Hibernate deteta a alteração e atualiza o registo na base de dados
-        // quando a transação for concluída. Não precisamos de chamar .save() explicitamente.
-
-        // 4. Mapeia a entidade atualizada para o DTO de resposta.
         return new CategoriaResponse(categoria.getId(), categoria.getNome(), categoria.isAtiva());
     }
 

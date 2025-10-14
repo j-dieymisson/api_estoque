@@ -146,6 +146,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnLogout) {
         btnLogout.addEventListener('click', fazerLogout);
     }
+
+    const btnLogoutMobile = document.getElementById('btn-logout-mobile');
+        if (btnLogoutMobile) {
+            btnLogoutMobile.addEventListener('click', fazerLogout);
+        }
     menus.forEach(setupMenuNavigation);
 
     carregarPerfilEConfigurarUI();

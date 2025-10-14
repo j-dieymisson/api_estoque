@@ -7,5 +7,6 @@ public record EquipamentoResponse(
         int quantidadeTotal,
         int quantidadeDisponivel,
         boolean ativo,
-        String nomeCategoria // Enviamos o nome da categoria para facilitar a exibição no front-end
+        Long categoriaId,
+        String nomeCategoria// Enviamos o nome da categoria para facilitar a exibição no front-end
 ) {}
