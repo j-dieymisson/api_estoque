@@ -7,28 +7,30 @@
     </div>
 
     <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
-        </div>
-        <div class="card-body">
-            <form id="form-filtros-solicitacoes" class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label for="filtro-status" class="form-label">Status</label>
-                    <select id="filtro-status" class="form-select"></select>
-                </div>
-                <div class="col-md-3">
-                    <label for="filtro-data-inicio" class="form-label">Data Início</label>
-                    <input type="date" class="form-control" id="filtro-data-inicio">
-                </div>
-                <div class="col-md-3">
-                    <label for="filtro-data-fim" class="form-label">Data Fim</label>
-                    <input type="date" class="form-control" id="filtro-data-fim">
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary me-2">Filtrar</button>
-                    <button type="button" class="btn btn-secondary" id="btn-limpar-filtros">Limpar</button>
-                </div>
-            </form>
+        <a href="#collapse-filtros-solicitacoes" data-bs-toggle="collapse" class="card-header py-3 text-decoration-none d-block">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="bi bi-funnel-fill me-2"></i> Filtros de Pesquisa</h6>
+        </a>
+        <div class="collapse" id="collapse-filtros-solicitacoes">
+            <div class="card-body">
+                <form id="form-filtros-solicitacoes" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="filtro-status" class="form-label">Status</label>
+                        <select id="filtro-status" class="form-select"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filtro-data-inicio" class="form-label">Data Início</label>
+                        <input type="date" class="form-control" id="filtro-data-inicio">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filtro-data-fim" class="form-label">Data Fim</label>
+                        <input type="date" class="form-control" id="filtro-data-fim">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                        <button type="button" class="btn btn-secondary" id="btn-limpar-filtros">Limpar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 

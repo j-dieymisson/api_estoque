@@ -21,6 +21,7 @@ setTimeout(() => {
         const corpoTabela = document.getElementById('corpo-tabela-itens-detalhe');
         const acoesContainer = document.getElementById('acoes-solicitacao');
         const btnVoltar = document.getElementById('btn-voltar-lista');
+        const btnImprimir = document.getElementById('btn-imprimir-solicitacao');
 
         const modalDevolucaoEl = document.getElementById('modal-devolucao');
         const modalDevolucao = new bootstrap.Modal(modalDevolucaoEl);
@@ -202,6 +203,37 @@ setTimeout(() => {
                 await carregarDetalhes();
             } catch (error) { showToast(error.response?.data?.message || 'Não foi possível registar a devolução.', 'Erro', true); }
         });
+
+        if (btnImprimir) {
+                btnImprimir.addEventListener('click', async () => {
+                    showToast('A gerar o seu PDF...', 'Aguarde');
+                    try {
+                        // 1. Chama a API pedindo o PDF. É crucial usar 'blob' como responseType.
+                        const response = await apiClient.get(`/solicitacoes/${solicitacaoId}/pdf`, {
+                            responseType: 'blob'
+                        });
+
+                        // 2. Cria um URL temporário para o ficheiro recebido
+                        const url = window.URL.createObjectURL(new Blob([response.data]));
+
+                        // 3. Cria um link invisível para acionar o download
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.setAttribute('download', `solicitacao_${solicitacaoId}.pdf`); // Nome do ficheiro
+
+                        // 4. Adiciona o link à página, clica nele e remove-o
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+
+                        window.URL.revokeObjectURL(url); // Liberta a memória
+
+                    } catch (error) {
+                        console.error("Erro ao gerar o PDF:", error);
+                        showToast('Não foi possível gerar o PDF.', 'Erro', true);
+                    }
+                });
+            }
 
         // --- Inicialização ---
         carregarDetalhes();
