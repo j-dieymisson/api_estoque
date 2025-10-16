@@ -97,65 +97,67 @@ public class EquipamentoService {
         );
     }
 
-
     @Transactional
-    public EquipamentoResponse atualizarEquipamento(Long id, EquipamentoRequest request) {
-        // 1. Busca o equipamento que queremos atualizar.
+    public EquipamentoResponse atualizarEquipamento(Long id, EquipamentoRequest request, Usuario usuarioLogado) {
         Equipamento equipamento = equipamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + id));
 
-        // 2. Busca a nova categoria, se o ID da categoria foi alterado.
-        // Usamos o CategoriaRepository, que já temos injetado.
-        Categoria categoria = categoriaRepository.findById(request.categoriaId())
-                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com o ID: " + request.categoriaId()));
-
-        // 3. Atualiza os dados do equipamento com as informações do DTO.
-        // Note que não permitimos a alteração das quantidades aqui.
-        // Isso será feito pelo método de "ajuste de stock".
+        // 1. Atualiza os dados principais
         equipamento.setNome(request.nome());
         equipamento.setDescricao(request.descricao());
-        equipamento.setCategoria(categoria);
-        int quantidadeEmUso = equipamento.getQuantidadeTotal() - equipamento.getQuantidadeDisponivel();
-        if (request.quantidadeTotal() < quantidadeEmUso & request.quantidadeTotal() != equipamento.getQuantidadeTotal() ) {
-            throw new BusinessException(
-                    "Ajuste de stock inválido. A nova quantidade total (" + request.quantidadeTotal() + ") " +
-                            "não pode ser menor que a quantidade de itens atualmente em utilização (" + quantidadeEmUso + ")."
-            );
-        }
-        //BUSCAR UM RESPONSÁVEL
-        Usuario responsavel = usuarioRepository.findById(1L)
-                .orElseThrow(() -> new ResourceNotFoundException("Utilizador padrão (ID 1) não encontrado..."));
 
-        // 1. Captura as quantidades ANTES da alteração
+        Categoria categoria = categoriaRepository.findById(request.categoriaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com o ID: " + request.categoriaId()));
+        equipamento.setCategoria(categoria);
+
+        // 2. Verifica SE a quantidade mudou
+        int quantidadeAntiga = equipamento.getQuantidadeTotal();
+        if (request.quantidadeTotal() != quantidadeAntiga) {
+            // 3. Se mudou, CHAMA a lógica de ajuste de stock
+            realizarAjusteEstoque(equipamento, request.quantidadeTotal(), usuarioLogado);
+        }
+
+        return mapToEquipamentoResponse(equipamento);
+    }
+
+    @Transactional
+    public EquipamentoResponse ajustarEstoque(Long id, AjusteEstoqueRequest request, Usuario usuarioLogado) {
+        Equipamento equipamento = equipamentoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + id));
+
+        // Delega a lógica para o método privado
+        realizarAjusteEstoque(equipamento, request.novaQuantidade(), usuarioLogado);
+
+        return mapToEquipamentoResponse(equipamento);
+    }
+
+    // --- LÓGICA CENTRALIZADA (NOVO MÉTODO PRIVADO) ---
+    private void realizarAjusteEstoque(Equipamento equipamento, int novaQuantidade, Usuario responsavel) {
+        int quantidadeEmUso = equipamento.getQuantidadeTotal() - equipamento.getQuantidadeDisponivel();
+        if (novaQuantidade < quantidadeEmUso) {
+            throw new BusinessException("Ajuste de stock inválido. A nova quantidade (" + novaQuantidade + ") não pode ser menor que a quantidade em utilização (" + quantidadeEmUso + ").");
+        }
+
         int quantidadeTotalAntiga = equipamento.getQuantidadeTotal();
         int quantidadeDisponivelAntiga = equipamento.getQuantidadeDisponivel();
+        int diferenca = novaQuantidade - quantidadeTotalAntiga;
 
-        // 2. Calcula a diferença com base na mudança da QUANTIDADE TOTAL
-        int diferenca = request.quantidadeTotal() - quantidadeTotalAntiga;
-
-        // 3. Atualiza as quantidades no equipamento
-        equipamento.setQuantidadeTotal(request.quantidadeTotal());
+        equipamento.setQuantidadeTotal(novaQuantidade);
         equipamento.setQuantidadeDisponivel(quantidadeDisponivelAntiga + diferenca);
 
-        // 4. Captura a quantidade DEPOIS da alteração
-        int quantidadeDisponivelPosterior = equipamento.getQuantidadeDisponivel();
-
-        // Regista a movimentação de AJUSTE no histórico
-        // Nota: O utilizador responsável aqui será o que estiver autenticado no futuro. Por agora, podemos deixar nulo ou usar um utilizador padrão.
+        // A criação do histórico só acontece aqui
         HistoricoMovimentacao registoHistorico = HistoricoMovimentacao.builder()
                 .dataMovimentacao(LocalDateTime.now())
                 .tipoMovimentacao(TipoMovimentacao.AJUSTE_MANUAL)
-                .quantidade(diferenca) // A diferença pode ser positiva ou negativa
+                .quantidade(diferenca)
                 .quantidadeAnterior(quantidadeDisponivelAntiga)
-                .quantidadePosterior(quantidadeDisponivelPosterior)
+                .quantidadePosterior(equipamento.getQuantidadeDisponivel())
                 .equipamento(equipamento)
                 .usuarioResponsavel(responsavel)
                 .build();
         historicoRepository.save(registoHistorico);
-
-        // 4. Mapeia a entidade atualizada para a resposta. Reutilizamos o nosso método auxiliar.
-        return mapToEquipamentoResponse(equipamento);
     }
+
 
     @Transactional
     public void desativarEquipamento(Long id) {
@@ -201,51 +203,7 @@ public class EquipamentoService {
         return mapToEquipamentoResponse(equipamento);
     }
 
-    @Transactional
-    public EquipamentoResponse ajustarEstoque(Long id, AjusteEstoqueRequest request) {
-        Equipamento equipamento = equipamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + id));
 
-        int quantidadeEmUso = equipamento.getQuantidadeTotal() - equipamento.getQuantidadeDisponivel();
-        if (request.novaQuantidade() < quantidadeEmUso & request.novaQuantidade() != equipamento.getQuantidadeTotal() ) {
-            throw new BusinessException(
-                    "Ajuste de stock inválido. A nova quantidade total (" + request.novaQuantidade() + ") " +
-                            "não pode ser menor que a quantidade de itens atualmente em utilização (" + quantidadeEmUso + ")."
-            );
-        }
-        //BUSCAR UM RESPONSÁVEL
-        Usuario responsavel = usuarioRepository.findById(1L)
-                .orElseThrow(() -> new ResourceNotFoundException("Utilizador padrão (ID 1) não encontrado..."));
-
-        // 1. Captura as quantidades ANTES da alteração
-        int quantidadeTotalAntiga = equipamento.getQuantidadeTotal();
-        int quantidadeDisponivelAntiga = equipamento.getQuantidadeDisponivel();
-
-        // 2. Calcula a diferença com base na mudança da QUANTIDADE TOTAL
-        int diferenca = request.novaQuantidade() - quantidadeTotalAntiga;
-
-        // 3. Atualiza as quantidades no equipamento
-        equipamento.setQuantidadeTotal(request.novaQuantidade());
-        equipamento.setQuantidadeDisponivel(quantidadeDisponivelAntiga + diferenca);
-
-        // 4. Captura a quantidade DEPOIS da alteração
-        int quantidadeDisponivelPosterior = equipamento.getQuantidadeDisponivel();
-
-        // Regista a movimentação de AJUSTE no histórico
-        // Nota: O utilizador responsável aqui será o que estiver autenticado no futuro. Por agora, podemos deixar nulo ou usar um utilizador padrão.
-        HistoricoMovimentacao registoHistorico = HistoricoMovimentacao.builder()
-                .dataMovimentacao(LocalDateTime.now())
-                .tipoMovimentacao(TipoMovimentacao.AJUSTE_MANUAL)
-                .quantidade(diferenca) // A diferença pode ser positiva ou negativa
-                .quantidadeAnterior(quantidadeDisponivelAntiga)
-                .quantidadePosterior(quantidadeDisponivelPosterior)
-                .equipamento(equipamento)
-                .usuarioResponsavel(responsavel)
-                .build();
-        historicoRepository.save(registoHistorico);
-
-        return mapToEquipamentoResponse(equipamento);
-    }
 
     @Transactional(readOnly = true)
     public Page<EquipamentoResponse> listarDisponiveis(Pageable pageable) {

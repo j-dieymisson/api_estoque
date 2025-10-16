@@ -3,6 +3,7 @@ package com.api.estoque.controller;
 import com.api.estoque.dto.request.AjusteEstoqueRequest;
 import com.api.estoque.dto.request.EquipamentoRequest;
 import com.api.estoque.dto.response.EquipamentoResponse;
+import com.api.estoque.model.Usuario;
 import com.api.estoque.service.EquipamentoService;
 import com.api.estoque.service.PdfService;
 import jakarta.validation.Valid;
@@ -12,6 +13,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -60,9 +62,11 @@ public class EquipamentoController {
     @PutMapping("/{id}")
     public ResponseEntity<EquipamentoResponse> atualizar(
             @PathVariable Long id,
-            @RequestBody @Valid EquipamentoRequest request
+            @RequestBody @Valid EquipamentoRequest request,
+            @AuthenticationPrincipal Usuario usuarioLogado // <-- PARÂMETRO ADICIONADO
     ) {
-        EquipamentoResponse response = equipamentoService.atualizarEquipamento(id, request);
+        // Agora passamos o utilizador logado para o serviço
+        EquipamentoResponse response = equipamentoService.atualizarEquipamento(id, request, usuarioLogado);
         return ResponseEntity.ok(response);
     }
 
@@ -89,9 +93,11 @@ public class EquipamentoController {
     @PatchMapping("/{id}/ajustar-estoque")
     public ResponseEntity<EquipamentoResponse> ajustarEstoque(
             @PathVariable Long id,
-            @RequestBody @Valid AjusteEstoqueRequest request
+            @RequestBody @Valid AjusteEstoqueRequest request,
+            @AuthenticationPrincipal Usuario usuarioLogado // <-- PARÂMETRO ADICIONADO
     ) {
-        EquipamentoResponse response = equipamentoService.ajustarEstoque(id, request);
+        // Agora passamos o utilizador logado para o serviço
+        EquipamentoResponse response = equipamentoService.ajustarEstoque(id, request, usuarioLogado);
         return ResponseEntity.ok(response);
     }
 

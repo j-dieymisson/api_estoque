@@ -126,6 +126,35 @@ setTimeout(() => {
                 dataPrevisaoDevolucao: document.getElementById('solicitacao-data-devolucao').value || null,
                 itens: itensDaSolicitacao.map(item => ({ equipamentoId: item.equipamentoId, quantidade: item.quantidade }))
             };
+
+            if (endpoint === '/solicitacoes') {
+                            if (!data.dataPrevisaoEntrega || !data.dataPrevisaoDevolucao) {
+                                showToast('As datas de previsão são obrigatórias para enviar a solicitação.', 'Erro de Validação', true);
+                                return; // Para a execução
+                            }
+
+                            const hoje = new Date();
+                            hoje.setHours(0, 0, 0, 0); // Zera a hora para comparar apenas a data
+
+                            // Adiciona 'T00:00:00' para evitar problemas de fuso horário na conversão
+                            const entrega = new Date(data.dataPrevisaoEntrega + 'T00:00:00');
+                            const devolucao = new Date(data.dataPrevisaoDevolucao + 'T00:00:00');
+
+                            if (entrega < hoje) {
+                                showToast('A data de previsão de entrega não pode ser no passado.', 'Erro de Validação', true);
+                                return; // Para a execução
+                            }
+
+                            if (devolucao < hoje) {
+                                 showToast('A data de previsão de devolução não pode ser no passado.', 'Erro de Validação', true);
+                                return; // Para a execução
+                            }
+
+                            if (devolucao < entrega) {
+                                showToast('A data de devolução não pode ser anterior à de entrega.', 'Erro de Validação', true);
+                                return; // Para a execução
+                            }
+                        }
             if (itensDaSolicitacao.length === 0) { showToast('Adicione pelo menos um item.', 'Erro', true); return; }
             if (endpoint === '/solicitacoes' && (!data.dataPrevisaoEntrega || !data.dataPrevisaoDevolucao)) {
                 showToast('As datas de previsão são obrigatórias para enviar a solicitação.', 'Erro', true); return;

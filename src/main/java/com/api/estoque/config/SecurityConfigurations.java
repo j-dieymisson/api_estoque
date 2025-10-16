@@ -41,13 +41,13 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.PUT, "/equipamentos/**", "/categorias/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/equipamentos/**", "/categorias/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/equipamentos/**").hasRole("ADMIN")
-                        .requestMatchers("/usuarios/**", "/cargos/**", "/dashboard/**").hasRole("ADMIN")
+                        .requestMatchers("/usuarios/**", "/cargos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/aprovar").hasAnyRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/recusar").hasAnyRole("ADMIN")
 
 
                         // ===== Regras de Gestor/Admin =====
-
+                        .requestMatchers("/dashboard/**").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/cancelar").hasRole("ADMIN") // Vamos proteger este também
                         .requestMatchers(HttpMethod.POST, "/solicitacoes/*/devolver-tudo").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers("/historico/**").hasAnyRole("ADMIN", "GESTOR")
