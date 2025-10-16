@@ -1,26 +1,47 @@
-// auth.js - Lógica exclusiva da página de login.
-
-// O código dentro disto só corre depois de a página HTML estar completamente carregada.
+// auth.js - Versão final e robusta
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Se um utilizador já logado acidentalmente for para a página de login,
-    // redireciona-o para a página principal.
     if (localStorage.getItem('authToken')) {
         window.location.href = '/app/index.html';
         return;
     }
 
     const form = document.getElementById('form-login');
-    const nomeInput = document.getElementById('nome');
+
+    //Lógica de toggle-senha
     const senhaInput = document.getElementById('senha');
-    const loginButton = form.querySelector('button[type="submit"]');
-    const spinner = loginButton.querySelector('.spinner-border');
+        const toggleSenha = document.getElementById('toggle-senha');
+
+        if (toggleSenha && senhaInput) {
+            toggleSenha.addEventListener('click', function() {
+                // Alterna o tipo do input de 'password' para 'text' e vice-versa
+                const type = senhaInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                senhaInput.setAttribute('type', type);
+
+                // Alterna o ícone do olho
+                const icon = this.querySelector('i');
+                if (type === 'password') {
+                    icon.classList.remove('bi-eye-slash-fill');
+                    icon.classList.add('bi-eye-fill');
+                } else {
+                    icon.classList.remove('bi-eye-fill');
+                    icon.classList.add('bi-eye-slash-fill');
+                }
+            });
+        }
 
     if (form) {
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
 
-            // Ativa o spinner e desativa o botão para evitar cliques múltiplos
+            // Seletores de elementos feitos no momento do submit para garantir que existem
+            const nomeInput = document.getElementById('nome');
+            const senhaInput = document.getElementById('senha');
+            const mensagemErro = document.getElementById('mensagem-erro');
+            const loginButton = form.querySelector('button[type="submit"]');
+            const spinner = loginButton.querySelector('.spinner-border');
+
+            mensagemErro.classList.add('d-none');
             loginButton.disabled = true;
             spinner.classList.remove('d-none');
 
@@ -28,29 +49,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const senha = senhaInput.value;
 
             try {
-                // Usa a nossa apiClient (do ficheiro api.js) para fazer a chamada POST
-                const response = await apiClient.post('/login', {
-                    nome: nome,
-                    senha: senha
-                });
-
-                const token = response.data.token;
-
-                // Guarda o token no localStorage do browser
-                localStorage.setItem('authToken', token);
-
-
-                // Espera um pouco para o utilizador ver o toast antes de redirecionar
-                setTimeout(() => {
-                    window.location.href = '/app/index.html';
-                });
-
+                const response = await apiClient.post('/login', { nome, senha });
+                localStorage.setItem('authToken', response.data.token);
+                window.location.href = '/app/index.html';
             } catch (error) {
-                console.error("Erro no login:", error.response);
-                // Mostra uma notificação de erro
-                showToast('Nome de utilizador ou senha inválidos.', 'Erro de Login', true);
+                console.error("Erro no login:", error);
 
-                // Reativa o botão em caso de erro
+                mensagemErro.textContent = 'Nome de utilizador ou senha inválidos.';
+                mensagemErro.classList.remove('d-none');
+
                 loginButton.disabled = false;
                 spinner.classList.add('d-none');
             }

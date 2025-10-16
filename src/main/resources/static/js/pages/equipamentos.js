@@ -18,12 +18,23 @@ setTimeout(() => {
         // --- Funções de Busca e Renderização ---
         async function carregarEquipamentos(page = 0) {
             currentPage = page;
-            const colspan = currentUserRole === 'ADMIN' ? 6 : 5;
+            const isAdminOuGestor = currentUserRole === 'ADMIN'  || currentUserRole === 'GESTOR';
+            const colspan = isAdminOuGestor ? 6 : 5;
             corpoTabela.innerHTML = `<tr><td colspan="${colspan}" class="text-center">A carregar...</td></tr>`;
-            const params = { page, size: 10, sort: 'nome,asc', id: filtroId.value || null, nome: filtroNome.value || null, categoriaId: filtroCategoria.value || null };
+
+            let endpoint = '/equipamentos';
+            if (isAdminOuGestor){
+                endpoint = 'equipamentos/todos';
+            }
+            const params = {
+                 page, size: 10, sort: 'nome,asc',
+                 id: filtroId.value || null,
+                 nome: filtroNome.value || null,
+                 categoriaId: filtroCategoria.value || null
+            };
             Object.keys(params).forEach(key => (params[key] == null || params[key] === '') && delete params[key]);
             try {
-                const response = await apiClient.get('/equipamentos', { params });
+                const response = await apiClient.get(endpoint, { params });
                 renderizarTabelaEquipamentos(response.data.content);
                 renderizarPaginacao(response.data);
             } catch (error) {

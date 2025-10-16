@@ -133,11 +133,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fazerLogout() {
-        showToast('A terminar a sessão...', 'Logout');
-        setTimeout(() => {
-            localStorage.removeItem('authToken');
-            window.location.href = '/login.html';
-        },);
+        localStorage.removeItem('authToken');
+        window.location.href = '/login.html';
     }
 
     if (btnDesktopToggle && sidebar) {

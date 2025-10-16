@@ -512,6 +512,10 @@ public class SolicitacaoService {
             Equipamento equipamento = equipamentoRepository.findById(itemAgrupado.equipamentoId())
                     .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + itemAgrupado.equipamentoId()));
 
+            if (!equipamento.isAtivo()) {
+                throw new BusinessException("Não é possível solicitar o equipamento '" + equipamento.getNome() + "' porque ele está inativo.");
+            }
+            
             // A validação de stock continua aqui, agora sobre a quantidade total somada
             if (equipamento.getQuantidadeDisponivel() < itemAgrupado.quantidade()) {
                 throw new BusinessException("Stock insuficiente para o equipamento: " + equipamento.getNome());

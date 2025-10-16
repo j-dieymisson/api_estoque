@@ -5,28 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - API Estoque</title>
     <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/bootstrap-icons.css">
 </head>
 <body class="bg-body-tertiary">
-
 <div class="toast-container position-fixed top-0 end-0 p-3">
     <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-            <strong class="me-auto" id="toast-title">Notificação</strong>
-            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body" id="toast-body">
-            Mensagem.
-        </div>
+        <div class="toast-header"><strong class="me-auto" id="toast-title">Notificação</strong><button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button></div>
+        <div class="toast-body" id="toast-body">Mensagem.</div>
     </div>
 </div>
-
 <div class="container">
     <div class="row justify-content-center align-items-center vh-100">
         <div class="col-md-5">
             <div class="card shadow-sm">
                 <div class="card-body p-5">
-                    <h3 class="card-title text-center mb-4">API Estoque</h3>
-
+                    <h3 class="card-title text-center mb-4"><span class="text-info">CEPRA</span> Estoque</h3>
                     <form id="form-login">
                         <div class="mb-3">
                             <label for="nome" class="form-label">Nome de Utilizador</label>
@@ -34,7 +27,12 @@
                         </div>
                         <div class="mb-3">
                             <label for="senha" class="form-label">Senha</label>
-                            <input type="password" class="form-control" id="senha" required>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="senha" required>
+                                <span class="input-group-text" id="toggle-senha" style="cursor: pointer;">
+                                    <i class="bi bi-eye-fill"></i>
+                                </span>
+                            </div>
                         </div>
                         <div class="d-grid mt-4">
                             <button class="btn btn-primary" type="submit">
@@ -43,17 +41,15 @@
                             </button>
                         </div>
                     </form>
-
+                    <div id="mensagem-erro" class="alert alert-danger mt-3 d-none" role="alert"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 <script src="/js/bootstrap.bundle.min.js"></script>
 <script src="/js/axios.min.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/auth.js"></script>
-
 </body>
 </html>

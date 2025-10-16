@@ -77,7 +77,7 @@ public class EquipamentoService {
             equipamentos = equipamentoRepository.findAllByAtivoTrueAndNomeContainingIgnoreCase(nome.get(), pageable);
         } else {
             // Sem filtros
-            equipamentos = equipamentoRepository.findAll(pageable);
+            equipamentos = equipamentoRepository.findAllByAtivoTrue(pageable);
         }
 
         return equipamentos.map(this::mapToEquipamentoResponse);
