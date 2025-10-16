@@ -116,31 +116,54 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
     async function carregarPerfilEConfigurarUI() {
-        try {
-            const response = await apiClient.get('/perfil');
-            const usuario = response.data;
+            try {
+                const response = await apiClient.get('/perfil');
+                const usuario = response.data;
 
-            if (nomeUsuarioSpan) nomeUsuarioSpan.textContent = usuario.nome;
-            const cargo = usuario.nomeCargo;
-            if (cargo !== 'ADMIN') {
-                document.querySelectorAll('.admin-only').forEach(item => {
-                    item.style.display = 'none';
+                if (nomeUsuarioSpan) nomeUsuarioSpan.textContent = usuario.nome;
+                const cargo = usuario.nomeCargo;
+
+                // ===============================================================
+                // NOVA LÓGICA DE VISIBILIDADE DO MENU
+                // ===============================================================
+                // Primeiro, mostramos tudo para começar do zero a cada login
+                document.querySelectorAll('.admin-only, .gestor-only').forEach(item => {
+                    item.style.display = ''; // Remove o 'display: none'
                 });
+
+                // Agora, escondemos com base no cargo
+                if (cargo === 'COLABORADOR') {
+                    document.querySelectorAll('.admin-only, .gestor-only').forEach(item => {
+                        item.style.display = 'none';
+                    });
+                } else if (cargo === 'GESTOR') {
+                    // Um GESTOR só não vê o que é EXCLUSIVO do ADMIN
+                    // (Ex: o link "Funcionários", que só tem a classe 'admin-only')
+                    document.querySelectorAll('.admin-only:not(.gestor-only)').forEach(item => {
+                         item.style.display = 'none';
+                    });
+                }
+                // Se for ADMIN, não escondemos nada.
+                // ===============================================================
+
+                let paginaInicial = 'solicitacoes.html';
+
+                if (cargo === 'ADMIN' ) {
+                    paginaInicial = 'dashboard.html';
+                }
+
+                if (cargo === 'GESTOR'){
+                    paginaInicial = 'equipamentos.html';
+                }
+
+                // Usamos a nossa função de navegação para carregar a página inicial
+                window.navigateTo(paginaInicial);
+
+            } catch (error) {
+                console.error("Erro ao carregar o perfil, a fazer logout.", error);
+                fazerLogout();
             }
-
-            let paginaInicial = 'solicitacoes.html';
-            if (cargo === 'ADMIN' || cargo === 'GESTOR') {
-                paginaInicial = 'dashboard.html';
-            }
-
-            loadPage(paginaInicial);
-            marcarLinkAtivo(paginaInicial);
-
-        } catch (error) {
-            console.error("Erro ao carregar o perfil, a fazer logout.", error);
-            fazerLogout();
         }
-    }
 
     function marcarLinkAtivo(pageUrl) {
         menus.forEach(menu => {

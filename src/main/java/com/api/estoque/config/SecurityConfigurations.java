@@ -37,17 +37,19 @@ public class SecurityConfigurations {
 
                         // ===== Regras de Admin (Exigem login como Admin) =====
                         // Qualquer outra ação em /cargos (que não seja o GET público) exige ser ADMIN
-                        .requestMatchers("/usuarios/**", "/cargos/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/aprovar").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/recusar").hasRole("ADMIN")
+                        .requestMatchers("/usuarios/**", "/cargos/**", "/dashboard/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/aprovar").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/recusar").hasAnyRole("ADMIN")
 
 
                         // ===== Regras de Gestor/Admin =====
-                        .requestMatchers("/dashboard/**").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/cancelar").hasRole("ADMIN") // Vamos proteger este também
                         .requestMatchers(HttpMethod.POST, "/solicitacoes/*/devolver-tudo").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers("/historico/**").hasAnyRole("ADMIN", "GESTOR")
-                        .requestMatchers( "/equipamentos/**", "/categorias/**").hasAnyRole("ADMIN", "GESTOR")
+                        .requestMatchers(HttpMethod.POST, "/equipamentos", "/categorias").hasAnyRole("ADMIN", "GESTOR")
+                        .requestMatchers(HttpMethod.PUT, "/equipamentos/**", "/categorias/**").hasAnyRole("ADMIN", "GESTOR")
+                        .requestMatchers(HttpMethod.DELETE, "/equipamentos/**", "/categorias/**").hasAnyRole("ADMIN", "GESTOR")
+                        .requestMatchers(HttpMethod.PATCH, "/equipamentos/**").hasAnyRole("ADMIN", "GESTOR")
 
                         // ===== Regra Final =====
                         // Qualquer outra requisição (como criar uma solicitação) exige apenas autenticação

@@ -22,10 +22,10 @@ setTimeout(() => {
             const colspan = isAdminOuGestor ? 6 : 5;
             corpoTabela.innerHTML = `<tr><td colspan="${colspan}" class="text-center">A carregar...</td></tr>`;
 
-            let endpoint = '/equipamentos';
-            if (isAdminOuGestor){
-                endpoint = 'equipamentos/todos';
-            }
+
+           // Decide qual endpoint chamar com base no cargo
+            const endpoint = isAdminOuGestor ? '/equipamentos/todos' : '/equipamentos';
+
             const params = {
                  page, size: 10, sort: 'nome,asc',
                  id: filtroId.value || null,
@@ -54,8 +54,8 @@ setTimeout(() => {
 
         function renderizarTabelaEquipamentos(equipamentos) {
             corpoTabela.innerHTML = '';
-            const hasAdminRole = currentUserRole === 'ADMIN';
-            const colspan = hasAdminRole ? 6 : 5;
+            const isAdminOuGestor = currentUserRole === 'ADMIN'|| currentUserRole === 'GESTOR';
+            const colspan = isAdminOuGestor ? 6 : 5;
             if (!equipamentos || equipamentos.length === 0) {
                 corpoTabela.innerHTML = `<tr><td colspan="${colspan}" class="text-center">Nenhum equipamento encontrado.</td></tr>`;
                 return;
@@ -63,7 +63,7 @@ setTimeout(() => {
             equipamentos.forEach(eq => {
                 const tr = document.createElement('tr');
                 let acoesHtml = '';
-                if (hasAdminRole) {
+                if (isAdminOuGestor) {
                  const botaoEditar = `<button class="btn btn-sm btn-outline-primary btn-editar" data-id="${eq.id}" title="Editar/Ajustar Stock"><i class="bi bi-pencil-fill"></i></button>`;
                     const botaoAtivarDesativar = eq.ativo
                                     ? `<button class="btn btn-sm btn-outline-secondary btn-desativar ms-1" data-id="${eq.id}" title="Desativar"><i class="bi bi-toggle-off"></i></button>`
@@ -71,6 +71,7 @@ setTimeout(() => {
 
                                 acoesHtml = `<td>${botaoEditar} ${botaoAtivarDesativar}</td>`;
                             }
+
                                      tr.innerHTML = `
                                          <td>${eq.id}</td>
                                          <td>${eq.nome}</td>
