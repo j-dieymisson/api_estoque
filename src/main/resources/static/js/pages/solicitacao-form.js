@@ -13,7 +13,7 @@ setTimeout(() => {
         const formSolicitacao = document.getElementById('form-solicitacao');
         const tituloForm = document.getElementById('form-solicitacao-titulo');
         const tabelaItensSelecionados = document.getElementById('tabela-itens-selecionados');
-        const btnVoltar = document.getElementById('btn-voltar-lista-solicitacoes');
+        const btnVoltar = document.getElementById('btn-voltar');
         const acoesCriarDiv = document.getElementById('acoes-criar');
         const acoesEditarRascunhoDiv = document.getElementById('acoes-editar-rascunho');
 
@@ -201,7 +201,7 @@ setTimeout(() => {
             });
 
             // Listeners Botões Principais
-            btnVoltar.addEventListener('click', () => window.navigateTo('solicitacoes.html'));
+            btnVoltar.addEventListener('click', () => window.navigateBack());
             document.getElementById('btn-salvar-rascunho').addEventListener('click', () => enviarFormulario('/rascunhos'));
             formSolicitacao.addEventListener('submit', (e) => { e.preventDefault(); enviarFormulario('/solicitacoes'); });
             document.getElementById('btn-atualizar-rascunho').addEventListener('click', () => enviarFormulario(`/rascunhos/${rascunhoId}`, 'put'));

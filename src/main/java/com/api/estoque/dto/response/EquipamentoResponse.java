@@ -1,5 +1,7 @@
 package com.api.estoque.dto.response;
 
+import java.time.LocalDateTime;
+
 public record EquipamentoResponse(
         Long id,
         String nome,
@@ -8,5 +10,6 @@ public record EquipamentoResponse(
         int quantidadeDisponivel,
         boolean ativo,
         Long categoriaId,
-        String nomeCategoria// Enviamos o nome da categoria para facilitar a exibição no front-end
+        String nomeCategoria,
+        LocalDateTime dataCriacao
 ) {}

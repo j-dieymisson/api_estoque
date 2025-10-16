@@ -20,7 +20,7 @@ setTimeout(() => {
         const justificativaP = document.getElementById('detalhe-justificativa');
         const corpoTabela = document.getElementById('corpo-tabela-itens-detalhe');
         const acoesContainer = document.getElementById('acoes-solicitacao');
-        const btnVoltar = document.getElementById('btn-voltar-lista');
+       const btnVoltar = document.getElementById('btn-voltar');
         const btnImprimir = document.getElementById('btn-imprimir-solicitacao');
 
         const modalDevolucaoEl = document.getElementById('modal-devolucao');
@@ -111,7 +111,7 @@ setTimeout(() => {
         }
 
         // --- Event Listeners ---
-        if (btnVoltar) btnVoltar.addEventListener('click', () => window.navigateTo('solicitacoes.html'));
+        if (btnVoltar) btnVoltar.addEventListener('click', () => window.navigateBack());
 
         if (acoesContainer) {
             acoesContainer.addEventListener('click', async (event) => {

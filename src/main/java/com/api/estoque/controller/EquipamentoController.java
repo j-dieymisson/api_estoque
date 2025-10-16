@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.Optional;
 
 @RestController // Anotação que combina @Controller e @ResponseBody, ideal para APIs REST
@@ -47,15 +49,19 @@ public class EquipamentoController {
         return ResponseEntity.created(uri).body(response);
     }
 
-    @GetMapping // Mapeia este método para requisições HTTP GET para /equipamentos
+
+    @GetMapping
     public ResponseEntity<Page<EquipamentoResponse>> listar(
             @PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao,
             @RequestParam(required = false) Optional<String> nome,
             @RequestParam(required = false) Optional<Long> categoriaId,
-            @RequestParam(required = false) Optional<Long> id
+            @RequestParam(required = false) Optional<Long> id,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataInicioCriacao,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFimCriacao
     ) {
-        // Passe todos os filtros para o serviço
-        Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarTodos(nome, categoriaId, id, paginacao);
+        Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarTodos(
+                nome, categoriaId, id, dataInicioCriacao, dataFimCriacao, paginacao
+        );
         return ResponseEntity.ok(pageDeEquipamentos);
     }
 

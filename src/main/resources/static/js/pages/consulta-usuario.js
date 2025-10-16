@@ -14,7 +14,7 @@
     const cabecalhoNome = document.getElementById('usuario-nome-cabecalho');
     const corpoTabela = document.getElementById('corpo-tabela-solicitacoes-usuario');
     const paginacaoContainer = document.getElementById('paginacao-solicitacoes-usuario');
-    const btnVoltar = document.getElementById('btn-voltar-consulta-usr');
+    const btnVoltar = document.getElementById('btn-voltar');
 
     const detalheId = document.getElementById('detalhe-usr-id');
     const detalheNome = document.getElementById('detalhe-usr-nome');
@@ -93,7 +93,9 @@
     }
 
     // --- Event Listeners ---
-    btnVoltar.addEventListener('click', () => window.navigateTo('consultas.html'));
+    if(btnVoltar) {
+           btnVoltar.addEventListener('click', () => window.navigateBack());
+        }
 
     paginacaoContainer.addEventListener('click', (event) => {
         const link = event.target.closest('a.page-link');

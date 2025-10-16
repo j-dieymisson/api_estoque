@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmModalButton = document.getElementById('confirmModalButton');
 
     let currentScript = null;
+    let navigationHistory = [];
 
     window.showConfirmModal = function(title, message, onConfirmCallback) {
             confirmModalTitle.textContent = title;
@@ -35,17 +36,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
     window.navigateTo = function(pageUrl, context = {}) {
-            // Guarda o 'contexto' (como o ID que queremos passar) numa variável global temporária
+            // Passo 1: Guarda o contexto (como o ID)
             window.pageContext = context;
 
-            // Simula um clique no link do menu correspondente para reutilizar a nossa lógica
-            const link = document.querySelector(`#menu-principal a[data-page='${pageUrl}']`);
-            if (link) {
-                link.click();
+            // Passo 2: Adiciona a nova página à nossa "memória"
+            navigationHistory.push({ pageUrl, context });
+
+            // Passo 3: Faz as duas coisas que o seu código antigo fazia
+            marcarLinkAtivo(pageUrl);
+            loadPage(pageUrl);
+        }
+
+    window.navigateBack = function() {
+            // Remove a página atual da nossa memória
+            navigationHistory.pop();
+
+            // Pega na página anterior que sobrou
+            const previousState = navigationHistory[navigationHistory.length - 1];
+
+            if (previousState) {
+                // Navega para a página anterior, restaurando o seu contexto
+                window.pageContext = previousState.context;
+                loadPage(previousState.pageUrl); // Carrega a página sem adicionar ao histórico novamente
+                marcarLinkAtivo(previousState.pageUrl);
             } else {
-                // Se não houver link no menu, carrega a página diretamente
-                loadPage(pageUrl);
-                marcarLinkAtivo(pageUrl);
+                // Se não houver mais nada no histórico, volta para a página inicial
+                carregarPerfilEConfigurarUI();
             }
         }
 
@@ -77,23 +93,27 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setupMenuNavigation(menuElement) {
-        if (!menuElement) return;
-        menuElement.addEventListener('click', function(event) {
-            const link = event.target.closest('a.nav-link');
-            if (link) {
-                event.preventDefault();
-                const pageToLoad = link.getAttribute('data-page');
-                marcarLinkAtivo(pageToLoad);
-                if (pageToLoad) loadPage(pageToLoad);
+            if (!menuElement) return;
+            menuElement.addEventListener('click', function(event) {
+                const link = event.target.closest('a.nav-link');
+                if (link) {
+                    event.preventDefault();
+                    const pageToLoad = link.getAttribute('data-page');
 
-                const offcanvasElement = document.getElementById('sidebar-mobile');
-                if (offcanvasElement) {
-                    const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasElement);
-                    if (offcanvas) offcanvas.hide();
+                    // 1. Limpa o histórico de navegação anterior
+                    navigationHistory = [];
+
+                    // 2. Chama a nossa função "super-herói" que faz tudo
+                    window.navigateTo(pageToLoad);
+
+                    const offcanvasElement = document.getElementById('sidebar-mobile');
+                    if (offcanvasElement) {
+                        const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasElement);
+                        if (offcanvas) offcanvas.hide();
+                    }
                 }
-            }
-        });
-    }
+            });
+        }
 
     async function carregarPerfilEConfigurarUI() {
         try {

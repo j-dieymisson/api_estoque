@@ -15,7 +15,7 @@
     const cabecalhoNome = document.getElementById('equipamento-nome-cabecalho');
     const corpoTabela = document.getElementById('corpo-tabela-hist-equipamento');
     const paginacaoContainer = document.getElementById('paginacao-hist-equipamento');
-    const btnVoltar = document.getElementById('btn-voltar-consulta-eq');
+    const btnVoltar = document.getElementById('btn-voltar');
     const detalheNome = document.getElementById('detalhe-eq-nome');
     const detalheCategoria = document.getElementById('detalhe-eq-categoria');
     const detalheQtdTotal = document.getElementById('detalhe-eq-qtd-total');
@@ -90,7 +90,7 @@
 
     // --- Event Listeners ---
     if(btnVoltar) {
-        btnVoltar.addEventListener('click', () => window.navigateTo('consultas.html'));
+       btnVoltar.addEventListener('click', () => window.navigateBack());
     }
 
     if(paginacaoContainer) {

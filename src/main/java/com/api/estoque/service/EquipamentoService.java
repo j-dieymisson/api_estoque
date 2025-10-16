@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -57,28 +58,27 @@ public class EquipamentoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<EquipamentoResponse> listarTodos(Optional<String> nome,
-                                                 Optional<Long> categoriaId,
-                                                 Optional<Long> id,
-                                                 Pageable pageable) {
-        Page<Equipamento> equipamentos;
-        // Lógica para decidir qual método do repositório usar
-        if (id.isPresent()) {
-            // Filtro por ID
-            equipamentos = equipamentoRepository.findByIdAndAtivoTrue(id.get(), pageable);
-        } else if (nome.isPresent() && categoriaId.isPresent()) {
-            // Filtro por NOME e CATEGORIA
-            equipamentos = equipamentoRepository.findAllByAtivoTrueAndCategoriaIdAndNomeContainingIgnoreCase(categoriaId.get(), nome.get(), pageable);
-        } else if (categoriaId.isPresent()) {
-            // Filtro apenas por CATEGORIA
-            equipamentos = equipamentoRepository.findAllByAtivoTrueAndCategoriaId(categoriaId.get(), pageable);
-        } else if (nome.isPresent()) {
-            // Filtro apenas por NOME
-            equipamentos = equipamentoRepository.findAllByAtivoTrueAndNomeContainingIgnoreCase(nome.get(), pageable);
-        } else {
-            // Sem filtros
-            equipamentos = equipamentoRepository.findAllByAtivoTrue(pageable);
-        }
+    public Page<EquipamentoResponse> listarTodos(
+            Optional<String> nome,
+            Optional<Long> categoriaId,
+            Optional<Long> id,
+            Optional<LocalDate> dataInicioCriacao, // Novo
+            Optional<LocalDate> dataFimCriacao,    // Novo
+            Pageable pageable) {
+
+        // Converte as datas para o início e fim do dia
+        LocalDateTime inicio = dataInicioCriacao.map(LocalDate::atStartOfDay).orElse(null);
+        LocalDateTime fim = dataFimCriacao.map(d -> d.atTime(23, 59, 59)).orElse(null);
+
+        // Chama o novo método único, passando null para os filtros não usados
+        Page<Equipamento> equipamentos = equipamentoRepository.findWithFilters(
+                id.orElse(null),
+                nome.orElse(null),
+                categoriaId.orElse(null),
+                inicio,
+                fim,
+                pageable
+        );
 
         return equipamentos.map(this::mapToEquipamentoResponse);
     }
@@ -93,7 +93,8 @@ public class EquipamentoService {
                 equipamento.getQuantidadeDisponivel(),
                 equipamento.isAtivo(),
                 equipamento.getCategoria().getId(),
-                equipamento.getCategoria().getNome() // Pega o nome da categoria associada
+                equipamento.getCategoria().getNome(),
+                equipamento.getDataCriacao()// Pega o nome da categoria associada
         );
     }
 
@@ -214,4 +215,6 @@ public class EquipamentoService {
         // Reutilizamos o nosso mapeamento para DTOs
         return equipamentosDisponiveis.map(this::mapToEquipamentoResponse);
     }
+
+
 }
