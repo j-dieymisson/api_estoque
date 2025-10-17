@@ -84,7 +84,34 @@ setTimeout(() => {
                                  });
                              }
 
-        function renderizarPaginacao(pageData) { /* ... (código existente da página de Consultas) ... */ }
+        function renderizarPaginacao(pageData) {
+                    paginacaoContainer.innerHTML = ''; // Limpa a paginação antiga
+
+                    // Se houver apenas uma página (ou nenhuma), não mostra nada
+                    if (!pageData || pageData.totalPages <= 1) {
+                        return;
+                    }
+
+                    let html = '<ul class="pagination pagination-sm justify-content-center">';
+
+                    // Cria o botão "Anterior" e desativa-o se for a primeira página
+                    html += `<li class="page-item ${pageData.first ? 'disabled' : ''}">
+                                <a class="page-link" href="#" data-page="${pageData.number - 1}">Anterior</a>
+                             </li>`;
+
+                    // Mostra o status atual da página (ex: "Página 1 de 5")
+                    html += `<li class="page-item disabled">
+                                <span class="page-link">Página ${pageData.number + 1} de ${pageData.totalPages}</span>
+                             </li>`;
+
+                    // Cria o botão "Próximo" e desativa-o se for a última página
+                    html += `<li class="page-item ${pageData.last ? 'disabled' : ''}">
+                                <a class="page-link" href="#" data-page="${pageData.number + 1}">Próximo</a>
+                             </li>`;
+
+                    html += '</ul>';
+                    paginacaoContainer.innerHTML = html;
+                }
 
         // --- Inicialização e Event Listeners ---
         async function init() {

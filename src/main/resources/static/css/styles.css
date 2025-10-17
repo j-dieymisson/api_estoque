@@ -96,6 +96,9 @@ body {
     justify-content: center;
 }
 
+.table{
+        white-space: nowrap;
+}
 
 /* --- RESPONSIVIDADE PARA MOBILE --- */
 
