@@ -228,6 +228,15 @@ public class SolicitacaoService {
             }
         }
 
+        // Antes de se tornar 'PENDENTE', deve ter as datas obrigatórias
+        if (rascunho.getDataPrevisaoEntrega() == null || rascunho.getDataPrevisaoDevolucao() == null) {
+            throw new BusinessException("Não é possível enviar a solicitação. As datas de previsão de entrega e devolução são obrigatórias.");
+        }
+        // Também validamos a ordem das datas
+        if (rascunho.getDataPrevisaoDevolucao().isBefore(rascunho.getDataPrevisaoEntrega())) {
+            throw new BusinessException("A data de devolução não pode ser anterior à data de entrega.");
+        }
+
         // 4. Altera o status de RASCUNHO para PENDENTE
         StatusSolicitacao statusAnterior = rascunho.getStatus();
         rascunho.setStatus(StatusSolicitacao.PENDENTE);
@@ -447,9 +456,17 @@ public class SolicitacaoService {
     }
 
     @Transactional
-    public SolicitacaoResponse cancelarSolicitacao(Long id) {
+    public SolicitacaoResponse cancelarSolicitacao(Long id,Usuario usuarioLogado) {
         Solicitacao solicitacao = solicitacaoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Solicitação não encontrada com o ID: " + id));
+
+
+        // Um Admin pode cancelar qualquer solicitação, mas um Colaborador/Gestor só pode cancelar as suas.
+        if (usuarioLogado.getCargo().getNome().equals("ADMIN") == false) {
+            if (!solicitacao.getUsuario().getId().equals(usuarioLogado.getId())) {
+                throw new BusinessException("Você não tem permissão para cancelar uma solicitação que não é sua.");
+            }
+        }
 
         // REGRA DE NEGÓCIO: Só se pode cancelar um pedido que ainda está pendente.
         if (solicitacao.getStatus() != StatusSolicitacao.PENDENTE) {

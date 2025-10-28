@@ -35,6 +35,7 @@ public class SecurityConfigurations {
                         .requestMatchers("/login.html", "/app/**", "/css/**", "/js/**").permitAll()
 
 
+
                         // ===== Regras de Admin (Exigem login como Admin) =====
                         // Qualquer outra ação em /cargos (que não seja o GET público) exige ser ADMIN
                         .requestMatchers("/usuarios/**", "/cargos/**", "/dashboard/**").hasRole("ADMIN")
@@ -54,6 +55,7 @@ public class SecurityConfigurations {
                         // ===== Regra Final =====
                         // Qualquer outra requisição (como criar uma solicitação) exige apenas autenticação
                         .requestMatchers(HttpMethod.GET, "/perfil").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/cancelar").authenticated()
 
                         .anyRequest().authenticated()
                 )

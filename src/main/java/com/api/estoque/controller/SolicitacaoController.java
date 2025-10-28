@@ -112,8 +112,10 @@ public class SolicitacaoController {
     }
 
     @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<SolicitacaoResponse> cancelar(@PathVariable Long id) {
-        SolicitacaoResponse response = solicitacaoService.cancelarSolicitacao(id);
+    public ResponseEntity<SolicitacaoResponse> cancelar(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+        SolicitacaoResponse response = solicitacaoService.cancelarSolicitacao(id,usuarioLogado);
         return ResponseEntity.ok(response);
     }
 

@@ -49,7 +49,7 @@ public class UsuarioService {
     }
 
     @Transactional
-    public void desativarUsuario(Long id) {
+    public void desativarUsuario(Long id,Usuario adminLogado) {
 
         if (id.equals(superAdminId)) {
             throw new BusinessException("O administrador principal não pode ser desativado.");
@@ -67,7 +67,7 @@ public class UsuarioService {
         for (Solicitacao solicitacao : solicitacoesPendentes) {
             // Reutilizamos o nosso método de cancelamento para garantir que
             // o histórico de status também é registado corretamente.
-            solicitacaoService.cancelarSolicitacao(solicitacao.getId());
+            solicitacaoService.cancelarSolicitacao(solicitacao.getId(), adminLogado);
         }
 
         // 3. Finalmente, desativa o utilizador.
