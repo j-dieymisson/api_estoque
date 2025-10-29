@@ -52,6 +52,7 @@ public class EquipamentoController {
 
     @GetMapping
     public ResponseEntity<Page<EquipamentoResponse>> listar(
+            @AuthenticationPrincipal Usuario usuarioLogado,
             @PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao,
             @RequestParam(required = false) Optional<String> nome,
             @RequestParam(required = false) Optional<Long> categoriaId,
@@ -60,7 +61,7 @@ public class EquipamentoController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFimCriacao
     ) {
         Page<EquipamentoResponse> pageDeEquipamentos = equipamentoService.listarTodos(
-                nome, categoriaId, id, dataInicioCriacao, dataFimCriacao, paginacao
+                usuarioLogado, nome, categoriaId, id, dataInicioCriacao, dataFimCriacao, paginacao
         );
         return ResponseEntity.ok(pageDeEquipamentos);
     }

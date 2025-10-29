@@ -46,19 +46,27 @@ public interface EquipamentoRepository extends JpaRepository<Equipamento, Long> 
     @Query("SELECT SUM(e.quantidadeTotal) FROM Equipamento e")
     Long sumQuantidadeTotal();
 
+   // NOVA QUERY para a visão do Admin/Gestor (todos os equipamentos)
     @Query("SELECT e FROM Equipamento e WHERE " +
-            "e.ativo = true AND " +
             "(:id IS NULL OR e.id = :id) AND " +
             "(:nome IS NULL OR LOWER(e.nome) LIKE LOWER(CONCAT('%', :nome, '%'))) AND " +
             "(:categoriaId IS NULL OR e.categoria.id = :categoriaId) AND " +
             "(:inicioCriacao IS NULL OR e.dataCriacao >= :inicioCriacao) AND " +
             "(:fimCriacao IS NULL OR e.dataCriacao <= :fimCriacao)")
-    Page<Equipamento> findWithFilters(
-            @Param("id") Long id,
-            @Param("nome") String nome,
-            @Param("categoriaId") Long categoriaId,
-            @Param("inicioCriacao") LocalDateTime inicioCriacao,
-            @Param("fimCriacao") LocalDateTime fimCriacao,
-            Pageable pageable
-    );
+    Page<Equipamento> findAllWithFilters(
+            @Param("id") Long id, @Param("nome") String nome, @Param("categoriaId") Long categoriaId,
+            @Param("inicioCriacao") LocalDateTime inicioCriacao, @Param("fimCriacao") LocalDateTime fimCriacao,
+            Pageable pageable);
+
+    // NOVA QUERY para a visão do Colaborador (apenas ativos)
+    @Query("SELECT e FROM Equipamento e WHERE e.ativo = true AND " +
+            "(:id IS NULL OR e.id = :id) AND " +
+            "(:nome IS NULL OR LOWER(e.nome) LIKE LOWER(CONCAT('%', :nome, '%'))) AND " +
+            "(:categoriaId IS NULL OR e.categoria.id = :categoriaId) AND " +
+            "(:inicioCriacao IS NULL OR e.dataCriacao >= :inicioCriacao) AND " +
+            "(:fimCriacao IS NULL OR e.dataCriacao <= :fimCriacao)")
+    Page<Equipamento> findActivesWithFilters(
+            @Param("id") Long id, @Param("nome") String nome, @Param("categoriaId") Long categoriaId,
+            @Param("inicioCriacao") LocalDateTime inicioCriacao, @Param("fimCriacao") LocalDateTime fimCriacao,
+            Pageable pageable);
 }

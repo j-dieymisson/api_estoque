@@ -17,30 +17,28 @@ setTimeout(() => {
 
         // --- Funções de Busca e Renderização ---
         async function carregarEquipamentos(page = 0) {
-            currentPage = page;
-            const isAdminOuGestor = currentUserRole === 'ADMIN'  || currentUserRole === 'GESTOR';
-            const colspan = isAdminOuGestor ? 6 : 5;
-            corpoTabela.innerHTML = `<tr><td colspan="${colspan}" class="text-center">A carregar...</td></tr>`;
+                    currentPage = page;
+                    const colspan = (currentUserRole === 'ADMIN' || currentUserRole === 'GESTOR') ? 6 : 5;
+                    corpoTabela.innerHTML = `<tr><td colspan="${colspan}" class="text-center">A carregar...</td></tr>`;
 
+                    const params = {
+                        page, size: 10, sort: 'nome,asc',
+                        id: filtroId.value || null,
+                        nome: filtroNome.value || null,
+                        categoriaId: filtroCategoria.value || null,
+                    };
+                    Object.keys(params).forEach(key => (params[key] == null || params[key] === '') && delete params[key]);
 
-           // Decide qual endpoint chamar com base no cargo
-            const endpoint = isAdminOuGestor ? '/equipamentos/todos' : '/equipamentos';
-
-            const params = {
-                 page, size: 10, sort: 'nome,asc',
-                 id: filtroId.value || null,
-                 nome: filtroNome.value || null,
-                 categoriaId: filtroCategoria.value || null
-            };
-            Object.keys(params).forEach(key => (params[key] == null || params[key] === '') && delete params[key]);
-            try {
-                const response = await apiClient.get(endpoint, { params });
-                renderizarTabelaEquipamentos(response.data.content);
-                renderizarPaginacao(response.data);
-            } catch (error) {
-                corpoTabela.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-danger">Falha ao carregar equipamentos.</td></tr>`;
-            }
-        }
+                    try {
+                        // A chamada agora é sempre para o mesmo endpoint. A "magia" acontece no back-end.
+                        const response = await apiClient.get('/equipamentos', { params });
+                        renderizarTabelaEquipamentos(response.data.content);
+                        renderizarPaginacao(response.data);
+                    } catch (error) {
+                        console.error("Erro ao carregar equipamentos:", error);
+                        corpoTabela.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-danger">Falha ao carregar equipamentos.</td></tr>`;
+                    }
+                }
 
         async function carregarCategorias() {
             try {

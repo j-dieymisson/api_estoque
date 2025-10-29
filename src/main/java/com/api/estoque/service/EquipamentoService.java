@@ -59,6 +59,7 @@ public class EquipamentoService {
 
     @Transactional(readOnly = true)
     public Page<EquipamentoResponse> listarTodos(
+            Usuario usuarioLogado,
             Optional<String> nome,
             Optional<Long> categoriaId,
             Optional<Long> id,
@@ -70,15 +71,19 @@ public class EquipamentoService {
         LocalDateTime inicio = dataInicioCriacao.map(LocalDate::atStartOfDay).orElse(null);
         LocalDateTime fim = dataFimCriacao.map(d -> d.atTime(23, 59, 59)).orElse(null);
 
-        // Chama o novo método único, passando null para os filtros não usados
-        Page<Equipamento> equipamentos = equipamentoRepository.findWithFilters(
-                id.orElse(null),
-                nome.orElse(null),
-                categoriaId.orElse(null),
-                inicio,
-                fim,
-                pageable
-        );
+        Page<Equipamento> equipamentos;
+        String cargo = usuarioLogado.getCargo().getNome();
+
+        // LÓGICA DE DECISÃO AQUI
+        if ("ADMIN".equals(cargo) || "GESTOR".equals(cargo)) {
+            // Se for Admin ou Gestor, chama a query que busca TODOS
+            equipamentos = equipamentoRepository.findAllWithFilters(
+                    id.orElse(null), nome.orElse(null), categoriaId.orElse(null), inicio, fim, pageable);
+        } else {
+            // Se for Colaborador, chama a query que busca apenas os ATIVOS
+            equipamentos = equipamentoRepository.findActivesWithFilters(
+                    id.orElse(null), nome.orElse(null), categoriaId.orElse(null), inicio, fim, pageable);
+        }
 
         return equipamentos.map(this::mapToEquipamentoResponse);
     }
