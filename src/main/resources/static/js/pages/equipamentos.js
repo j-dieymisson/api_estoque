@@ -64,8 +64,8 @@ setTimeout(() => {
                 if (isAdminOuGestor) {
                  const botaoEditar = `<button class="btn btn-sm btn-outline-primary btn-editar" data-id="${eq.id}" title="Editar/Ajustar Stock"><i class="bi bi-pencil-fill"></i></button>`;
                     const botaoAtivarDesativar = eq.ativo
-                                    ? `<button class="btn btn-sm btn-outline-secondary btn-desativar ms-1" data-id="${eq.id}" title="Desativar"><i class="bi bi-toggle-off"></i></button>`
-                                    : `<button class="btn btn-sm btn-outline-success btn-ativar ms-1" data-id="${eq.id}" title="Ativar"><i class="bi bi-toggle-on"></i></button>`;
+                                    ? `<button class="btn btn-sm btn-outline-success btn-desativar ms-1" data-id="${eq.id}" title="Desativar"><i class="bi bi-toggle-off"></i></button>`
+                                    : `<button class="btn btn-sm btn-outline-danger btn-ativar ms-1" data-id="${eq.id}" title="Ativar"><i class="bi bi-toggle-on"></i></button>`;
 
                                 acoesHtml = `<td>${botaoEditar} ${botaoAtivarDesativar}</td>`;
                             }

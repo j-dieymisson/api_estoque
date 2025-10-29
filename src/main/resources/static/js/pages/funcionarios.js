@@ -53,7 +53,9 @@ setTimeout(() => {
             usuarios.forEach(user => {
                 const tr = document.createElement('tr');
                 const statusBadge = `<span class="badge ${user.ativo ? 'bg-success' : 'bg-danger'}">${user.ativo ? 'Ativo' : 'Inativo'}</span>`;
-                const acoesHtml = `<button class="btn btn-sm btn-outline-warning btn-editar" data-id="${user.id}"><i class="bi bi-pencil-fill"></i></button> <button class="btn btn-sm btn-outline-secondary btn-senha ms-1" data-id="${user.id}" data-nome="${user.nome}"><i class="bi bi-key-fill"></i></button> ${user.ativo ? `<button class="btn btn-sm btn-outline-danger btn-desativar ms-1" data-id="${user.id}"><i class="bi bi-toggle-off"></i></button>` : `<button class="btn btn-sm btn-outline-success btn-ativar ms-1" data-id="${user.id}"><i class="bi bi-toggle-on"></i></button>`}`;
+                const acoesHtml = `<button class="btn btn-sm btn-outline-primary btn-editar" data-id="${user.id}"><i class="bi bi-pencil-fill"></i></button>
+                                    <button class="btn btn-sm btn-outline-secondary btn-senha ms-1" data-id="${user.id}" data-nome="${user.nome}"><i class="bi bi-key-fill"></i></button>
+                                    ${user.ativo ? `<button class="btn btn-sm btn-outline-success btn-desativar ms-1" data-id="${user.id}"><i class="bi bi-toggle-off"></i></button>` : `<button class="btn btn-sm btn-outline-danger btn-ativar ms-1" data-id="${user.id}"><i class="bi bi-toggle-on"></i></button>`}`;
                 tr.innerHTML = `<td>${user.id}</td><td>${user.nome}</td><td>${user.email}</td><td>${user.nomeCargo}</td><td>${statusBadge}</td><td>${acoesHtml}</td>`;
                 corpoTabela.appendChild(tr);
             });

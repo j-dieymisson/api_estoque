@@ -211,6 +211,7 @@ public class UsuarioService {
                 usuario.getNome(),
                 usuario.getEmail(),
                 usuario.getCargo().getNome(), // Pega o nome do objeto Cargo associado
+                usuario.getCargo().getId(),
                 usuario.isAtivo()
         );
     }
