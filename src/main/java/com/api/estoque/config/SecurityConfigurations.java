@@ -44,7 +44,6 @@ public class SecurityConfigurations {
 
 
                         // ===== Regras de Gestor/Admin =====
-                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/cancelar").hasRole("ADMIN") // Vamos proteger este também
                         .requestMatchers(HttpMethod.POST, "/solicitacoes/*/devolver-tudo").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers("/historico/**").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers(HttpMethod.POST, "/equipamentos", "/categorias").hasAnyRole("ADMIN", "GESTOR")
