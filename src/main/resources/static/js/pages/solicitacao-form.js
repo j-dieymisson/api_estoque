@@ -27,6 +27,7 @@ setTimeout(() => {
         const areaAdicionarQuantidade = document.getElementById('area-adicionar-quantidade');
         const itemSelecionadoNome = document.getElementById('item-selecionado-nome');
         const itemSelecionadoDisponivel = document.getElementById('item-selecionado-disponivel');
+        const itemSelecionadoDescricao = document.getElementById('item-selecionado-descricao');
         const itemQuantidadeInput = document.getElementById('item-quantidade');
         const btnConfirmarAdicionarItem = document.getElementById('btn-confirmar-adicionar-item');
 
@@ -80,6 +81,7 @@ setTimeout(() => {
             itemSelecionadoParaAdicionar = equipamento;
             itemSelecionadoNome.textContent = equipamento.nome;
             itemSelecionadoDisponivel.textContent = equipamento.quantidadeDisponivel;
+            itemSelecionadoDescricao.textContent = equipamento.descricao || 'N/A';
             itemQuantidadeInput.max = equipamento.quantidadeDisponivel;
             areaAdicionarQuantidade.classList.remove('d-none');
         }
@@ -120,51 +122,74 @@ setTimeout(() => {
         }
 
         async function enviarFormulario(endpoint, metodo = 'post') {
-            const data = {
-                justificativa: document.getElementById('solicitacao-justificativa').value,
-                dataPrevisaoEntrega: document.getElementById('solicitacao-data-entrega').value || null,
-                dataPrevisaoDevolucao: document.getElementById('solicitacao-data-devolucao').value || null,
-                itens: itensDaSolicitacao.map(item => ({ equipamentoId: item.equipamentoId, quantidade: item.quantidade }))
-            };
+                    // 1. Capturamos os valores dos campos
+                    const dataPrevisaoEntrega = document.getElementById('solicitacao-data-entrega').value;
+                    const dataPrevisaoDevolucao = document.getElementById('solicitacao-data-devolucao').value;
+                    const justificativa = document.getElementById('solicitacao-justificativa').value;
 
-            if (endpoint === '/solicitacoes') {
-                            if (!data.dataPrevisaoEntrega || !data.dataPrevisaoDevolucao) {
-                                showToast('As datas de previsão são obrigatórias para enviar a solicitação.', 'Erro de Validação', true);
-                                return; // Para a execução
-                            }
+                    // 2. Montamos o objeto de dados
+                    const data = {
+                        justificativa: justificativa,
+                        dataPrevisaoEntrega: dataPrevisaoEntrega || null,
+                        dataPrevisaoDevolucao: dataPrevisaoDevolucao || null,
+                        itens: itensDaSolicitacao.map(item => ({ equipamentoId: item.equipamentoId, quantidade: item.quantidade }))
+                    };
 
-                            const hoje = new Date();
-                            hoje.setHours(0, 0, 0, 0); // Zera a hora para comparar apenas a data
+                    // 3. Validação de Itens
+                    if (itensDaSolicitacao.length === 0) {
+                        showToast('Adicione pelo menos um item.', 'Erro', true);
+                        return;
+                    }
 
-                            // Adiciona 'T00:00:00' para evitar problemas de fuso horário na conversão
-                            const entrega = new Date(data.dataPrevisaoEntrega + 'T00:00:00');
-                            const devolucao = new Date(data.dataPrevisaoDevolucao + 'T00:00:00');
+                    // ===============================================================
+                    // NOVA LÓGICA DE VALIDAÇÃO DE DATAS
+                    // ===============================================================
 
-                            if (entrega < hoje) {
-                                showToast('A data de previsão de entrega não pode ser no passado.', 'Erro de Validação', true);
-                                return; // Para a execução
-                            }
+                    // 4. Validação de Datas (Obrigatoriedade)
+                    // Esta validação só corre para o envio FINAL de uma solicitação
+                    if (endpoint === '/solicitacoes' && (!data.dataPrevisaoEntrega || !data.dataPrevisaoDevolucao)) {
+                        showToast('As datas de previsão são obrigatórias para enviar a solicitação.', 'Erro de Validação', true);
+                        return;
+                    }
 
-                            if (devolucao < hoje) {
-                                 showToast('A data de previsão de devolução não pode ser no passado.', 'Erro de Validação', true);
-                                return; // Para a execução
-                            }
+                    // 5. Validação de Datas (Passado e Ordem)
+                    // Esta validação corre SEMPRE que uma data for preenchida
+                    const hoje = new Date();
+                    hoje.setHours(0, 0, 0, 0); // Zera a hora para comparar apenas a data
 
-                            if (devolucao < entrega) {
-                                showToast('A data de devolução não pode ser anterior à de entrega.', 'Erro de Validação', true);
-                                return; // Para a execução
-                            }
+                    if (data.dataPrevisaoEntrega) {
+                        const entrega = new Date(data.dataPrevisaoEntrega + 'T00:00:00');
+                        if (entrega < hoje) {
+                            showToast('A data de previsão de entrega não pode ser no passado.', 'Erro de Validação', true);
+                            return;
                         }
-            if (itensDaSolicitacao.length === 0) { showToast('Adicione pelo menos um item.', 'Erro', true); return; }
-            if (endpoint === '/solicitacoes' && (!data.dataPrevisaoEntrega || !data.dataPrevisaoDevolucao)) {
-                showToast('As datas de previsão são obrigatórias para enviar a solicitação.', 'Erro', true); return;
-            }
-            try {
-                await apiClient[metodo](endpoint, data);
-                showToast('Operação realizada com sucesso!', 'Sucesso');
-                window.navigateTo('solicitacoes.html');
-            } catch (error) { showToast(error.response?.data?.message || 'Não foi possível salvar.', 'Erro', true); }
-        }
+                    }
+                    if (data.dataPrevisaoDevolucao) {
+                        const devolucao = new Date(data.dataPrevisaoDevolucao + 'T00:00:00');
+                        if (devolucao < hoje) {
+                            showToast('A data de previsão de devolução não pode ser no passado.', 'Erro de Validação', true);
+                            return;
+                        }
+                    }
+                    if (data.dataPrevisaoEntrega && data.dataPrevisaoDevolucao) {
+                        const entrega = new Date(data.dataPrevisaoEntrega + 'T00:00:00');
+                        const devolucao = new Date(data.dataPrevisaoDevolucao + 'T00:00:00');
+                        if (devolucao < entrega) {
+                            showToast('A data de devolução não pode ser anterior à de entrega.', 'Erro de Validação', true);
+                            return;
+                        }
+                    }
+                    // ===============================================================
+
+                    // 6. Envio para a API
+                    try {
+                        await apiClient[metodo](endpoint, data);
+                        showToast('Operação realizada com sucesso!', 'Sucesso');
+                        window.navigateTo('solicitacoes.html');
+                    } catch (error) {
+                        showToast(error.response?.data?.message || 'Não foi possível salvar.', 'Erro', true);
+                    }
+                }
 
         // --- Inicialização e Event Listeners ---
         async function init() {
@@ -208,16 +233,34 @@ setTimeout(() => {
             document.getElementById('btn-enviar-rascunho').addEventListener('click', () => {
                             showConfirmModal('Enviar Solicitação', 'O rascunho será convertido numa solicitação pendente. Deseja continuar?', async () => {
                                  // Validação de datas
-                                 if (!document.getElementById('solicitacao-data-entrega').value || !document.getElementById('solicitacao-data-devolucao').value) {
-                                     showToast('Para enviar a solicitação, as datas de previsão são obrigatórias.', 'Erro', true);
-                                     return;
+                                 const dataPrevisaoEntrega = document.getElementById('solicitacao-data-entrega').value;
+                                 const dataPrevisaoDevolucao = document.getElementById('solicitacao-data-devolucao').value;
+
+                                 if (!dataPrevisaoEntrega || !dataPrevisaoDevolucao) {
+                                      showToast('Para enviar a solicitação, as datas de previsão são obrigatórias.', 'Erro', true); return;
                                  }
+
+                                 const hoje = new Date();
+                                 hoje.setHours(0, 0, 0, 0);
+                                 const entrega = new Date(dataPrevisaoEntrega + 'T00:00:00');
+                                 const devolucao = new Date(dataPrevisaoDevolucao + 'T00:00:00');
+
+                                 if (entrega < hoje) {
+                                     showToast('A data de previsão de entrega não pode ser no passado.', 'Erro de Validação', true); return;
+                                 }
+                                 if (devolucao < hoje) {
+                                      showToast('A data de previsão de devolução não pode ser no passado.', 'Erro de Validação', true); return;
+                                 }
+                                 if (devolucao < entrega) {
+                                     showToast('A data de devolução não pode ser anterior à de entrega.', 'Erro de Validação', true); return;
+                                 }
+
                                  try {
                                     // Passo 1: Salva as últimas alterações no rascunho (continua a ser PUT, como antes)
                                     await apiClient.put(`/rascunhos/${rascunhoId}`, {
                                         justificativa: document.getElementById('solicitacao-justificativa').value,
                                         dataPrevisaoEntrega: document.getElementById('solicitacao-data-entrega').value || null,
-                                        dataPrevisaoDevolucão: document.getElementById('solicitacao-data-devolucao').value || null,
+                                        dataPrevisaoDevolucao: document.getElementById('solicitacao-data-devolucao').value || null,
                                         itens: itensDaSolicitacao.map(item => ({ equipamentoId: item.equipamentoId, quantidade: item.quantidade }))
                                     });
 
