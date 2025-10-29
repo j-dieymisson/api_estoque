@@ -100,6 +100,14 @@ body {
         white-space: nowrap;
 }
 
+/* NOVA CLASSE AJUDANTE PARA TRUNCAMENTO DE TEXTO EM TABELAS   */
+.truncate-text {
+    max-width: 200px; /* Define uma largura máxima para a coluna */
+    white-space: nowrap; /* Impede a quebra de linha */
+    overflow: hidden; /* Esconde o texto que transborda */
+    text-overflow: ellipsis; /* Adiciona o "..." no final */
+}
+
 /* --- RESPONSIVIDADE PARA MOBILE --- */
 
 @media (max-width: 767.98px) {
@@ -121,4 +129,9 @@ body {
      .table-responsive .table th {
          padding: 0.20rem 0.2rem;
      }
+
+     /* Em ecrãs pequenos, podemos ser ainda mais agressivos */
+     .truncate-text {
+             max-width: 120px;
+         }
  }

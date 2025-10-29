@@ -72,8 +72,8 @@ setTimeout(() => {
 
                                      tr.innerHTML = `
                                          <td>${eq.id}</td>
-                                         <td>${eq.nome}</td>
-                                         <td>${eq.nomeCategoria}</td>
+                                         <td class="truncate-text" title="${eq.nome}">${eq.nome}</td>
+                                         <td class="truncate-text" title="${eq.nomeCategoria}">${eq.nomeCategoria}</td>
                                          <td>${eq.quantidadeTotal}</td>
                                          <td>${eq.quantidadeDisponivel}</td>
                                          ${acoesHtml}
