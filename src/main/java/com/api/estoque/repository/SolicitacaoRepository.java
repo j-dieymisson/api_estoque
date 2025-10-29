@@ -50,14 +50,15 @@ public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> 
     // Conta todas as solicitações com um status específico dentro de um intervalo de datas
     long countByStatusAndDataSolicitacaoBetween(StatusSolicitacao status, LocalDateTime inicio, LocalDateTime fim);
 
-    // Substitua o seu método findAdminView por este:
     @Query("SELECT s FROM Solicitacao s WHERE " +
-            "((s.status != com.api.estoque.model.StatusSolicitacao.RASCUNHO) OR (s.usuario.id = :usuarioId)) AND " + // <-- Nome do parâmetro alterado para :usuarioId
+            "((s.status != com.api.estoque.model.StatusSolicitacao.RASCUNHO) OR (s.usuario.id = :usuarioLogadoId)) AND " +
+            "(:usuarioId IS NULL OR s.usuario.id = :usuarioId) AND " + // <-- FILTRO ADICIONADO
             "(:status IS NULL OR s.status = :status) AND " +
             "(:inicio IS NULL OR s.dataSolicitacao >= :inicio) AND " +
             "(:fim IS NULL OR s.dataSolicitacao <= :fim)")
     Page<Solicitacao> findAdminView(
-            @Param("usuarioId") Long usuarioId, // <-- Nome do parâmetro alterado aqui também
+            @Param("usuarioLogadoId") Long usuarioLogadoId,
+            @Param("usuarioId") Long usuarioId, // <-- PARÂMETRO ADICIONADO
             @Param("status") StatusSolicitacao status,
             @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim,

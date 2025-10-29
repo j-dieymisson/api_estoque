@@ -358,6 +358,7 @@ public class SolicitacaoService {
     @Transactional(readOnly = true)
     public Page<SolicitacaoResponse> listarTodasSolicitacoes(
             Usuario usuarioLogado, // Recebe o objeto Usuario
+            Optional<Long> usuarioId,
             Optional<StatusSolicitacao> status,
             Optional<LocalDate> dataInicio,
             Optional<LocalDate> dataFim,
@@ -369,6 +370,7 @@ public class SolicitacaoService {
         // A chamada agora inclui o ID do utilizador, correspondendo à nova assinatura
         Page<Solicitacao> solicitacoes = solicitacaoRepository.findAdminView(
                 usuarioLogado.getId(),
+                usuarioId.orElse(null),
                 status.orElse(null),
                 inicio,
                 fim,

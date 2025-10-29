@@ -84,12 +84,14 @@ public class SolicitacaoController {
     public ResponseEntity<Page<SolicitacaoResponse>> listar(
             @AuthenticationPrincipal Usuario usuarioLogado,
             @PageableDefault(size = 5, sort = {"dataSolicitacao"}, direction = Sort.Direction.DESC) Pageable paginacao,
+            @RequestParam(required = false) Optional<Long> usuarioId,
             @RequestParam(required = false) Optional<StatusSolicitacao> status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim
     ) {
         Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarTodasSolicitacoes(
                 usuarioLogado,
+                usuarioId,
                 status, dataInicio, dataFim, paginacao
         );
         return ResponseEntity.ok(paginaDeSolicitacoes);
