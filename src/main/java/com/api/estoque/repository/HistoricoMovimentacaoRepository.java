@@ -54,4 +54,7 @@ public interface HistoricoMovimentacaoRepository extends JpaRepository<Historico
             Pageable pageable
     );
 
+    // Busca as 5 movimentações mais recentes que NÃO SEJAM do tipo especificado
+    List<HistoricoMovimentacao> findTop5ByTipoMovimentacaoNotOrderByDataMovimentacaoDesc(TipoMovimentacao tipo);
+
 }

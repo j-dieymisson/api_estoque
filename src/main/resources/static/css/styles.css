@@ -100,12 +100,27 @@ body {
         white-space: nowrap;
 }
 
-/* NOVA CLASSE AJUDANTE PARA TRUNCAMENTO DE TEXTO EM TABELAS   */
+/* ---TABELAS--- */
 .truncate-text {
     max-width: 200px; /* Define uma largura máxima para a coluna */
     white-space: nowrap; /* Impede a quebra de linha */
     overflow: hidden; /* Esconde o texto que transborda */
     text-overflow: ellipsis; /* Adiciona o "..." no final */
+}
+
+/* ---FEED DE ATIVIDADES--- */
+#feed-atividades {
+    /* Esta altura é uma estimativa para 5 itens de lista.
+       Pode ajustar este valor (ex: 350px) se achar melhor. */
+    min-height: 320px;
+}
+
+/* Quando estiver a carregar, centraliza o spinner dentro desse espaço */
+#feed-atividades li.text-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
 }
 
 /* --- RESPONSIVIDADE PARA MOBILE --- */

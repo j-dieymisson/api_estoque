@@ -1,5 +1,6 @@
 package com.api.estoque.controller;
 
+import com.api.estoque.dto.response.AtividadeRecenteResponse;
 import com.api.estoque.model.DashboardWidget;
 import com.api.estoque.model.Usuario;
 import com.api.estoque.service.DashboardService;
@@ -62,5 +63,11 @@ public class DashboardController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(preferencias);
+    }
+
+    @GetMapping("/feed-atividades")
+    public ResponseEntity<List<AtividadeRecenteResponse>> getFeedAtividades() {
+        List<AtividadeRecenteResponse> feed = dashboardService.getFeedAtividades();
+        return ResponseEntity.ok(feed);
     }
 }

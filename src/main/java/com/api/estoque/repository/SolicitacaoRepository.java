@@ -79,4 +79,7 @@ public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> 
             Pageable pageable
     );
 
+    // Busca as 5 solicitações mais recentes que estão com status PENDENTE
+    List<Solicitacao> findTop5ByStatusOrderByDataSolicitacaoDesc(StatusSolicitacao status);
+
 }

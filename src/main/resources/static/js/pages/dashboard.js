@@ -49,7 +49,7 @@
                     <div class="card-body">
                         <div class="row no-gutters align-items-center">
                             <div class="col me-2">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">${details.title}</div>
+                                <div class="text-xs font-weight-bold text-gray text-uppercase mb-1">${details.title}</div>
                                 <div class="h5 mb-0 font-weight-bold text-gray-800">${value}</div>
                             </div>
                             <div class="col-auto">
@@ -63,57 +63,56 @@
     }
 
     // Formata uma entrada de histórico para uma string legível
-        function formatarEntradaFeed(historico) {
-            const data = new Date(historico.dataMovimentacao).toLocaleString('pt-BR');
-            const responsavel = historico.usuarioResponsavel;
-            const tipo = historico.tipoMovimentacao;
+        function formatarEntradaFeed(atividade) {
+            const data = new Date(atividade.data).toLocaleString('pt-BR');
+            const descricao = atividade.descricao;
+            let icon = 'bi-bell-fill';
 
-            // Formato simples sugerido por si
-            if (tipo === 'SAIDA' && historico.solicitacaoId) {
-                return `<strong>${data}:</strong> ${responsavel} fez a <strong>${tipo}</strong> (Solicitação ${historico.solicitacaoId}).`;
+            // Define o ícone com base no tipo
+            if (atividade.tipo === 'SOLICITACAO_PENDENTE') {
+                icon = 'bi-file-earmark-plus-fill text-secondary';
+            } else if (atividade.tipo === 'SAIDA') {
+                icon = 'bi-arrow-up-right-square-fill text-secondary';
+            } else if (atividade.tipo === 'DEVOLUCAO') {
+                icon = 'bi-arrow-down-left-square-fill text';
             }
-            if (tipo === 'DEVOLUCAO' && historico.solicitacaoId) {
-                return `<strong>${data}:</strong> ${responsavel} fez a <strong>${tipo}</strong> de ${Math.abs(historico.quantidade)}x ${historico.equipamentoNome} (Solicitação #${historico.solicitacaoId}).`;
-            }
-            if (tipo === 'AJUSTE_MANUAL') {
-                return `<strong>${data}:</strong> ${responsavel} fez um <strong>AJUSTE MANUAL</strong> de ${historico.quantidade} no stock de ${historico.equipamentoNome}.`;
-            }
-            // Fallback para outros tipos
-            return `<strong>${data}:</strong> Movimentação de ${historico.equipamentoNome} por ${responsavel}.`;
+
+            // Retorna o HTML completo para o item da lista
+            return `<li class="list-group-item d-flex align-items-center"><i class="bi ${icon} h5 me-3"></i><div>${descricao}<div class="text-muted small">${data}</div></div></li>`;
         }
 
-        // Busca os dados da API e renderiza o feed
-        async function carregarFeedDeAtividades() {
-            if (!feedAtividadesContainer) return;
+      // Busca os dados da API e renderiza o feed
+          async function carregarFeedDeAtividades() {
+              if (!feedAtividadesContainer) return;
 
-            try {
-                const response = await apiClient.get('/historico/movimentacoes', {
-                    params: {
-                        size: 5, // Pede apenas os 5 registos mais recentes
-                        sort: 'dataMovimentacao,desc'
-                    }
-                });
+              // Adiciona o seletor para o novo botão de atualizar
+              const btnAtualizarFeed = document.getElementById('btn-atualizar-feed');
+              if(btnAtualizarFeed) {
+                  btnAtualizarFeed.addEventListener('click', carregarFeedDeAtividades);
+              }
 
-                const atividades = response.data.content;
-                feedAtividadesContainer.innerHTML = ''; // Limpa o "loading"
+              feedAtividadesContainer.innerHTML = '<li class="list-group-item text-center">A carregar atividades...</li>';
+              try {
 
-                if (atividades.length === 0) {
-                    feedAtividadesContainer.innerHTML = '<li class="list-group-item">Nenhuma atividade recente.</li>';
-                    return;
-                }
+                  const response = await apiClient.get('/dashboard/feed-atividades');
 
-                atividades.forEach(atividade => {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item';
-                    li.innerHTML = formatarEntradaFeed(atividade);
-                    feedAtividadesContainer.appendChild(li);
-                });
+                  const atividades = response.data;
+                  feedAtividadesContainer.innerHTML = ''; // Limpa o "loading"
 
-            } catch (error) {
-                console.error("Erro ao carregar o feed de atividades:", error);
-                feedAtividadesContainer.innerHTML = '<li class="list-group-item text-danger">Não foi possível carregar as atividades.</li>';
-            }
-        }
+                  if (atividades.length === 0) {
+                      feedAtividadesContainer.innerHTML = '<li class="list-group-item">Nenhuma atividade recente.</li>';
+                      return;
+                  }
+
+                  atividades.forEach(atividade => {
+                      feedAtividadesContainer.innerHTML += formatarEntradaFeed(atividade);
+                  });
+
+              } catch (error) {
+                  console.error("Erro ao carregar o feed de atividades:", error);
+                  feedAtividadesContainer.innerHTML = '<li class="list-group-item text-danger">Não foi possível carregar as atividades.</li>';
+              }
+          }
 
     // Função para renderizar os cartões do dashboard com base nos dados da API
     async function renderizarWidgets() {

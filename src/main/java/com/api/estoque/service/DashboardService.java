@@ -1,9 +1,7 @@
 package com.api.estoque.service;
 
-import com.api.estoque.model.DashboardWidget;
-import com.api.estoque.model.PreferenciaDashboard;
-import com.api.estoque.model.StatusSolicitacao;
-import com.api.estoque.model.Usuario;
+import com.api.estoque.dto.response.AtividadeRecenteResponse;
+import com.api.estoque.model.*;
 import com.api.estoque.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,11 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,17 +20,21 @@ public class DashboardService {
     private final EquipamentoRepository equipamentoRepository;
     private final PreferenciaDashboardRepository preferenciaRepository;
     private final CategoriaRepository categoriaRepository;
+    private final HistoricoMovimentacaoRepository historicoMovimentacaoRepository;
+
 
     public DashboardService(UsuarioRepository usuarioRepository,
                             SolicitacaoRepository solicitacaoRepository,
                             EquipamentoRepository equipamentoRepository,
                             PreferenciaDashboardRepository preferenciaRepository,
-                            CategoriaRepository categoriaRepository) {
+                            CategoriaRepository categoriaRepository,
+                            HistoricoMovimentacaoRepository historicoMovimentacaoRepository) {
         this.usuarioRepository = usuarioRepository;
         this.solicitacaoRepository = solicitacaoRepository;
         this.equipamentoRepository = equipamentoRepository;
         this.preferenciaRepository = preferenciaRepository;
         this.categoriaRepository = categoriaRepository;
+        this.historicoMovimentacaoRepository = historicoMovimentacaoRepository;
     }
 
     /**
@@ -126,6 +124,64 @@ public class DashboardService {
     public List<String> listarWidgetsDisponiveis() {
         return Arrays.stream(DashboardWidget.values())
                 .map(Enum::name)
+                .collect(Collectors.toList());
+    }
+
+    // NOVO MÉTODO PARA O FEED DE ATIVIDADES
+    @Transactional(readOnly = true)
+    public List<AtividadeRecenteResponse> getFeedAtividades() {
+        // 1. Criamos a nossa lista final que irá combinar tudo
+        List<AtividadeRecenteResponse> feedCompleto = new ArrayList<>();
+
+        // 2. Buscamos as 5 solicitações pendentes mais recentes
+        List<Solicitacao> pendentes = solicitacaoRepository
+                .findTop5ByStatusOrderByDataSolicitacaoDesc(StatusSolicitacao.PENDENTE);
+
+        // 3. Mapeamos as pendentes para o nosso DTO de resposta
+        List<AtividadeRecenteResponse> atividadesPendentes = pendentes.stream()
+                .map(sol -> new AtividadeRecenteResponse(
+                        sol.getId(),
+                        "SOLICITACAO_PENDENTE",
+                        sol.getUsuario().getNome() + " criou uma nova solicitação.",
+                        sol.getDataSolicitacao()
+                ))
+                .collect(Collectors.toList());
+
+        feedCompleto.addAll(atividadesPendentes);
+
+        // 4. Buscamos as 5 movimentações mais recentes (ignorando ajustes)
+        List<HistoricoMovimentacao> movimentacoes = historicoMovimentacaoRepository
+                .findTop5ByTipoMovimentacaoNotOrderByDataMovimentacaoDesc(TipoMovimentacao.AJUSTE_MANUAL);
+
+        // 5. Mapeamos as movimentações para o nosso DTO de resposta
+        List<AtividadeRecenteResponse> atividadesMovimentacoes = movimentacoes.stream()
+                .map(mov -> {
+                    String tipo = mov.getTipoMovimentacao().name(); // SAIDA ou DEVOLUCAO
+                    String descricao = "";
+
+                    // Criamos a descrição formatada como você pediu
+                    if (tipo.equals("SAIDA")) {
+                        descricao = mov.getUsuarioResponsavel().getNome() + " fez a SAÍDA (Solicitação #" + mov.getSolicitacao().getId() + ").";
+                    } else if (tipo.equals("DEVOLUCAO")) {
+                        descricao = mov.getUsuarioResponsavel().getNome() + " fez uma DEVOLUÇÃO (Solicitação #" + mov.getSolicitacao().getId() + ").";
+                    }
+
+                    return new AtividadeRecenteResponse(
+                            mov.getSolicitacao().getId(),
+                            tipo,
+                            descricao,
+                            mov.getDataMovimentacao()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        feedCompleto.addAll(atividadesMovimentacoes);
+
+        // 6. Ordenamos a lista combinada pela data (do mais recente para o mais antigo)
+        //    e pegamos apenas os 5 itens mais recentes no total.
+        return feedCompleto.stream()
+                .sorted(Comparator.comparing(AtividadeRecenteResponse::data).reversed())
+                .limit(5)
                 .collect(Collectors.toList());
     }
 }
