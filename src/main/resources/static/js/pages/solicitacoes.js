@@ -71,7 +71,7 @@ setTimeout(() => {
             const endpoint = isAdminOuGestor ? '/solicitacoes' : '/solicitacoes/minhas';
 
             const params = {
-                page, size: 5, sort: 'dataSolicitacao,desc',
+                page, size: 10, sort: 'dataSolicitacao,desc',
                 status: filtroStatusSelect.value || null,
                 dataInicio: filtroDataInicio.value || null,
                 dataFim: filtroDataFim.value || null,

@@ -123,6 +123,35 @@ body {
     min-height: 300px;
 }
 
+
+.card-body-table-wrapper {
+    /* Define uma altura mínima para 10 itens + cabeçalho + paginação */
+    min-height: 650px;
+
+    /* Ativa o Flexbox */
+    display: flex;
+    flex-direction: column; /* Organiza os itens em coluna */
+}
+
+.card-body-table-wrapper .table-responsive {
+    /* Diz à tabela para "esticar" e ocupar o espaço disponível */
+    flex-grow: 1;
+}
+
+.card-body-table-wrapper nav {
+    /* "Empurra" a paginação para o fundo do card-body */
+    margin-top: auto;
+}
+
+/* Centraliza a mensagem "A carregar..." */
+.card-body-table-wrapper #corpo-tabela-equipamentos td[colspan],
+.card-body-table-wrapper #corpo-tabela-solicitacoes td[colspan],
+.card-body-table-wrapper #corpo-tabela-funcionarios td[colspan] {
+    /* Define a altura da célula para preencher o espaço */
+    height: 520px;
+    vertical-align: middle;
+}
+
 /* --- RESPONSIVIDADE PARA MOBILE --- */
 
 @media (max-width: 767.98px) {

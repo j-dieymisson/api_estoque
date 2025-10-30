@@ -33,7 +33,7 @@ setTimeout(() => {
             currentPage = page;
             corpoTabela.innerHTML = '<tr><td colspan="6" class="text-center">A carregar...</td></tr>';
             const nomePesquisado = inputPesquisaNome.value;
-            const params = { page, size: 5, sort: 'nome,asc' };
+            const params = { page, size: 10, sort: 'nome,asc' };
             if (nomePesquisado) params.nome = nomePesquisado;
             try {
                 const response = await apiClient.get('/usuarios', { params });
