@@ -59,8 +59,8 @@ setTimeout(() => {
             Object.keys(params).forEach(key => (params[key] == null || params[key] === '') && delete params[key]);
             listaBuscaEquipamentos.innerHTML = '<li class="list-group-item text-center">A buscar...</li>';
             try {
-                const response = await apiClient.get('/equipamentos', { params });
-                const equipamentos = response.data.content;
+                const response = await apiClient.get('/equipamentos/selecao', { params });
+                const equipamentos = response.data;
                 listaBuscaEquipamentos.innerHTML = '';
                 if (equipamentos.length === 0) {
                     listaBuscaEquipamentos.innerHTML = '<li class="list-group-item">Nenhum equipamento encontrado.</li>';

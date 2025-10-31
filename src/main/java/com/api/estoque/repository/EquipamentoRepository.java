@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface EquipamentoRepository extends JpaRepository<Equipamento, Long> {
 
@@ -69,4 +70,10 @@ public interface EquipamentoRepository extends JpaRepository<Equipamento, Long> 
             @Param("id") Long id, @Param("nome") String nome, @Param("categoriaId") Long categoriaId,
             @Param("inicioCriacao") LocalDateTime inicioCriacao, @Param("fimCriacao") LocalDateTime fimCriacao,
             Pageable pageable);
+
+    @Query("SELECT e FROM Equipamento e WHERE e.ativo = true AND e.quantidadeDisponivel > 0 AND " +
+            "(:nome IS NULL OR LOWER(e.nome) LIKE LOWER(CONCAT('%', :nome, '%'))) AND " +
+            "(:categoriaId IS NULL OR e.categoria.id = :categoriaId) " +
+            "ORDER BY e.nome ASC")
+    List<Equipamento> findEquipamentosParaSelecao(@Param("nome") String nome, @Param("categoriaId") Long categoriaId);
 }

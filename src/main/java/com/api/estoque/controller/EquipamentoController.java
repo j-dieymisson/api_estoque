@@ -20,6 +20,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @RestController // Anotação que combina @Controller e @ResponseBody, ideal para APIs REST
@@ -64,6 +65,15 @@ public class EquipamentoController {
                 usuarioLogado, nome, categoriaId, id, dataInicioCriacao, dataFimCriacao, paginacao
         );
         return ResponseEntity.ok(pageDeEquipamentos);
+    }
+
+    @GetMapping("/selecao")
+    public ResponseEntity<List<EquipamentoResponse>> listarParaSelecao(
+            @RequestParam(required = false) Optional<String> nome,
+            @RequestParam(required = false) Optional<Long> categoriaId
+    ) {
+        List<EquipamentoResponse> lista = equipamentoService.listarParaSelecao(nome, categoriaId);
+        return ResponseEntity.ok(lista);
     }
 
     @PutMapping("/{id}")

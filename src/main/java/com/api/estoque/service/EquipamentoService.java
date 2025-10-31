@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class EquipamentoService {
@@ -219,6 +221,21 @@ public class EquipamentoService {
 
         // Reutilizamos o nosso mapeamento para DTOs
         return equipamentosDisponiveis.map(this::mapToEquipamentoResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<EquipamentoResponse> listarParaSelecao(Optional<String> nome, Optional<Long> categoriaId) {
+        // Pega nos valores dos Optionals, ou usa null se estiverem vazios
+        String nomeFiltro = nome.orElse(null);
+        Long categoriaFiltro = categoriaId.orElse(null);
+
+        // Chama o novo método do repositório com ambos os filtros
+        List<Equipamento> equipamentos = equipamentoRepository.findEquipamentosParaSelecao(nomeFiltro, categoriaFiltro);
+
+        // Mapeia a Lista de Entidades para uma Lista de DTOs
+        return equipamentos.stream()
+                .map(this::mapToEquipamentoResponse) // Reutiliza seu método de mapeamento
+                .collect(Collectors.toList());
     }
 
 
