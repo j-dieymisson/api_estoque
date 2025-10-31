@@ -41,6 +41,7 @@ public class SecurityConfigurations {
                         .requestMatchers("/usuarios/**", "/cargos/**", "/dashboard/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/aprovar").hasAnyRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/recusar").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/solicitacoes/pendentes/contagem").hasRole("ADMIN")
 
 
                         // ===== Regras de Gestor/Admin =====

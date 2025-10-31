@@ -132,6 +132,7 @@ setTimeout(() => {
                         await apiClient.post(endpoint);
                         showToast('Ação executada com sucesso!', 'Sucesso');
                         await carregarDetalhes();
+                        window.atualizarNotificacaoPendentes();
                     } catch (error) { showToast(error.response?.data?.message || 'Erro ao executar a ação.', 'Erro', true); }
                 };
 

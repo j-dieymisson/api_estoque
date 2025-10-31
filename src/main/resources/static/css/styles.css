@@ -33,7 +33,6 @@ body {
     flex-grow: 1;
 }
 
-
 /* --- ESTILOS DA SIDEBAR --- */
 
 .sidebar {
@@ -152,6 +151,20 @@ body {
     vertical-align: middle;
 }
 
+.btn-primary {
+    /* Cor de fundo */
+    background-color: #495057;
+
+    /* Cor da borda (geralmente igual ao fundo) */
+    border-color: #343a40;
+
+}
+
+/* É crucial alterar a cor quando o mouse está sobre o botão (hover) */
+.btn-primary:hover {
+    background-color: #343a40;
+    border-color: #495057;
+
 /* --- RESPONSIVIDADE PARA MOBILE --- */
 
 @media (max-width: 767.98px) {
@@ -178,4 +191,4 @@ body {
      .truncate-text {
              max-width: 120px;
          }
- }
+}

@@ -485,6 +485,12 @@ public class SolicitacaoService {
         return mapToSolicitacaoResponse(solicitacaoSalva);
     }
 
+    // NOVO MÉTODO - Leve e focado
+    @Transactional(readOnly = true)
+    public long contarSolicitacoesPendentes() {
+        return solicitacaoRepository.countByStatus(StatusSolicitacao.PENDENTE);
+    }
+
     @Transactional
     public SolicitacaoResponse atualizarSolicitacaoPendente(Long id, SolicitacaoUpdateRequest request) {
         // 1. Busca a solicitação

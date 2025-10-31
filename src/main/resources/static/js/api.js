@@ -62,10 +62,10 @@ function showToast(message, title = 'Notificação', isError = false) {
 
         // Adiciona/remove classes de cor com base no tipo de notificação
         if (isError) {
-            toastElement.classList.add('bg-danger', 'text-white');
+            toastElement.classList.add('bg-gray', 'text-white');
             toastElement.classList.remove('bg-success');
         } else {
-            toastElement.classList.add('bg-success', 'text-white');
+            toastElement.classList.add('bg-gray', 'text-white');
             toastElement.classList.remove('bg-danger');
         }
 

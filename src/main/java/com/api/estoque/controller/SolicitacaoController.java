@@ -2,6 +2,7 @@ package com.api.estoque.controller;
 
 import com.api.estoque.dto.request.SolicitacaoRequest;
 import com.api.estoque.dto.request.SolicitacaoUpdateRequest;
+import com.api.estoque.dto.response.ContagemResponse;
 import com.api.estoque.dto.response.HistoricoStatusSolicitacaoResponse;
 import com.api.estoque.dto.response.SolicitacaoResponse;
 import com.api.estoque.model.StatusSolicitacao;
@@ -177,5 +178,12 @@ public class SolicitacaoController {
                 .map(Enum::name)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(status);
+    }
+
+    // NOVO ENDPOINT - Leve e focado
+    @GetMapping("/pendentes/contagem")
+    public ResponseEntity<ContagemResponse> getContagemPendentes() {
+        long contagem = solicitacaoService.contarSolicitacoesPendentes();
+        return ResponseEntity.ok(new ContagemResponse(contagem));
     }
 }

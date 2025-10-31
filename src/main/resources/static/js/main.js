@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentScript = null;
     let navigationHistory = [];
+    let currentUserRole = null;
 
     window.showConfirmModal = function(title, message, onConfirmCallback) {
             confirmModalTitle.textContent = title;
@@ -72,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             console.log(`A carregar a página parcial: ${pageUrl}`);
-            const response = await fetch(`/app/partials/${pageUrl}`);
+            const response = await fetch(`/app/partials/${  pageUrl}`);
             if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
 
             mainContentArea.innerHTML = await response.text();
@@ -85,6 +86,8 @@ document.addEventListener('DOMContentLoaded', function() {
             currentScript.src = scriptUrl;
             currentScript.onerror = () => console.error(`Erro ao carregar o script: ${scriptUrl}`);
             document.body.appendChild(currentScript);
+
+            window.atualizarNotificacaoPendentes();
 
         } catch (error) {
             console.error("Falha ao carregar o conteúdo da página:", error);
@@ -121,11 +124,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const usuario = response.data;
 
                 if (nomeUsuarioSpan) nomeUsuarioSpan.textContent = usuario.nome;
-                const cargo = usuario.nomeCargo;
 
-                // ===============================================================
-                // NOVA LÓGICA DE VISIBILIDADE DO MENU
-                // ===============================================================
+                                currentUserRole = usuario.nomeCargo; // <-- DEFINA A VARIÁVEL GLOBAL AQUI
+                                const cargo = currentUserRole;
+
                 // Primeiro, mostramos tudo para começar do zero a cada login
                 document.querySelectorAll('.admin-only, .gestor-only').forEach(item => {
                     item.style.display = ''; // Remove o 'display: none'
@@ -144,12 +146,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
                 // Se for ADMIN, não escondemos nada.
-                // ===============================================================
+
 
                 let paginaInicial = 'solicitacoes.html';
 
                 if (cargo === 'ADMIN' ) {
                     paginaInicial = 'dashboard.html';
+                    window.atualizarNotificacaoPendentes();
                 }
 
                 if (cargo === 'GESTOR'){
@@ -179,6 +182,48 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.removeItem('authToken');
         window.location.href = '/login.html';
     }
+
+    // --- LÓGICA DE NOTIFICAÇÃO (AGORA GLOBAL E UNIFICADA) ---
+
+      window.atualizarNotificacaoPendentes = async function() {
+                  if (currentUserRole !== 'ADMIN') {
+                      mostrarNotificacao(false);
+                      return;
+                  }
+
+                  try {
+                      // 1. Chamamos o novo endpoint leve (isto está correto)
+                      const response = await apiClient.get('/solicitacoes/pendentes/contagem', {
+                                          params: {
+                                              _: new Date().getTime() // Adiciona um carimbo de data/hora (ex: ?_=123456789)
+                                          }
+                                      });
+
+                     // 2. Devemos ler a resposta (ex: { contagem: 3 })
+                      const dadosContagem = response.data;
+
+                      // 3. Verificamos o campo 'contagem' (e não 'solicitacoesPendentes')
+                      if (dadosContagem && dadosContagem.contagem > 0) {
+                          mostrarNotificacao(true);
+                      } else {
+                          mostrarNotificacao(false);
+                      }
+                  } catch (error) {
+                      console.error("Erro ao verificar solicitações pendentes:", error);
+                  }
+              }
+
+        // Esta função é agora uma "ajudante" interna, usada pela função acima
+        function mostrarNotificacao(show) {
+            const notificacoes = document.querySelectorAll('.notificacao-pendentes');
+            notificacoes.forEach(notificacao => {
+                if (show) {
+                    notificacao.classList.remove('d-none');
+                } else {
+                    notificacao.classList.add('d-none');
+                }
+            });
+        }
 
     if (btnDesktopToggle && sidebar) {
         btnDesktopToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));

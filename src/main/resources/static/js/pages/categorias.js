@@ -25,15 +25,15 @@ setTimeout(() => {
                     const tr = document.createElement('tr');
                     const statusBadge = cat.ativa ? '<span class="badge bg-success">Ativa</span>' : '<span class="badge bg-secondary">Inativa</span>';
                     const actionButton = cat.ativa
-                        ? `<button class="btn btn-sm btn-outline-danger btn-desativar-categoria" data-id="${cat.id}" title="Desativar"><i class="bi bi-toggle-off"></i></button>`
-                        : `<button class="btn btn-sm btn-outline-success btn-ativar-categoria" data-id="${cat.id}" title="Ativar"><i class="bi bi-toggle-on"></i></button>`;
+                        ? `<button class="btn btn-sm btn-outline-success btn-desativar-categoria" data-id="${cat.id}" title="Desativar"><i class="bi bi-toggle-off"></i></button>`
+                        : `<button class="btn btn-sm btn-outline-danger btn-ativar-categoria" data-id="${cat.id}" title="Ativar"><i class="bi bi-toggle-on"></i></button>`;
 
                     tr.innerHTML = `
                         <td>${cat.id}</td>
                         <td>${cat.nome}</td>
                         <td>${statusBadge}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-warning btn-editar-categoria" data-id="${cat.id}" title="Editar"><i class="bi bi-pencil-fill"></i></button>
+                            <button class="btn btn-sm btn-outline-primary btn-editar-categoria" data-id="${cat.id}" title="Editar"><i class="bi bi-pencil-fill"></i></button>
                             ${actionButton}
                         </td>
                     `;
