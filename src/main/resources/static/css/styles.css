@@ -151,16 +151,27 @@ body {
     vertical-align: middle;
 }
 
+/* --- BOTÕES --- */
+
 .btn-primary {
     /* Cor de fundo */
-    background-color: #495057;
+    --bs-btn-bg: #495057;
 
     /* Cor da borda (geralmente igual ao fundo) */
-    border-color: #343a40;
+    --bs-btn-border-color: #343a40;
+
+    /*Cor para o FUNDO do clique */
+    --bs-btn-active-bg: #495057;
+
+    /* Cor para a BORDA do clique */
+    --bs-btn-active-border-color: #495057;
+
+    /* Cor  para o TEXTO do clique */
+    --bs-btn-active-color: #fff;
 
 }
 
-/* É crucial alterar a cor quando o mouse está sobre o botão (hover) */
+/* Cor (hover) */
 .btn-primary:hover {
     background-color: #343a40;
     border-color: #495057;

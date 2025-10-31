@@ -45,7 +45,6 @@ public class SecurityConfigurations {
 
 
                         // ===== Regras de Gestor/Admin =====
-                        .requestMatchers(HttpMethod.POST, "/solicitacoes/*/devolver-tudo").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers("/historico/**").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers(HttpMethod.POST, "/equipamentos", "/categorias").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers(HttpMethod.PUT, "/equipamentos/**", "/categorias/**").hasAnyRole("ADMIN", "GESTOR")
@@ -56,6 +55,7 @@ public class SecurityConfigurations {
                         // Qualquer outra requisição (como criar uma solicitação) exige apenas autenticação
                         .requestMatchers(HttpMethod.GET, "/perfil").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/cancelar").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/solicitacoes/*/devolver-tudo").authenticated()
 
                         .anyRequest().authenticated()
                 )

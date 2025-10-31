@@ -109,6 +109,9 @@ public class SolicitacaoService {
             if (equipamento.getQuantidadeDisponivel() < item.getQuantidadeSolicitada()) {
                 throw new BusinessException("Estoque insuficiente para o equipamento: " + equipamento.getNome() + ". A aprovação não pode ser concluída.");
             }
+            if (!equipamento.isAtivo()) {
+                throw new BusinessException("O equipamento '" + equipamento.getNome() + "' está INATIVO e não pode ser solicitado.");
+            }
 
             // Captura a quantidade ANTES da mudança
             int qtdAnterior = equipamento.getQuantidadeDisponivel();
@@ -218,14 +221,33 @@ public class SolicitacaoService {
             throw new BusinessException("Apenas solicitações com status RASCUNHO podem ser enviadas. Status atual: " + rascunho.getStatus());
         }
 
-        // 3. Itera sobre os itens para VALIDAR O STOCK (lógica que foi pulada na criação do rascunho)
+        // 3. Cria uma lista para acumular todas as mensagens de erro
+        List<String> errosDeValidacao = new ArrayList<>();
+
+        // 4. Itera sobre os itens para validar TUDO (Stock e Ativo)
         for (SolicitacaoItem item : rascunho.getItens()) {
             Equipamento equipamento = item.getEquipamento();
 
-            // A mesma validação de stock do método criarSolicitacao
-            if (equipamento.getQuantidadeDisponivel() < item.getQuantidadeSolicitada()) {
-                throw new BusinessException("Stock insuficiente para o equipamento: " + equipamento.getNome() + ". Não é possível enviar a solicitação.");
+            // Validação 1: O equipamento está ativo?
+            if (!equipamento.isAtivo()) {
+                errosDeValidacao.add("O equipamento '" + equipamento.getNome() + "' está INATIVO.");
             }
+
+            // Validação 2: O stock é suficiente?
+            if (equipamento.getQuantidadeDisponivel() < item.getQuantidadeSolicitada()) {
+                errosDeValidacao.add("Stock insuficiente para '" + equipamento.getNome() + "' (Disponível: " + equipamento.getQuantidadeDisponivel() + ").");
+            }
+
+            // (Podemos adicionar mais validações aqui no futuro, ex: limite de qtd)
+        }
+
+        // 5. APÓS o loop, verifica se a lista de erros tem alguma coisa
+        if (!errosDeValidacao.isEmpty()) {
+            // Se houver erros, junta todos numa única mensagem e lança a exceção
+            String mensagemCompleta = "A solicitação não pode ser enviada pelos seguintes motivos:\n- " +
+                    String.join("\n- ", errosDeValidacao);
+
+            throw new BusinessException(mensagemCompleta);
         }
 
         // Antes de se tornar 'PENDENTE', deve ter as datas obrigatórias

@@ -239,4 +239,4 @@ document.addEventListener('DOMContentLoaded', function() {
     menus.forEach(setupMenuNavigation);
 
     carregarPerfilEConfigurarUI();
-})();
+});
