@@ -49,7 +49,9 @@ setTimeout(() => {
                 solicitanteSpan.textContent = solicitacaoAtual.nomeUsuario;
                 dataSolicitacaoSpan.textContent = new Date(solicitacaoAtual.dataSolicitacao).toLocaleString('pt-BR');
                 dataEntregaSpan.textContent = solicitacaoAtual.dataPrevisaoEntrega ? new Date(solicitacaoAtual.dataPrevisaoEntrega).toLocaleDateString('pt-BR') : 'N/A';
-                dataDevolucaoSpan.textContent = solicitacaoAtual.dataPrevisaoDevolucao ? new Date(solicitacaoAtual.dataPrevisaoDevolucao).toLocaleDateString('pt-BR') : 'N/A';
+                dataDevolucaoSpan.innerHTML = solicitacaoAtual.dataPrevisaoDevolucao
+                    ? new Date(solicitacaoAtual.dataPrevisaoDevolucao).toLocaleDateString('pt-BR')
+                    : '<span class="text-muted fst-italic">Indeterminada</span>';
                 justificativaP.textContent = solicitacaoAtual.justificativa;
 
                 statusBadge.textContent = solicitacaoAtual.status;

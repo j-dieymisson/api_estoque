@@ -16,6 +16,8 @@ setTimeout(() => {
         const btnVoltar = document.getElementById('btn-voltar');
         const acoesCriarDiv = document.getElementById('acoes-criar');
         const acoesEditarRascunhoDiv = document.getElementById('acoes-editar-rascunho');
+        const inputDataDevolucao = document.getElementById('solicitacao-data-devolucao');
+        const chkSemDevolucao = document.getElementById('chk-sem-devolucao');
 
         // --- Seletores do Modal "Adicionar Item" ---
         const modalAdicionarItemEl = document.getElementById('modal-adicionar-item');
@@ -141,14 +143,19 @@ setTimeout(() => {
                         return;
                     }
 
-                    // ===============================================================
-                    // NOVA LÓGICA DE VALIDAÇÃO DE DATAS
-                    // ===============================================================
-
                     // 4. Validação de Datas (Obrigatoriedade)
                     // Esta validação só corre para o envio FINAL de uma solicitação
-                    if (endpoint === '/solicitacoes' && (!data.dataPrevisaoEntrega || !data.dataPrevisaoDevolucao)) {
-                        showToast('As datas de previsão são obrigatórias para enviar a solicitação.', 'Erro de Validação', true);
+                    const chkIndeterminada = document.getElementById('chk-sem-devolucao').checked;
+
+                    // A entrega é SEMPRE obrigatória
+                    if (endpoint === '/solicitacoes' && !data.dataPrevisaoEntrega) {
+                        showToast('A data de previsão de entrega é obrigatória para enviar a solicitação.', 'Erro de Validação', true);
+                        return;
+                    }
+
+                    // A devolução é obrigatória, A MENOS QUE o checkbox esteja marcado
+                    if (endpoint === '/solicitacoes' && !data.dataPrevisaoDevolucao && !chkIndeterminada) {
+                        showToast('A data de previsão de devolução é obrigatória, ou marque a opção "indeterminada".', 'Erro de Validação', true);
                         return;
                     }
 
@@ -204,6 +211,16 @@ setTimeout(() => {
             } else {
                 tituloForm.textContent = 'Nova Solicitação de Equipamento';
             }
+            chkSemDevolucao.addEventListener('change', () => {
+                    if (chkSemDevolucao.checked) {
+                        // Se o utilizador marcar "indeterminada"
+                        inputDataDevolucao.value = ''; // Limpa o valor
+                        inputDataDevolucao.disabled = true; // Desativa o campo
+                    } else {
+                        // Se o utilizador desmarcar
+                        inputDataDevolucao.disabled = false; // Reativa o campo
+                    }
+                });
 
             // Listeners Modal
             formBuscaItemModal.addEventListener('submit', buscarEquipamentosModal);
@@ -236,9 +253,16 @@ setTimeout(() => {
                                  const dataPrevisaoEntrega = document.getElementById('solicitacao-data-entrega').value;
                                  const dataPrevisaoDevolucao = document.getElementById('solicitacao-data-devolucao').value;
 
-                                 if (!dataPrevisaoEntrega || !dataPrevisaoDevolucao) {
-                                      showToast('Para enviar a solicitação, as datas de previsão são obrigatórias.', 'Erro', true); return;
-                                 }
+                                 const chkIndeterminada = document.getElementById('chk-sem-devolucao').checked;
+
+                                 if (!dataPrevisaoEntrega) {
+                                               showToast('Para enviar a solicitação, a data de previsão de entrega é obrigatória.', 'Erro', true); return;
+                                          }
+
+                                          // A devolução é obrigatória, A MENOS QUE o checkbox esteja marcado
+                                          if (!dataPrevisaoDevolucao && !chkIndeterminada) {
+                                               showToast('Para enviar a solicitação, a data de previsão de devolução é obrigatória, ou marque a opção "indeterminada".', 'Erro', true); return;
+                                          }
 
                                  const hoje = new Date();
                                  hoje.setHours(0, 0, 0, 0);
