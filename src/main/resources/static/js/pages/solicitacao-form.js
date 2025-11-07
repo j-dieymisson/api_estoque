@@ -147,17 +147,17 @@ setTimeout(() => {
                     // Esta validação só corre para o envio FINAL de uma solicitação
                     const chkIndeterminada = document.getElementById('chk-sem-devolucao').checked;
 
-                    // A entrega é SEMPRE obrigatória
-                    if (endpoint === '/solicitacoes' && !data.dataPrevisaoEntrega) {
-                        showToast('A data de previsão de entrega é obrigatória para enviar a solicitação.', 'Erro de Validação', true);
-                        return;
-                    }
+                   // A entrega é SEMPRE obrigatória (para rascunho ou final)
+                   if (!data.dataPrevisaoEntrega) {
+                       showToast('A data de previsão de entrega é obrigatória.', 'Erro de Validação', true);
+                       return;
+                   }
 
-                    // A devolução é obrigatória, A MENOS QUE o checkbox esteja marcado
-                    if (endpoint === '/solicitacoes' && !data.dataPrevisaoDevolucao && !chkIndeterminada) {
-                        showToast('A data de previsão de devolução é obrigatória, ou marque a opção "indeterminada".', 'Erro de Validação', true);
-                        return;
-                    }
+                   // A devolução é obrigatória, A MENOS QUE o checkbox esteja marcado
+                   if (!data.dataPrevisaoDevolucao && !chkIndeterminada) {
+                       showToast('A data de previsão de devolução é obrigatória, ou marque a opção "indeterminada".', 'Erro de Validação', true);
+                       return;
+                   }
 
                     // 5. Validação de Datas (Passado e Ordem)
                     // Esta validação corre SEMPRE que uma data for preenchida
