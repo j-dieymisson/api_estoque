@@ -109,6 +109,18 @@ public class UsuarioService {
         novoUsuario.setCargo(cargo);
         novoUsuario.setAtivo(true);
 
+        //Associa o Gestor Imediato, se um ID for fornecido
+        if (request.gestorImediatoId() != null) {
+            Usuario gestor = usuarioRepository.findById(request.gestorImediatoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Gestor Imediato não encontrado com o ID: " + request.gestorImediatoId()));
+
+            // Opcional: Adicionar verificação se o gestor é mesmo um "GESTOR"
+            if (!gestor.getCargo().getNome().equals("GESTOR")) {
+                throw new BusinessException("O utilizador selecionado não tem o cargo de GESTOR.");
+            }
+            novoUsuario.setGestorImediato(gestor);
+        }
+
         // 3. O PASSO MAIS IMPORTANTE: Encripta a senha antes de a definir
         novoUsuario.setSenha(passwordEncoder.encode(request.senha()));
 
@@ -186,7 +198,24 @@ public class UsuarioService {
         usuario.setEmail(request.email());
         usuario.setCargo(novoCargo); // A importante alteração de cargo acontece aqui.
 
-        // O JPA guarda as alterações automaticamente.
+        // 4. Atualiza o Gestor Imediato
+        if (request.gestorImediatoId() != null) {
+            // Verifica se o utilizador não está a tentar definir-se a si mesmo como gestor
+            if (id.equals(request.gestorImediatoId())) {
+                throw new BusinessException("Um utilizador não pode ser o seu próprio gestor.");
+            }
+
+            Usuario gestor = usuarioRepository.findById(request.gestorImediatoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Gestor Imediato não encontrado com o ID: " + request.gestorImediatoId()));
+
+            if (!gestor.getCargo().getNome().equals("GESTOR")) {
+                throw new BusinessException("O utilizador selecionado não tem o cargo de GESTOR.");
+            }
+            usuario.setGestorImediato(gestor);
+        } else {
+            // Permite remover o gestor (definir como null)
+            usuario.setGestorImediato(null);
+        }
 
         return mapToUsuarioResponse(usuario);
     }
@@ -209,15 +238,39 @@ public class UsuarioService {
         // O JPA guarda a alteração automaticamente no fim da transação.
     }
 
+    @Transactional(readOnly = true)
+    public List<UsuarioResponse> listarGestores() {
+        // 1. Encontra o Cargo de "GESTOR"
+        Cargo cargoGestor = cargoRepository.findByNome("GESTOR")
+                .orElseThrow(() -> new ResourceNotFoundException("O perfil 'GESTOR' não foi encontrado no sistema."));
+
+        // 2. Busca todos os utilizadores ativos que têm esse cargo
+        List<Usuario> gestores = usuarioRepository.findAllByCargo(cargoGestor).stream()
+                .filter(Usuario::isAtivo) // Garante que apenas gestores ativos sejam listados
+                .toList();
+
+        // 3. Mapeia para a resposta
+        return gestores.stream()
+                .map(this::mapToUsuarioResponse)
+                .toList();
+    }
+
     // Adicione também um método auxiliar para o mapeamento
     public UsuarioResponse mapToUsuarioResponse(Usuario usuario) {
+
+        Usuario gestor = usuario.getGestorImediato();
+        Long gestorId = (gestor != null) ? gestor.getId() : null;
+        String gestorNome = (gestor != null) ? gestor.getNome() : null;
+
         return new UsuarioResponse(
                 usuario.getId(),
                 usuario.getNome(),
                 usuario.getEmail(),
                 usuario.getCargo().getNome(), // Pega o nome do objeto Cargo associado
                 usuario.getCargo().getId(),
-                usuario.isAtivo()
+                usuario.isAtivo(),
+                gestorId,
+                gestorNome
         );
     }
 }

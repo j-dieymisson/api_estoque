@@ -6,6 +6,7 @@ import com.api.estoque.dto.request.UsuarioUpdateRequest;
 import com.api.estoque.dto.response.UsuarioResponse;
 import com.api.estoque.model.Usuario;
 import com.api.estoque.service.UsuarioService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -62,6 +64,14 @@ public class UsuarioController {
     ) {
         Page<UsuarioResponse> paginaDeUsuarios = usuarioService.listarTodos(nome, paginacao);
         return ResponseEntity.ok(paginaDeUsuarios);
+    }
+
+    @GetMapping("/gestores")
+    @Operation(summary = "Lista todos os utilizadores com o cargo de GESTOR",
+            description = "Retorna uma lista de utilizadores ativos que podem ser definidos como 'Gestor Imediato' (usado para preencher dropdowns no front-end).")
+    public ResponseEntity<List<UsuarioResponse>> listarGestores() {
+        List<UsuarioResponse> gestores = usuarioService.listarGestores();
+        return ResponseEntity.ok(gestores);
     }
 
     // ENDPOINT PARA DETALHAR UM UTILIZADOR

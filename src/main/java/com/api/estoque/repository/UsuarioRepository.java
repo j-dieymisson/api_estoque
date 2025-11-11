@@ -1,10 +1,13 @@
 package com.api.estoque.repository;
 
+import com.api.estoque.model.Cargo;
 import com.api.estoque.model.Usuario;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.List;
 import java.util.Optional;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
@@ -21,4 +24,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     // Busca por nome, mas também excluindo o super admin
     Page<Usuario> findByNomeContainingIgnoreCaseAndIdNot(String nome, Long id, Pageable pageable);
+
+    List<Usuario> findAllByCargo(Cargo cargo);
 }
