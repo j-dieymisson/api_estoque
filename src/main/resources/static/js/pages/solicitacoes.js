@@ -15,11 +15,18 @@ setTimeout(() => {
         let currentUserRole = null;
         let currentPage = 0;
 
-        // --- Funções Auxiliares ---
-        function getBadgeClassForStatus(status) {
-            const map = { 'PENDENTE': 'bg-warning text-dark', 'APROVADA': 'bg-success', 'FINALIZADA': 'bg-secondary', 'RECUSADA': 'bg-danger', 'CANCELADA': 'bg-danger', 'RASCUNHO': 'bg-info text-dark' };
-            return map[status] || 'bg-primary';
-        }
+       function getBadgeClassForStatus(status) {
+                   const map = {
+                       'PENDENTE_GESTOR': 'bg-warning text-dark', // NOVO
+                       'PENDENTE_ADMIN': 'bg-warning text-dark', // NOVO
+                       'APROVADA': 'bg-success',
+                       'FINALIZADA': 'bg-secondary',
+                       'RECUSADA': 'bg-danger',
+                       'CANCELADA': 'bg-danger',
+                       'RASCUNHO': 'bg-info text-dark'
+                   };
+                   return map[status] || 'bg-primary';
+               }
 
         function renderizarPaginacao(pageData) {
             paginacaoContainer.innerHTML = '';
@@ -49,11 +56,16 @@ setTimeout(() => {
                 const acoesHtml = `<button class="btn btn-sm btn-outline-primary btn-detalhes" data-id="${sol.id}" title="Ver Detalhes"><i class="bi bi-eye-fill"></i></button>`;
                 const solicitanteHtml = isAdminOuGestor ? `<td>${sol.nomeUsuario}</td>` : '';
 
+                let statusVisual = sol.status;
+                    if (statusVisual === 'PENDENTE_GESTOR' || statusVisual === 'PENDENTE_ADMIN') {
+                        statusVisual = 'PENDENTE';
+                    }
+
                 tr.innerHTML = `
                     <td>${sol.id}</td>
                     ${solicitanteHtml}
                     <td>${new Date(sol.dataSolicitacao).toLocaleDateString('pt-BR')}</td>
-                    <td><span class="badge ${getBadgeClassForStatus(sol.status)}">${sol.status}</span></td>
+                    <td><span class="badge ${getBadgeClassForStatus(sol.status)}">${statusVisual}</span></td>
                     <td>${acoesHtml}</td>
                 `;
                 corpoTabela.appendChild(tr);
@@ -71,11 +83,11 @@ setTimeout(() => {
             const endpoint = isAdminOuGestor ? '/solicitacoes' : '/solicitacoes/minhas';
 
             const params = {
-                page, size: 10, sort: 'dataSolicitacao,desc',
-                status: filtroStatusSelect.value || null,
-                dataInicio: filtroDataInicio.value || null,
-                dataFim: filtroDataFim.value || null,
-            };
+                            page, size: 10, sort: 'dataSolicitacao,desc',
+                            statuses: filtroStatusSelect.value || null, // <-- ALTERADO PARA O PLURAL
+                            dataInicio: filtroDataInicio.value || null,
+                            dataFim: filtroDataFim.value || null,
+                        };
             Object.keys(params).forEach(key => (params[key] == null || params[key] === '') && delete params[key]);
 
             try {
@@ -87,16 +99,28 @@ setTimeout(() => {
             }
         }
 
-        async function carregarFiltroStatus() {
-            try {
-                const response = await apiClient.get('/solicitacoes/status');
-                filtroStatusSelect.innerHTML = '<option value="">Todos</option>';
-                response.data.forEach(status => {
-                    const option = new Option(status.charAt(0).toUpperCase() + status.slice(1).toLowerCase(), status);
-                    filtroStatusSelect.appendChild(option);
-                });
-            } catch (error) { console.error("Erro ao carregar os status para o filtro:", error); }
-        }
+       async function carregarFiltroStatus() {
+                   // Não chamamos mais a API. Nós definimos os status que o utilizador PODE ver.
+                   const statusVisiveis = [
+                       { value: 'PENDENTE_GESTOR,PENDENTE_ADMIN', text: 'Pendente' },
+                       { value: 'APROVADA',   text: 'Aprovada' },
+                       { value: 'FINALIZADA', text: 'Finalizada' },
+                       { value: 'RECUSADA',   text: 'Recusada' },
+                       { value: 'CANCELADA',  text: 'Cancelada' },
+                       { value: 'RASCUNHO',   text: 'Rascunho' }
+                   ];
+
+                   filtroStatusSelect.innerHTML = '<option value="">Todos</option>';
+
+                   statusVisiveis.forEach(status => {
+                       // Escondemos 'Rascunho' para não-admins
+                       if (status.value === 'RASCUNHO' && currentUserRole !== 'ADMIN') {
+                           return;
+                       }
+                       const option = new Option(status.text, status.value);
+                       filtroStatusSelect.appendChild(option);
+                   });
+               }
 
         // --- Inicialização e Event Listeners ---
         async function init() {

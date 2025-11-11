@@ -54,8 +54,17 @@ setTimeout(() => {
                     : '<span class="text-muted fst-italic">Indeterminada</span>';
                 justificativaP.textContent = solicitacaoAtual.justificativa;
 
-                statusBadge.textContent = solicitacaoAtual.status;
-                statusBadge.className = `badge ${getBadgeClassForStatus(solicitacaoAtual.status)}`;
+                let statusVisual = solicitacaoAtual.status;
+                                let badgeClass = getBadgeClassForStatus(solicitacaoAtual.status); // Pega a cor correta
+
+                                if (solicitacaoAtual.status === 'PENDENTE_GESTOR') {
+                                    statusVisual = 'Pendente <span class="badge bg-light text-dark ms-1">0/2</span>';
+                                } else if (solicitacaoAtual.status === 'PENDENTE_ADMIN') {
+                                    statusVisual = 'Pendente <span class="badge bg-light text-dark ms-1">1/2</span>';
+                                }
+
+                                statusBadge.innerHTML = statusVisual; // Usamos innerHTML para o contador
+                                statusBadge.className = `badge ${badgeClass}`;
 
                 corpoTabela.innerHTML = '';
                 solicitacaoAtual.itens.forEach(item => {
@@ -83,34 +92,57 @@ setTimeout(() => {
         }
 
         function controlarVisibilidadeAcoes(solicitacao, usuarioLogado) {
-            acoesContainer.querySelectorAll('button').forEach(btn => btn.classList.add('d-none'));
-            const cargo = usuarioLogado.nomeCargo;
-            const status = solicitacao.status;
+                    acoesContainer.querySelectorAll('button').forEach(btn => btn.classList.add('d-none'));
+                    const cargo = usuarioLogado.nomeCargo;
+                    const status = solicitacao.status;
 
-            if (status === 'RASCUNHO') {
-                document.getElementById('btn-editar-rascunho-detalhe').classList.remove('d-none');
-                document.getElementById('btn-enviar-rascunho-detalhe').classList.remove('d-none');
-                document.getElementById('btn-apagar-rascunho-detalhe').classList.remove('d-none');
-            } else if (status === 'PENDENTE') {
-                if (cargo === 'ADMIN') {
-                    document.getElementById('btn-aprovar').classList.remove('d-none');
-                    document.getElementById('btn-recusar').classList.remove('d-none');
+                    if (status === 'RASCUNHO') {
+                        document.getElementById('btn-editar-rascunho-detalhe').classList.remove('d-none');
+                        document.getElementById('btn-enviar-rascunho-detalhe').classList.remove('d-none');
+                        document.getElementById('btn-apagar-rascunho-detalhe').classList.remove('d-none');
+
+                    } else if (status === 'PENDENTE_GESTOR') {
+                        // Nível 1: Apenas o Gestor pode aprovar/recusar
+                        if (cargo === 'GESTOR') {
+                            document.getElementById('btn-aprovar').classList.remove('d-none');
+                            document.getElementById('btn-recusar').classList.remove('d-none');
+                        }
+                        // O dono pode cancelar
+                        if (usuarioLogado.nome === solicitacao.nomeUsuario) {
+                             document.getElementById('btn-cancelar').classList.remove('d-none');
+                        }
+
+                    } else if (status === 'PENDENTE_ADMIN') {
+                        // Nível 2: Apenas o Admin pode aprovar/recusar
+                         if (cargo === 'ADMIN') {
+                            document.getElementById('btn-aprovar').classList.remove('d-none');
+                            document.getElementById('btn-recusar').classList.remove('d-none');
+                        }
+                        // O dono ainda pode cancelar
+                        if (usuarioLogado.nome === solicitacao.nomeUsuario) {
+                             document.getElementById('btn-cancelar').classList.remove('d-none');
+                        }
+
+                    } else if (status === 'APROVADA') {
+                        const algumPendente = solicitacao.itens.some(item => item.quantidadePendente > 0);
+                        if (algumPendente) {
+                            document.getElementById('btn-devolver-tudo').classList.remove('d-none');
+                        }
+                    }
                 }
-                if (usuarioLogado.nome === solicitacao.nomeUsuario) {
-                     document.getElementById('btn-cancelar').classList.remove('d-none');
-                }
-            } else if (status === 'APROVADA') {
-                const algumPendente = solicitacao.itens.some(item => item.quantidadePendente > 0);
-                if (algumPendente) {
-                    document.getElementById('btn-devolver-tudo').classList.remove('d-none');
-                }
-            }
-        }
 
         function getBadgeClassForStatus(status) {
-            const map = { 'PENDENTE': 'bg-warning text-dark', 'APROVADA': 'bg-success', 'FINALIZADA': 'bg-secondary', 'RECUSADA': 'bg-danger', 'CANCELADA': 'bg-danger', 'RASCUNHO': 'bg-info text-dark' };
-            return map[status] || 'bg-primary';
-        }
+                    const map = {
+                        'PENDENTE_GESTOR': 'bg-warning text-dark', // NOVO
+                        'PENDENTE_ADMIN': 'bg-warning text-dark', // NOVO
+                        'APROVADA': 'bg-success',
+                        'FINALIZADA': 'bg-secondary',
+                        'RECUSADA': 'bg-danger',
+                        'CANCELADA': 'bg-danger',
+                        'RASCUNHO': 'bg-info text-dark'
+                    };
+                    return map[status] || 'bg-primary';
+                }
 
         // --- Event Listeners ---
         if (btnVoltar) btnVoltar.addEventListener('click', () => window.navigateBack());
@@ -140,7 +172,12 @@ setTimeout(() => {
 
                 switch (target.id) {
                     case 'btn-aprovar':
-                        showConfirmModal('Aprovar Solicitação', `Tem a certeza?`, () => acaoPatch(`/solicitacoes/${id}/aprovar`));
+                        // Lógica inteligente: verifica o status atual para decidir qual endpoint chamar
+                        if (solicitacaoAtual.status === 'PENDENTE_GESTOR') {
+                            showConfirmModal('Aprovar (Nível 1/2 - Gestor)', `Tem a certeza?`, () => acaoPatch(`/solicitacoes/${id}/aprovar-gestor`));
+                        } else if (solicitacaoAtual.status === 'PENDENTE_ADMIN') {
+                            showConfirmModal('Aprovar (Nível 2/2 - Admin)', `Tem a certeza?`, () => acaoPatch(`/solicitacoes/${id}/aprovar-admin`));
+                        }
                         break;
                     case 'btn-recusar':
                         showConfirmModal('Recusar Solicitação', `Tem a certeza?`, () => acaoPatch(`/solicitacoes/${id}/recusar`));

@@ -58,10 +58,15 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilizador não encontrado com o ID: " + id));
 
-        // 1. Encontra todas as solicitações PENDENTES deste utilizador.
-        // Reutilizamos o método que já tínhamos no repositório.
+        // 1. Define a lista de status que consideramos "pendentes"
+        List<StatusSolicitacao> statusesPendentes = List.of(
+                StatusSolicitacao.PENDENTE_GESTOR,
+                StatusSolicitacao.PENDENTE_ADMIN
+        );
+
+        // 2. Encontra todas as solicitações deste utilizador que estão em qualquer um desses status
         List<Solicitacao> solicitacoesPendentes = solicitacaoRepository
-                .findAllByUsuarioIdAndStatus(id, StatusSolicitacao.PENDENTE);
+                .findAllByUsuarioIdAndStatusIn(id, statusesPendentes);
 
         // 2. Itera e cancela cada uma delas.
         for (Solicitacao solicitacao : solicitacoesPendentes) {

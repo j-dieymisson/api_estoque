@@ -62,15 +62,29 @@ public class SolicitacaoController {
         return ResponseEntity.created(uri).body(response);
     }
 
-    @PatchMapping("/{id}/aprovar")
-    public ResponseEntity<SolicitacaoResponse> aprovar(@PathVariable Long id) {
-        SolicitacaoResponse response = solicitacaoService.aprovarSolicitacao(id);
-        return ResponseEntity.ok(response); // Retorna 200 OK com a solicitação atualizada
+    @PatchMapping("/{id}/aprovar-gestor")
+    @Operation(summary = "Aprovação Nível 1 (Gestor)")
+    public ResponseEntity<SolicitacaoResponse> aprovarComoGestor(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+        SolicitacaoResponse response = solicitacaoService.aprovarComoGestor(id, usuarioLogado);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/aprovar-admin")
+    @Operation(summary = "Aprovação Nível 2 (Admin - Final)")
+    public ResponseEntity<SolicitacaoResponse> aprovarComoAdmin(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+        SolicitacaoResponse response = solicitacaoService.aprovarComoAdmin(id, usuarioLogado);
+        return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/recusar")
-    public ResponseEntity<SolicitacaoResponse> recusar(@PathVariable Long id) {
-        SolicitacaoResponse response = solicitacaoService.recusarSolicitacao(id);
+    public ResponseEntity<SolicitacaoResponse> recusar(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuarioLogado) { // <-- PARÂMETRO ADICIONADO
+        SolicitacaoResponse response = solicitacaoService.recusarSolicitacao(id, usuarioLogado); // <-- PARÂMETRO PASSADO
         return ResponseEntity.ok(response);
     }
 
@@ -86,14 +100,19 @@ public class SolicitacaoController {
             @AuthenticationPrincipal Usuario usuarioLogado,
             @PageableDefault(size = 5, sort = {"dataSolicitacao"}, direction = Sort.Direction.DESC) Pageable paginacao,
             @RequestParam(required = false) Optional<Long> usuarioId,
-            @RequestParam(required = false) Optional<StatusSolicitacao> status,
+
+            // --- A MUDANÇA ESTÁ AQUI ---
+            @RequestParam(required = false) List<StatusSolicitacao> statuses,
+
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim
     ) {
         Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarTodasSolicitacoes(
                 usuarioLogado,
                 usuarioId,
-                status, dataInicio, dataFim, paginacao
+                // --- E AQUI (para passar null em vez de uma lista vazia) ---
+                (statuses == null || statuses.isEmpty()) ? null : statuses,
+                dataInicio, dataFim, paginacao
         );
         return ResponseEntity.ok(paginaDeSolicitacoes);
     }
@@ -108,9 +127,10 @@ public class SolicitacaoController {
     }
 
     @PostMapping("/{id}/devolver-tudo")
-    public ResponseEntity<SolicitacaoResponse> devolverTudo(@PathVariable Long id) {
+    public ResponseEntity<SolicitacaoResponse> devolverTudo(@PathVariable Long id,
+                                                            @AuthenticationPrincipal Usuario usuarioLogado) {
         // Pode receber um DTO no body se quiser adicionar uma observação, por exemplo
-        SolicitacaoResponse response = solicitacaoService.devolverTudo(id);
+        SolicitacaoResponse response = solicitacaoService.devolverTudo(id, usuarioLogado);
         return ResponseEntity.ok(response);
     }
 
@@ -158,15 +178,21 @@ public class SolicitacaoController {
             @ParameterObject
             @PageableDefault(size = 10, sort = {"dataSolicitacao"}) Pageable paginacao,
 
-
-            @AuthenticationPrincipal Usuario usuarioLogado, // Pega o utilizador do token
-            // Os filtros continuam a ser opcionais
-            @RequestParam(required = false) Optional<StatusSolicitacao> status,
+            @AuthenticationPrincipal Usuario usuarioLogado,
+            @RequestParam(required = false) List<StatusSolicitacao> statuses,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim
     ) {
+        // --- A CORREÇÃO ESTÁ AQUI ---
+        // Aplicamos a mesma verificação de 'isEmpty' que o método 'listar' usa
         Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarMinhasSolicitacoes(
-                usuarioLogado, status, dataInicio, dataFim, paginacao);
+                usuarioLogado,
+                (statuses == null || statuses.isEmpty()) ? null : statuses, // <-- CORRIGIDO
+                dataInicio,
+                dataFim,
+                paginacao
+        );
+        // --- FIM DA CORREÇÃO ---
 
         return ResponseEntity.ok(paginaDeSolicitacoes);
     }
@@ -180,10 +206,10 @@ public class SolicitacaoController {
         return ResponseEntity.ok(status);
     }
 
-    // NOVO ENDPOINT - Leve e focado
     @GetMapping("/pendentes/contagem")
-    public ResponseEntity<ContagemResponse> getContagemPendentes() {
-        long contagem = solicitacaoService.contarSolicitacoesPendentes();
+    public ResponseEntity<ContagemResponse> getContagemPendentes(
+            @AuthenticationPrincipal Usuario usuarioLogado) { // <-- PARÂMETRO ADICIONADO
+        long contagem = solicitacaoService.contarSolicitacoesPendentes(usuarioLogado); // <-- PARÂMETRO PASSADO
         return ResponseEntity.ok(new ContagemResponse(contagem));
     }
 }

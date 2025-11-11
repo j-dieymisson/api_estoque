@@ -1,7 +1,8 @@
 package com.api.estoque.model;
 
 public enum StatusSolicitacao {
-    PENDENTE,
+    PENDENTE_GESTOR,
+    PENDENTE_ADMIN,
     APROVADA,
     RECUSADA,
     RASCUNHO,

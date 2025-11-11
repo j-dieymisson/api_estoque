@@ -39,17 +39,21 @@ public class RascunhoController {
     }
 
     @PatchMapping("/{id}/enviar")
-    public ResponseEntity<SolicitacaoResponse> enviar(@PathVariable Long id) {
+    public ResponseEntity<SolicitacaoResponse> enviar(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuarioLogado) { // <-- PARÂMETRO ADICIONADO
+
         // Chama o método para "promover" o rascunho a uma solicitação pendente
-        SolicitacaoResponse response = solicitacaoService.enviarRascunho(id);
+        SolicitacaoResponse response = solicitacaoService.enviarRascunho(id, usuarioLogado); // <-- PARÂMETRO PASSADO
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
-    public ResponseEntity<List<SolicitacaoResponse>> listarRascunhos(@RequestParam Long usuarioId) {
-        // NOTA: Quando tivermos segurança, não precisaremos de passar o usuarioId.
-        // Pegaremos o utilizador do token de autenticação.
-        List<SolicitacaoResponse> rascunhos = solicitacaoService.listarRascunhosPorUsuario(usuarioId);
+    public ResponseEntity<List<SolicitacaoResponse>> listarRascunhos(
+            @AuthenticationPrincipal Usuario usuarioLogado) { // <-- PARÂMETRO MUDADO
+
+        // Agora usamos o ID do utilizador logado, o que é muito mais seguro
+        List<SolicitacaoResponse> rascunhos = solicitacaoService.listarRascunhosPorUsuario(usuarioLogado.getId());
         return ResponseEntity.ok(rascunhos);
     }
 

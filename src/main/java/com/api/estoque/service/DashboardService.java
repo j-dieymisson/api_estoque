@@ -57,10 +57,14 @@ public class DashboardService {
                     dashboardData.put("totalUsuariosAtivos", usuarioRepository.countByAtivoTrue());
                     break;
                 case SOLICITACOES_PENDENTES:
-                    dashboardData.put("solicitacoesPendentes", solicitacaoRepository.countByStatus(StatusSolicitacao.PENDENTE));
+                    dashboardData.put("solicitacoesPendentes", solicitacaoRepository.countByStatusIn(
+                            List.of(StatusSolicitacao.PENDENTE_GESTOR, StatusSolicitacao.PENDENTE_ADMIN)
+                    ));
                     break;
                 case SOLICITACOES_APROVADAS_HOJE:
-                    dashboardData.put("solicitacoesAprovadasHoje", solicitacaoRepository.countByStatusAndDataSolicitacaoAfter(StatusSolicitacao.APROVADA, LocalDate.now().atStartOfDay()));
+                    dashboardData.put("solicitacoesAprovadasHoje", solicitacaoRepository.countByStatusInAndDataSolicitacaoAfter(
+                            List.of(StatusSolicitacao.APROVADA), LocalDate.now().atStartOfDay()
+                    ));
                     break;
                 case TOTAL_UNIDADES_EM_USO:
                     Long emUso = equipamentoRepository.sumEquipamentosEmUso();
@@ -80,7 +84,9 @@ public class DashboardService {
                     dashboardData.put("solicitacoesFinalizadasMes", solicitacaoRepository.countByStatusAndDataSolicitacaoBetween(StatusSolicitacao.FINALIZADA, inicioDoMes, fimDoMes));
                     break;
                 case SOLICITACOES_TOTAIS:
-                    dashboardData.put("solicitacoesTotais", solicitacaoRepository.countByStatusNot(StatusSolicitacao.RASCUNHO));
+                    dashboardData.put("solicitacoesTotais", solicitacaoRepository.countByStatusNotIn(
+                            List.of(StatusSolicitacao.RASCUNHO)
+                    ));
                     break;
                 case EQUIPAMENTOS_ATIVOS:
                     dashboardData.put("equipamentosAtivos", equipamentoRepository.countByAtivoTrue());
@@ -135,7 +141,9 @@ public class DashboardService {
 
         // 2. Buscamos as 5 solicitações pendentes mais recentes
         List<Solicitacao> pendentes = solicitacaoRepository
-                .findTop5ByStatusOrderByDataSolicitacaoDesc(StatusSolicitacao.PENDENTE);
+                .findTop5ByStatusInOrderByDataSolicitacaoDesc(
+                        List.of(StatusSolicitacao.PENDENTE_GESTOR, StatusSolicitacao.PENDENTE_ADMIN)
+                );
 
         // 3. Mapeamos as pendentes para o nosso DTO de resposta
         List<AtividadeRecenteResponse> atividadesPendentes = pendentes.stream()

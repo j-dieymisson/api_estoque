@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> {
@@ -40,12 +41,22 @@ public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> 
     // 4. Busca por Utilizador, Status E Data (a mais completa)
     Page<Solicitacao> findAllByUsuarioIdAndStatusAndDataSolicitacaoBetween(Long usuarioId, StatusSolicitacao status, LocalDateTime inicio, LocalDateTime fim, Pageable pageable);
 
-    long countByStatus(StatusSolicitacao status);
+    // Conta por múltiplos status (ex: PENDENTE_GESTOR e PENDENTE_ADMIN)
+    long countByStatusIn(Collection<StatusSolicitacao> statuses);
 
-    long countByStatusAndDataSolicitacaoAfter(StatusSolicitacao status, LocalDateTime data);
+    // Conta por múltiplos status DEPOIS de uma data
+    long countByStatusInAndDataSolicitacaoAfter(Collection<StatusSolicitacao> statuses, LocalDateTime data);
 
-    // Conta todas as solicitações cujo status NÃO SEJA o fornecido
-    long countByStatusNot(StatusSolicitacao status);
+    // Conta todos que NÃO ESTÃO na lista de status (ex: tudo exceto Rascunho)
+    long countByStatusNotIn(Collection<StatusSolicitacao> statuses);
+
+    // Busca o Top 5 por múltiplos status
+    List<Solicitacao> findTop5ByStatusInOrderByDataSolicitacaoDesc(Collection<StatusSolicitacao> statuses);
+
+    @Query("SELECT COUNT(s) FROM Solicitacao s WHERE s.status = :status AND s.usuario.gestorImediato.id = :gestorId")
+    long countByStatusAndUsuarioGestorImediatoId(@Param("status") StatusSolicitacao status, @Param("gestorId") Long gestorId);
+
+
 
     // Conta todas as solicitações com um status específico dentro de um intervalo de datas
     long countByStatusAndDataSolicitacaoBetween(StatusSolicitacao status, LocalDateTime inicio, LocalDateTime fim);
@@ -53,13 +64,13 @@ public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> 
     @Query("SELECT s FROM Solicitacao s WHERE " +
             "((s.status != com.api.estoque.model.StatusSolicitacao.RASCUNHO) OR (s.usuario.id = :usuarioLogadoId)) AND " +
             "(:usuarioId IS NULL OR s.usuario.id = :usuarioId) AND " + // <-- FILTRO ADICIONADO
-            "(:status IS NULL OR s.status = :status) AND " +
+            "(:statuses IS NULL OR s.status IN :statuses) AND " +
             "(:inicio IS NULL OR s.dataSolicitacao >= :inicio) AND " +
             "(:fim IS NULL OR s.dataSolicitacao <= :fim)")
     Page<Solicitacao> findAdminView(
             @Param("usuarioLogadoId") Long usuarioLogadoId,
             @Param("usuarioId") Long usuarioId, // <-- PARÂMETRO ADICIONADO
-            @Param("status") StatusSolicitacao status,
+            @Param("statuses") List<StatusSolicitacao> statuses,
             @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim,
             Pageable pageable
@@ -68,18 +79,18 @@ public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> 
     // Substitua o seu método findMyView por este:
     @Query("SELECT s FROM Solicitacao s WHERE " +
             "s.usuario.id = :usuarioId AND " +
-            "(:status IS NULL OR s.status = :status) AND " +
+            "(:statuses IS NULL OR s.status IN :statuses) AND " +
             "(:inicio IS NULL OR s.dataSolicitacao >= :inicio) AND " +
             "(:fim IS NULL OR s.dataSolicitacao <= :fim)")
     Page<Solicitacao> findMyView(
             @Param("usuarioId") Long usuarioId,
-            @Param("status") StatusSolicitacao status,
+            @Param("statuses") List<StatusSolicitacao> statuses,
             @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim,
             Pageable pageable
     );
 
-    // Busca as 5 solicitações mais recentes que estão com status PENDENTE
-    List<Solicitacao> findTop5ByStatusOrderByDataSolicitacaoDesc(StatusSolicitacao status);
+    // Busca por ID de usuário E uma LISTA de status
+    List<Solicitacao> findAllByUsuarioIdAndStatusIn(Long usuarioId, Collection<StatusSolicitacao> statuses);
 
 }

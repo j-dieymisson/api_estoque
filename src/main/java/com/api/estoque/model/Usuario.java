@@ -36,6 +36,15 @@ public class Usuario implements UserDetails {
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<PreferenciaDashboard> preferenciasDashboard;
 
+    /**
+     * Define quem é o gestor imediato deste utilizador.
+     * Se este campo for 'null', significa que este utilizador
+     * é do topo (ex: um Admin) ou não tem gestor.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gestor_imediato_id")
+    private Usuario gestorImediato;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this.cargo == null) {
@@ -44,7 +53,6 @@ public class Usuario implements UserDetails {
         // A autoridade do utilizador é o seu cargo, com o prefixo ROLE_ que o Spring espera.
         return List.of(new SimpleGrantedAuthority("ROLE_" + this.cargo.getNome().toUpperCase()));
     }
-
 
     @Override
     public String getPassword() {
