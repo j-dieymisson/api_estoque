@@ -105,14 +105,15 @@ public class SolicitacaoController {
             @RequestParam(required = false) List<StatusSolicitacao> statuses,
 
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim,
+            @RequestParam(required = false) Boolean devolucaoIndeterminada
     ) {
         Page<SolicitacaoResponse> paginaDeSolicitacoes = solicitacaoService.listarTodasSolicitacoes(
                 usuarioLogado,
                 usuarioId,
                 // --- E AQUI (para passar null em vez de uma lista vazia) ---
                 (statuses == null || statuses.isEmpty()) ? null : statuses,
-                dataInicio, dataFim, paginacao
+                dataInicio, dataFim, devolucaoIndeterminada, paginacao
         );
         return ResponseEntity.ok(paginaDeSolicitacoes);
     }
@@ -181,7 +182,8 @@ public class SolicitacaoController {
             @AuthenticationPrincipal Usuario usuarioLogado,
             @RequestParam(required = false) List<StatusSolicitacao> statuses,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Optional<LocalDate> dataFim,
+            @RequestParam(required = false) Boolean devolucaoIndeterminada
     ) {
         // --- A CORREÇÃO ESTÁ AQUI ---
         // Aplicamos a mesma verificação de 'isEmpty' que o método 'listar' usa
@@ -190,6 +192,7 @@ public class SolicitacaoController {
                 (statuses == null || statuses.isEmpty()) ? null : statuses, // <-- CORRIGIDO
                 dataInicio,
                 dataFim,
+                devolucaoIndeterminada,
                 paginacao
         );
         // --- FIM DA CORREÇÃO ---

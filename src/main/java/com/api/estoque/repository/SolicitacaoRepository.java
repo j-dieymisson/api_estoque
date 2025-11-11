@@ -63,30 +63,33 @@ public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> 
 
     @Query("SELECT s FROM Solicitacao s WHERE " +
             "((s.status != com.api.estoque.model.StatusSolicitacao.RASCUNHO) OR (s.usuario.id = :usuarioLogadoId)) AND " +
-            "(:usuarioId IS NULL OR s.usuario.id = :usuarioId) AND " + // <-- FILTRO ADICIONADO
+            "(:usuarioId IS NULL OR s.usuario.id = :usuarioId) AND " +
             "(:statuses IS NULL OR s.status IN :statuses) AND " +
             "(:inicio IS NULL OR s.dataSolicitacao >= :inicio) AND " +
-            "(:fim IS NULL OR s.dataSolicitacao <= :fim)")
+            "(:fim IS NULL OR s.dataSolicitacao <= :fim) AND " +
+            "(:devolucaoIndeterminada IS NULL OR (:devolucaoIndeterminada = true AND s.dataPrevisaoDevolucao IS NULL))")
     Page<Solicitacao> findAdminView(
             @Param("usuarioLogadoId") Long usuarioLogadoId,
             @Param("usuarioId") Long usuarioId, // <-- PARÂMETRO ADICIONADO
             @Param("statuses") List<StatusSolicitacao> statuses,
             @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim,
+            @Param("devolucaoIndeterminada") Boolean devolucaoIndeterminada,
             Pageable pageable
     );
 
-    // Substitua o seu método findMyView por este:
     @Query("SELECT s FROM Solicitacao s WHERE " +
             "s.usuario.id = :usuarioId AND " +
             "(:statuses IS NULL OR s.status IN :statuses) AND " +
             "(:inicio IS NULL OR s.dataSolicitacao >= :inicio) AND " +
-            "(:fim IS NULL OR s.dataSolicitacao <= :fim)")
+            "(:fim IS NULL OR s.dataSolicitacao <= :fim) AND " +
+            "(:devolucaoIndeterminada IS NULL OR (:devolucaoIndeterminada = true AND s.dataPrevisaoDevolucao IS NULL))")
     Page<Solicitacao> findMyView(
             @Param("usuarioId") Long usuarioId,
             @Param("statuses") List<StatusSolicitacao> statuses,
             @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim,
+            @Param("devolucaoIndeterminada") Boolean devolucaoIndeterminada,
             Pageable pageable
     );
 

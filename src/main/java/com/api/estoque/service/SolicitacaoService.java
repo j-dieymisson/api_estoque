@@ -426,6 +426,7 @@
                     List<StatusSolicitacao> statuses,
                     Optional<LocalDate> dataInicio,
                     Optional<LocalDate> dataFim,
+                    Boolean devolucaoIndeterminada,
                     Pageable pageable) {
     
                 LocalDateTime inicio = dataInicio.map(LocalDate::atStartOfDay).orElse(null);
@@ -438,6 +439,7 @@
                         statuses,
                         inicio,
                         fim,
+                        devolucaoIndeterminada,
                         pageable
                 );
     
@@ -631,6 +633,7 @@
                     List<StatusSolicitacao> statuses,
                     Optional<LocalDate> dataInicio,
                     Optional<LocalDate> dataFim,
+                    Boolean devolucaoIndeterminada,
                     Pageable pageable) {
     
                 LocalDateTime inicio = dataInicio.map(LocalDate::atStartOfDay).orElse(null);
@@ -642,6 +645,7 @@
                         statuses,
                         inicio,
                         fim,
+                        devolucaoIndeterminada,
                         pageable
                 );
     
