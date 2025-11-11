@@ -259,8 +259,20 @@ public class UsuarioService {
     public UsuarioResponse mapToUsuarioResponse(Usuario usuario) {
 
         Usuario gestor = usuario.getGestorImediato();
-        Long gestorId = (gestor != null) ? gestor.getId() : null;
-        String gestorNome = (gestor != null) ? gestor.getNome() : null;
+        Long gestorId = null;
+        String gestorNome = null;
+
+        // Verificamos se o gestor não é nulo E se ele já foi inicializado
+        if (gestor != null && org.hibernate.Hibernate.isInitialized(gestor)) {
+            // Se sim, podemos aceder aos dados
+            gestorId = gestor.getId();
+            gestorNome = gestor.getNome();
+        } else if (gestor != null) {
+            // Se ele existe mas não foi inicializado (é um Proxy),
+            // podemos pegar o ID sem causar o erro, mas não o nome.
+            gestorId = gestor.getId();
+            // Não tentamos aceder a gestor.getNome() para evitar a exceção
+        }
 
         return new UsuarioResponse(
                 usuario.getId(),

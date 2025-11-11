@@ -45,10 +45,24 @@
                         <div class="col-md-6 mb-3"><label for="funcionario-email" class="form-label">Email</label><input type="email" class="form-control" id="funcionario-email" required></div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3"><label for="funcionario-cargo" class="form-label">Cargo</label><select class="form-select" id="funcionario-cargo" required></select></div>
-                        <div class="col-md-6 mb-3" id="campo-senha"><label for="funcionario-senha" class="form-label">Senha</label><input type="password" class="form-control" id="funcionario-senha" minlength="6"></div>
+                        <div class="col-md-6 mb-3">
+                            <label for="funcionario-cargo" class="form-label">Cargo</label>
+                            <select class="form-select" id="funcionario-cargo" required></select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="funcionario-gestor" class="form-label">Gestor Imediato (Opcional)</label>
+                            <select class="form-select" id="funcionario-gestor">
+                                <option value="">Nenhum (É um Gestor/Admin)</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3" id="campo-senha">
+                            <label for="funcionario-senha" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="funcionario-senha" minlength="6">
+                        </div>
+                    </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                     <button type="submit" class="btn btn-primary">Salvar</button>

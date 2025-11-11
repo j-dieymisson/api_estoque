@@ -21,6 +21,7 @@ setTimeout(() => {
         const campoSenha = document.getElementById('campo-senha');
         const funcionarioSenhaInput = document.getElementById('funcionario-senha');
         const btnAdicionarFuncionario = document.getElementById('btn-adicionar-funcionario');
+        const funcionarioGestorSelect = document.getElementById('funcionario-gestor');
 
         const modalSenhaEl = document.getElementById('modal-alterar-senha');
         const modalSenha = new bootstrap.Modal(modalSenhaEl);
@@ -85,6 +86,18 @@ setTimeout(() => {
             } catch (error) { showToast("Não foi possível carregar cargos.", "Erro", true); }
         }
 
+        async function carregarGestores() {
+                    try {
+                        const response = await apiClient.get('/usuarios/gestores');
+                        funcionarioGestorSelect.innerHTML = '<option value="">Nenhum (É um Gestor/Admin)</option>';
+                        response.data.forEach(gestor => {
+                            funcionarioGestorSelect.appendChild(new Option(gestor.nome, gestor.id));
+                        });
+                    } catch (error) {
+                        showToast("Não foi possível carregar a lista de gestores.", "Erro", true);
+                    }
+                }
+
         // --- Funções dos Modais ---
         function abrirModalParaCriar() {
             formFuncionario.reset();
@@ -104,6 +117,7 @@ setTimeout(() => {
                 funcionarioNomeInput.value = user.nome;
                 funcionarioEmailInput.value = user.email;
                 funcionarioCargoSelect.value = user.cargoId;
+                funcionarioGestorSelect.value = user.gestorImediatoId || '';
                 modalFuncionarioLabel.textContent = `Editar: ${user.nome}`;
                 campoSenha.style.display = 'none';
                 funcionarioSenhaInput.required = false;
@@ -115,7 +129,7 @@ setTimeout(() => {
             event.preventDefault();
             const id = funcionarioIdInput.value;
             const isUpdate = !!id;
-            const data = { nome: funcionarioNomeInput.value, email: funcionarioEmailInput.value, cargoId: parseInt(funcionarioCargoSelect.value) };
+            const data = { nome: funcionarioNomeInput.value, email: funcionarioEmailInput.value, cargoId: parseInt(funcionarioCargoSelect.value), gestorImediatoId: funcionarioGestorSelect.value ? parseInt(funcionarioGestorSelect.value) : null };
             if (!isUpdate) data.senha = funcionarioSenhaInput.value;
             try {
                 if (isUpdate) {
@@ -150,7 +164,10 @@ setTimeout(() => {
 
         // --- Inicialização e Event Listeners ---
         async function init() {
-            await carregarCargos();
+            await Promise.all([
+                            carregarCargos(),
+                            carregarGestores()
+                        ]);
             await carregarUsuarios(0);
 
             if(formPesquisa) formPesquisa.addEventListener('submit', (e) => { e.preventDefault(); carregarUsuarios(0); });
