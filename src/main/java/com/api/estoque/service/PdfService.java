@@ -8,6 +8,7 @@ import com.api.estoque.repository.HistoricoGeracaoPdfRepository;
 import com.api.estoque.repository.HistoricoMovimentacaoRepository;
 import com.api.estoque.repository.SolicitacaoRepository;
 import com.api.estoque.service.pdf.RelatorioPdfGenerator;
+import com.api.estoque.service.pdf.TemplatePdfEvent;
 import com.api.estoque.service.pdf.TipoRelatorio;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
@@ -63,7 +64,8 @@ public class PdfService {
         byte[] pdfBytes;
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             Document document = new Document();
-            PdfWriter.getInstance(document, baos);
+            PdfWriter writer = PdfWriter.getInstance(document, baos);
+            writer.setPageEvent(new TemplatePdfEvent(solicitacao.getId(), "Solicitação de Equipamentos"));
             document.open();
 
             // Delega a criação do CONTEÚDO para a classe especialista
@@ -105,7 +107,8 @@ public class PdfService {
         // 3. Gera o PDF em memória
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             Document document = new Document();
-            PdfWriter.getInstance(document, baos);
+            PdfWriter writer = PdfWriter.getInstance(document, baos);
+            writer.setPageEvent(new TemplatePdfEvent());
             document.open();
             gerador.gerar(document, equipamentos); // Delega para o especialista
             document.close();
@@ -128,7 +131,8 @@ public class PdfService {
         // 3. Gera o PDF em memória (a lógica de criar o Document, etc. é a mesma)
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             Document document = new Document();
-            PdfWriter.getInstance(document, baos);
+            PdfWriter writer = PdfWriter.getInstance(document, baos);
+            writer.setPageEvent(new TemplatePdfEvent());
             document.open();
             gerador.gerar(document, historico); // Delega para o especialista
             document.close();
