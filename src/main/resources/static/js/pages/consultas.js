@@ -10,8 +10,32 @@ setTimeout(() => {
         // --- Seletores da Aba 2 ---
         const formBuscaSolicitacaoUsuario = document.getElementById('form-busca-solicitacao-usuario');
         const formBuscaSolicitacaoId = document.getElementById('form-busca-solicitacao-id');
+        const auditoriaTab = document.getElementById('auditoriaTab');
         const filtroStatusSelect = document.getElementById('filtro-sol-status');
 
+        // --- Lógica para Salvar e Restaurar Abas ---
+
+        // 1. Restaurar a aba ativa (ao voltar)
+        const savedTabId = window.pageContext?.activeTab;
+        if (savedTabId) {
+            const tabParaAtivar = document.getElementById(savedTabId);
+            if (tabParaAtivar) {
+                // Usa a API do Bootstrap para mostrar a aba correta
+                const tab = new bootstrap.Tab(tabParaAtivar);
+                tab.show();
+            }
+        }
+
+        // 2. Salvar a aba no histórico sempre que o utilizador clicar nela
+        if (auditoriaTab) {
+            auditoriaTab.addEventListener('click', function(event) {
+                const target = event.target.closest('button[data-bs-toggle="tab"]');
+                if (target) {
+                    // Salva o ID da aba que foi clicada (ex: 'solicitacoes-tab')
+                    window.updateCurrentHistoryContext({ activeTab: target.id });
+                }
+            });
+        }
 
         // --- Lógica de Navegação da Aba 1 ---
         if (formRelatorioEquipamentos) {

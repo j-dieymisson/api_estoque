@@ -89,7 +89,7 @@ setTimeout(() => {
                 await carregarCategorias();
             }
             form.addEventListener('submit', salvarFormulario);
-            btnVoltar.addEventListener('click', () => window.navigateTo('equipamentos.html'));
+            btnVoltar.addEventListener('click', () => window.navigateBack());
         }
 
         init();

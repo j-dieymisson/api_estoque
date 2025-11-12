@@ -66,6 +66,25 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        /**
+             * Atualiza o 'context' da página ATUAL no histórico de navegação.
+             * Isto é usado para guardar o estado (ex: página de paginação, filtros)
+             * sem navegar para uma nova página.
+             */
+    window.updateCurrentHistoryContext = function(newContextData) {
+        if (navigationHistory.length > 0) {
+            // Pega na página atual (a última do array)
+            const currentState = navigationHistory[navigationHistory.length - 1];
+
+            // Funde o contexto antigo com os novos dados
+            // (ex: { id: 123 } + { page: 3 } = { id: 123, page: 3 })
+            currentState.context = { ...currentState.context, ...newContextData };
+
+            // Atualiza também o contexto global
+            window.pageContext = currentState.context;
+        }
+    }
+
     async function loadPage(pageUrl) {
         try {
             if (!pageUrl || pageUrl === '#') {

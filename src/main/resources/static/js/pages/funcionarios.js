@@ -31,6 +31,9 @@ setTimeout(() => {
 
         // --- Funções de Busca e Renderização ---
         async function carregarUsuarios(page = 0) {
+        // 1. Salva a página que estamos a carregar no histórico global
+            window.updateCurrentHistoryContext({ page: page });
+
             currentPage = page;
             corpoTabela.innerHTML = '<tr><td colspan="6" class="text-center">A carregar...</td></tr>';
             const nomePesquisado = inputPesquisaNome.value;
@@ -168,7 +171,8 @@ setTimeout(() => {
                             carregarCargos(),
                             carregarGestores()
                         ]);
-            await carregarUsuarios(0);
+            const savedPage = window.pageContext?.page || 0;
+            await carregarUsuarios(savedPage);
 
             if(formPesquisa) formPesquisa.addEventListener('submit', (e) => { e.preventDefault(); carregarUsuarios(0); });
             if(paginacaoContainer) paginacaoContainer.addEventListener('click', (e) => {

@@ -57,6 +57,21 @@
     // --- Lógica Principal ---
     async function carregarDados(page = 0) {
         corpoTabela.innerHTML = '<tr><td colspan="7" class="text-center">A carregar histórico...</td></tr>';
+        // 1. Lemos o ID AQUI DENTRO (Correção de Timing)
+        const equipamentoId = window.pageContext?.id;
+        if (!equipamentoId) {
+            cabecalhoNome.textContent = 'Erro';
+            corpoTabela.innerHTML = '<tr><td colspan="7" class="text-center text-danger">ID do equipamento não fornecido.</td></tr>';
+            return;
+        }
+
+
+        //2. Salvamos o estado completo (ID + página)
+        window.updateCurrentHistoryContext({
+            id: equipamentoId, // O ID do equipamento que estamos a ver
+            page: page        // A página do histórico que estamos a carregar
+        });
+
         cabecalhoNome.textContent = `Consulta para Equipamento ID: ${equipamentoId}`;
 
         try {
@@ -104,5 +119,8 @@
     }
 
     // --- Inicialização ---
-    carregarDados(0); // Chama a função principal para carregar os dados
+    // Lê a página guardada do histórico (ou usa 0 se não houver)
+    const savedPage = window.pageContext?.page || 0;
+    // Chamamos a função principal para carregar os dados
+    carregarDados(savedPage);
 })();

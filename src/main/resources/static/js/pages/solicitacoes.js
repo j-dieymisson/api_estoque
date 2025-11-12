@@ -75,6 +75,20 @@ setTimeout(() => {
 
         // --- Funções Principais ---
         async function carregarSolicitacoes(page = 0) {
+        // --- 1. LER FILTROS DO DOM ---
+            const statusPesquisado = filtroStatusSelect.value;
+            const dataInicioPesquisada = filtroDataInicio.value;
+            const dataFimPesquisada = filtroDataFim.value;
+
+            // --- 2. SALVAR ESTADO ATUAL (PÁGINA + FILTROS) ---
+            const currentState = {
+                page: page,
+                status: statusPesquisado,
+                dataInicio: dataInicioPesquisada,
+                dataFim: dataFimPesquisada
+            };
+            window.updateCurrentHistoryContext(currentState);
+
             currentPage = page;
             const isAdminOuGestor = currentUserRole === 'ADMIN' || currentUserRole === 'GESTOR';
             const colspan = isAdminOuGestor ? 6 : 5;
@@ -84,9 +98,9 @@ setTimeout(() => {
 
             const params = {
                             page, size: 10, sort: 'dataSolicitacao,desc',
-                            statuses: filtroStatusSelect.value || null, // <-- ALTERADO PARA O PLURAL
-                            dataInicio: filtroDataInicio.value || null,
-                            dataFim: filtroDataFim.value || null,
+                            statuses: statusPesquisado || null, // <-- ALTERADO PARA O PLURAL
+                            dataInicio: dataInicioPesquisada || null,
+                            dataFim: dataFimPesquisada || null,
                         };
             Object.keys(params).forEach(key => (params[key] == null || params[key] === '') && delete params[key]);
 
@@ -137,7 +151,18 @@ setTimeout(() => {
 
 
                 await carregarFiltroStatus();
-                await carregarSolicitacoes(0);
+                // 1. Lê o estado guardado (filtros e página) do histórico
+                const savedState = window.pageContext || {};
+                const savedPage = savedState.page || 0;
+
+                // 2. Restaura os valores dos filtros de volta nos campos
+                filtroStatusSelect.value = savedState.status || '';
+                filtroDataInicio.value = savedState.dataInicio || '';
+                filtroDataFim.value = savedState.dataFim || '';
+
+                // 3. Carrega os dados usando a página e filtros guardados
+                await carregarSolicitacoes(savedPage);
+
             } catch(e) { console.error("Erro na inicialização da página de solicitações", e); }
         }
 
@@ -154,12 +179,19 @@ setTimeout(() => {
         });
 
         if (paginacaoContainer) paginacaoContainer.addEventListener('click', (event) => {
-            const link = event.target.closest('a.page-link');
-            if (link && !link.parentElement.classList.contains('disabled')) {
-                event.preventDefault();
-                carregarSolicitacoes(parseInt(link.dataset.page));
-            }
-        });
+                    const link = event.target.closest('a.page-link');
+                    if (link && !link.parentElement.classList.contains('disabled')) {
+                        event.preventDefault();
+                        const newPage = parseInt(link.dataset.page);
+
+                        // --- ALTERAÇÃO AQUI ---
+                        // 1. Salva a nova página no histórico do main.js
+                        window.updateCurrentHistoryContext({ page: newPage });
+                        // 2. Carrega os dados da nova página
+                        carregarSolicitacoes(newPage);
+                        // --- FIM DA ALTERAÇÃO ---
+                    }
+                });
 
         init();
     })();

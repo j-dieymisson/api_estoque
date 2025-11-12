@@ -17,15 +17,29 @@ setTimeout(() => {
 
         // --- Funções de Busca e Renderização ---
         async function carregarEquipamentos(page = 0) {
+                    // --- 1. LER FILTROS DO DOM ---
+                    const idPesquisado = filtroId.value;
+                    const nomePesquisado = filtroNome.value;
+                    const categoriaPesquisada = filtroCategoria.value;
+
+                    // --- 2. SALVAR ESTADO ATUAL (PÁGINA + FILTROS) ---
+                    const currentState = {
+                        page: page,
+                        id: idPesquisado,
+                        nome: nomePesquisado,
+                        categoriaId: categoriaPesquisada
+                    };
+                    window.updateCurrentHistoryContext(currentState);
+
                     currentPage = page;
                     const colspan = (currentUserRole === 'ADMIN' || currentUserRole === 'GESTOR') ? 6 : 5;
                     corpoTabela.innerHTML = `<tr><td colspan="${colspan}" class="text-center">A carregar...</td></tr>`;
 
                     const params = {
                         page, size: 10, sort: 'nome,asc',
-                        id: filtroId.value || null,
-                        nome: filtroNome.value || null,
-                        categoriaId: filtroCategoria.value || null,
+                        id: idPesquisado || null,
+                        nome: nomePesquisado || null,
+                        categoriaId: categoriaPesquisada || null,
                     };
                     Object.keys(params).forEach(key => (params[key] == null || params[key] === '') && delete params[key]);
 
@@ -129,7 +143,17 @@ setTimeout(() => {
                 } catch (e) { return; }
 
                 await carregarCategorias();
-                await carregarEquipamentos(0);
+                // 1. Lê o estado guardado (filtros e página) do histórico
+                const savedState = window.pageContext || {};
+                const savedPage = savedState.page || 0;
+
+                // 2. Restaura os valores dos filtros de volta nos campos
+                filtroId.value = savedState.id || '';
+                filtroNome.value = savedState.nome || '';
+                filtroCategoria.value = savedState.categoriaId || '';
+
+                // 3. Carrega os dados usando a página e filtros guardados
+                await carregarEquipamentos(savedPage);
 
                 // --- Event Listeners Corrigidos ---
 

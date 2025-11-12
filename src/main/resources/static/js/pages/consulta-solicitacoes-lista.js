@@ -38,77 +38,90 @@ setTimeout(() => {
 
         // --- Função Principal ---
 
-        async function carregarDados(page = 0) {
-            corpoTabela.innerHTML = `<tr><td colspan="4" class="text-center">A carregar...</td></tr>`;
+       async function carregarDados(page = 0) {
+                   corpoTabela.innerHTML = `<tr><td colspan="4" class="text-center">A carregar...</td></tr>`;
 
-            // Lemos os parâmetros AQUI DENTRO, quando a função é chamada
-            const usuarioId = window.pageContext?.usuarioId;
-            const dataInicio = window.pageContext?.dataInicio;
-            const dataFim = window.pageContext?.dataFim;
-            const statuses = window.pageContext?.statuses;
-            const devolucaoIndeterminada = window.pageContext?.devolucaoIndeterminada;
+                   // Lemos os parâmetros AQUI DENTRO (como já corrigimos)
+                   const usuarioId = window.pageContext?.usuarioId;
+                   const dataInicio = window.pageContext?.dataInicio;
+                   const dataFim = window.pageContext?.dataFim;
+                   const statuses = window.pageContext?.statuses;
+                   const devolucaoIndeterminada = window.pageContext?.devolucaoIndeterminada;
 
-            // Validação de segurança: Se o ID do utilizador falhar, paramos.
-            if (!usuarioId) {
-                corpoTabela.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Erro: ID do funcionário não foi passado para a página.</td></tr>`;
-                return;
-            }
+                   // Validação de segurança
+                   if (!usuarioId) {
+                       corpoTabela.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Erro: ID do funcionário não foi passado para a página.</td></tr>`;
+                       return;
+                   }
 
-            const params = {
-                page, size: 10, sort: 'dataSolicitacao,desc',
-                usuarioId: usuarioId,
-                dataInicio: dataInicio || null,
-                dataFim: dataFim || null,
-                statuses: statuses || null,
-                devolucaoIndeterminada: devolucaoIndeterminada ? true : null
-            };
-            Object.keys(params).forEach(key => (params[key] == null || params[key] === '') && delete params[key]);
 
-            try {
-                // Fazemos as duas chamadas em paralelo para otimizar
-                const [userRes, solRes] = await Promise.all([
-                    apiClient.get(`/usuarios/${usuarioId}`),
-                    apiClient.get('/solicitacoes', { params })
-                ]);
+                   // ALTERAÇÃO: Salvamos o estado completo (filtros + página)
 
-                const usuario = userRes.data;
-                const pageData = solRes.data;
+                   window.updateCurrentHistoryContext({
+                       usuarioId: usuarioId,
+                       dataInicio: dataInicio,
+                       dataFim: dataFim,
+                       statuses: statuses,
+                       devolucaoIndeterminada: devolucaoIndeterminada,
+                       page: page // A página atual que estamos a carregar
+                   });
 
-                // Atualiza o cabeçalho
-                cabecalhoUsuario.textContent = `Relatório de Solicitações para: ${usuario.nome}`;
-                if (dataInicio && dataFim) {
-                    subcabecalhoPeriodo.textContent = `Período: ${new Date(dataInicio+'T00:00:00').toLocaleDateString('pt-BR')} a ${new Date(dataFim+'T00:00:00').toLocaleDateString('pt-BR')}`;
-                }
 
-                // Renderiza a tabela
-                corpoTabela.innerHTML = '';
-                if (pageData.content.length === 0) {
-                    corpoTabela.innerHTML = `<tr><td colspan="4" class="text-center">Nenhuma solicitação encontrada para este funcionário no período.</td></tr>`;
-                } else {
-                    pageData.content.forEach(sol => {
-                        const tr = document.createElement('tr');
+                   const params = {
+                       page, size: 10, sort: 'dataSolicitacao,desc',
+                       usuarioId: usuarioId,
+                       dataInicio: dataInicio || null,
+                       dataFim: dataFim || null,
+                       statuses: statuses || null,
+                       devolucaoIndeterminada: devolucaoIndeterminada ? true : null
+                   };
+                   Object.keys(params).forEach(key => (params[key] == null || params[key] === '') && delete params[key]);
 
-                        let statusVisual = sol.status;
-                        if (statusVisual === 'PENDENTE_GESTOR' || statusVisual === 'PENDENTE_ADMIN') {
-                            statusVisual = 'Pendente';
-                        }
+                   try {
+                       // (O resto da sua função continua igual...)
+                       const [userRes, solRes] = await Promise.all([
+                           apiClient.get(`/usuarios/${usuarioId}`),
+                           apiClient.get('/solicitacoes', { params })
+                       ]);
 
-                        tr.innerHTML = `
-                            <td>${sol.id}</td>
-                            <td>${new Date(sol.dataSolicitacao).toLocaleDateString('pt-BR')}</td>
-                            <td><span class="badge ${getBadgeClassForStatus(sol.status)}">${statusVisual}</span></td>
-                            <td><button class="btn btn-sm btn-outline-info btn-detalhes-solicitacao" data-id="${sol.id}">Ver Detalhes</button></td>
-                        `;
-                        corpoTabela.appendChild(tr);
-                    });
-                }
-                renderizarPaginacao(pageData);
+                       const usuario = userRes.data;
+                       const pageData = solRes.data;
 
-            } catch (error) {
-                console.error("Erro ao gerar relatório de solicitações:", error);
-                corpoTabela.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Falha ao carregar relatório.</td></tr>`;
-            }
-        }
+                       // Atualiza o cabeçalho
+                       cabecalhoUsuario.textContent = `Relatório de Solicitações para: ${usuario.nome}`;
+                       if (dataInicio && dataFim) {
+                           subcabecalhoPeriodo.textContent = `Período: ${new Date(dataInicio+'T00:00:00').toLocaleDateString('pt-BR')} a ${new Date(dataFim+'T00:00:00').toLocaleDateString('pt-BR')}`;
+                       }
+
+                       // Renderiza a tabela
+                       corpoTabela.innerHTML = '';
+                       if (pageData.content.length === 0) {
+                           corpoTabela.innerHTML = `<tr><td colspan="4" class="text-center">Nenhuma solicitação encontrada para este funcionário no período.</td></tr>`;
+                       } else {
+                           pageData.content.forEach(sol => {
+                               const tr = document.createElement('tr');
+
+                               let statusVisual = sol.status;
+                               if (statusVisual === 'PENDENTE_GESTOR' || statusVisual === 'PENDENTE_ADMIN') {
+                                   statusVisual = 'Pendente';
+                               }
+
+                               tr.innerHTML = `
+                                   <td>${sol.id}</td>
+                                   <td>${new Date(sol.dataSolicitacao).toLocaleDateString('pt-BR')}</td>
+                                   <td><span class="badge ${getBadgeClassForStatus(sol.status)}">${statusVisual}</span></td>
+                                   <td><button class="btn btn-sm btn-outline-info btn-detalhes-solicitacao" data-id="${sol.id}">Ver Detalhes</button></td>
+                               `;
+                               corpoTabela.appendChild(tr);
+                           });
+                       }
+                       renderizarPaginacao(pageData);
+
+                   } catch (error) {
+                       console.error("Erro ao gerar relatório de solicitações:", error);
+                       corpoTabela.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Falha ao carregar relatório.</td></tr>`;
+                   }
+               }
 
         // --- Event Listeners ---
         if(btnVoltar) {
@@ -132,8 +145,10 @@ setTimeout(() => {
         });
 
         // --- Inicialização ---
+        // Lê a página guardada do histórico (ou usa 0 se não houver)
+        const savedPage = window.pageContext?.page || 0;
         // Chamamos a função principal para carregar os dados
-        carregarDados(0);
+        carregarDados(savedPage);
 
     })();
 }, 0);

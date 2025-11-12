@@ -3,58 +3,71 @@ setTimeout(() => {
     (async function() {
         console.log("A executar o script da lista de resultados de equipamentos...");
 
-        // Lê os parâmetros de data passados pelo 'navigateTo'
-        const dataInicio = window.pageContext?.dataInicioCriacao;
-        const dataFim = window.pageContext?.dataFimCriacao;
-
-        if (!dataInicio || !dataFim) {
-            document.getElementById('main-content-area').innerHTML = '<div class="alert alert-danger">Período de datas não fornecido.</div>';
-            return;
-        }
-
         // --- Seletores ---
         const cabecalhoResultado = document.getElementById('resultado-cabecalho');
         const corpoTabela = document.getElementById('corpo-tabela-relatorio-equipamentos');
         const paginacaoContainer = document.getElementById('paginacao-relatorio-equipamentos');
         const btnVoltar = document.getElementById('btn-voltar');
 
-        // --- Funções ---
-        async function carregarDados(page = 0) {
-            corpoTabela.innerHTML = `<tr><td colspan="5" class="text-center">A carregar...</td></tr>`;
-            const params = {
-                page, size: 10, sort: 'dataCriacao,desc',
-                dataInicioCriacao: dataInicio,
-                dataFimCriacao: dataFim
-            };
+       async function carregarDados(page = 0) {
+                   corpoTabela.innerHTML = `<tr><td colspan="5" class="text-center">A carregar...</td></tr>`;
 
-            try {
-                const response = await apiClient.get('/equipamentos', { params });
-                const pageData = response.data;
 
-                // Atualiza o cabeçalho com o período da busca
-                cabecalhoResultado.textContent = `Período da busca: ${new Date(dataInicio+'T00:00:00').toLocaleDateString('pt-BR')} a ${new Date(dataFim+'T00:00:00').toLocaleDateString('pt-BR')}`;
+                   //1. Lemos os parâmetros AQUI DENTRO ===
 
-                corpoTabela.innerHTML = '';
-                if (pageData.content.length === 0) {
-                    corpoTabela.innerHTML = `<tr><td colspan="5" class="text-center">Nenhum equipamento criado neste período.</td></tr>`;
-                } else {
-                    pageData.content.forEach(eq => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${eq.id}</td>
-                            <td>${eq.nome}</td>
-                            <td>${eq.nomeCategoria}</td>
-                            <td>${new Date(eq.dataCriacao).toLocaleDateString('pt-BR')}</td>
-                            <td><button class="btn btn-sm btn-outline-info btn-ver-historico" data-id="${eq.id}">Ver Histórico</button></td>
-                        `;
-                        corpoTabela.appendChild(tr);
-                    });
-                }
-                renderizarPaginacao(pageData);
-            } catch (error) {
-                corpoTabela.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Falha ao carregar relatório.</td></tr>`;
-            }
-        }
+                   const dataInicio = window.pageContext?.dataInicioCriacao;
+                   const dataFim = window.pageContext?.dataFimCriacao;
+
+                   // Validação de segurança
+                   if (!dataInicio || !dataFim) {
+                       corpoTabela.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Período de datas não fornecido.</td></tr>`;
+                       return;
+                   }
+
+
+                   //2. Salvamos o estado completo (filtros + página)
+
+                   window.updateCurrentHistoryContext({
+                       dataInicioCriacao: dataInicio,
+                       dataFimCriacao: dataFim,
+                       page: page // A página atual que estamos a carregar
+                   });
+
+
+                   const params = {
+                       page, size: 10, sort: 'dataCriacao,desc',
+                       dataInicioCriacao: dataInicio,
+                       dataFimCriacao: dataFim
+                   };
+
+                   try {
+                       const response = await apiClient.get('/equipamentos', { params });
+                       const pageData = response.data;
+
+                       // Atualiza o cabeçalho com o período da busca
+                       cabecalhoResultado.textContent = `Período da busca: ${new Date(dataInicio+'T00:00:00').toLocaleDateString('pt-BR')} a ${new Date(dataFim+'T00:00:00').toLocaleDateString('pt-BR')}`;
+
+                       corpoTabela.innerHTML = '';
+                       if (pageData.content.length === 0) {
+                           corpoTabela.innerHTML = `<tr><td colspan="5" class="text-center">Nenhum equipamento criado neste período.</td></tr>`;
+                       } else {
+                           pageData.content.forEach(eq => {
+                               const tr = document.createElement('tr');
+                               tr.innerHTML = `
+                                   <td>${eq.id}</td>
+                                   <td>${eq.nome}</td>
+                                   <td>${eq.nomeCategoria}</td>
+                                   <td>${new Date(eq.dataCriacao).toLocaleDateString('pt-BR')}</td>
+                                   <td><button class="btn btn-sm btn-outline-info btn-ver-historico" data-id="${eq.id}">Ver Histórico</button></td>
+                               `;
+                               corpoTabela.appendChild(tr);
+                           });
+                       }
+                       renderizarPaginacao(pageData);
+                   } catch (error) {
+                       corpoTabela.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Falha ao carregar relatório.</td></tr>`;
+                   }
+               }
 
         function renderizarPaginacao(pageData) {
             paginacaoContainer.innerHTML = '';
@@ -89,7 +102,10 @@ setTimeout(() => {
         });
 
         // --- Inicialização ---
-        carregarDados(0);
+       // 3. Lê a página guardada do histórico (ou usa 0 se não houver)
+       const savedPage = window.pageContext?.page || 0;
+       // Chamamos a função principal para carregar os dados
+       carregarDados(savedPage);
 
     })();
 }, 0);
