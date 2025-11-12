@@ -21,6 +21,7 @@ public class DashboardService {
     private final PreferenciaDashboardRepository preferenciaRepository;
     private final CategoriaRepository categoriaRepository;
     private final HistoricoMovimentacaoRepository historicoMovimentacaoRepository;
+    private final HistoricoStatusSolicitacaoRepository historicoStatusSolicitacaoRepository;
 
 
     public DashboardService(UsuarioRepository usuarioRepository,
@@ -28,13 +29,15 @@ public class DashboardService {
                             EquipamentoRepository equipamentoRepository,
                             PreferenciaDashboardRepository preferenciaRepository,
                             CategoriaRepository categoriaRepository,
-                            HistoricoMovimentacaoRepository historicoMovimentacaoRepository) {
+                            HistoricoMovimentacaoRepository historicoMovimentacaoRepository,
+                            HistoricoStatusSolicitacaoRepository historicoStatusSolicitacaoRepository) {
         this.usuarioRepository = usuarioRepository;
         this.solicitacaoRepository = solicitacaoRepository;
         this.equipamentoRepository = equipamentoRepository;
         this.preferenciaRepository = preferenciaRepository;
         this.categoriaRepository = categoriaRepository;
         this.historicoMovimentacaoRepository = historicoMovimentacaoRepository;
+        this.historicoStatusSolicitacaoRepository = historicoStatusSolicitacaoRepository;
     }
 
     /**
@@ -62,8 +65,9 @@ public class DashboardService {
                     ));
                     break;
                 case SOLICITACOES_APROVADAS_HOJE:
-                    dashboardData.put("solicitacoesAprovadasHoje", solicitacaoRepository.countByStatusInAndDataSolicitacaoAfter(
-                            List.of(StatusSolicitacao.APROVADA), LocalDate.now().atStartOfDay()
+                    dashboardData.put("solicitacoesAprovadasHoje", historicoStatusSolicitacaoRepository.countByStatusNovoAndDataAlteracaoAfter(
+                            StatusSolicitacao.APROVADA,
+                            LocalDate.now().atStartOfDay()
                     ));
                     break;
                 case TOTAL_UNIDADES_EM_USO:
