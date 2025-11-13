@@ -94,6 +94,28 @@ public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> 
             Pageable pageable
     );
 
+    @Query("SELECT s FROM Solicitacao s WHERE " +
+            // 1. A CONDIÇÃO PRINCIPAL: O usuário da solicitação DEVE ser do mesmo setor do gestor
+            "s.usuario.setor = :setorDoGestor AND " +
+            // 2. Não mostrar rascunhos de outros (mesma lógica do admin, mas dentro do setor)
+            "((s.status != com.api.estoque.model.StatusSolicitacao.RASCUNHO) OR (s.usuario.id = :usuarioLogadoId)) AND " +
+            // 3. Filtros (idênticos ao findAdminView)
+            "(:usuarioId IS NULL OR s.usuario.id = :usuarioId) AND " +
+            "(:statuses IS NULL OR s.status IN :statuses) AND " +
+            "(:inicio IS NULL OR s.dataSolicitacao >= :inicio) AND " +
+            "(:fim IS NULL OR s.dataSolicitacao <= :fim) AND " +
+            "(:devolucaoIndeterminada IS NULL OR (:devolucaoIndeterminada = true AND s.dataPrevisaoDevolucao IS NULL))")
+    Page<Solicitacao> findGestorView(
+            @Param("usuarioLogadoId") Long usuarioLogadoId,
+            @Param("setorDoGestor") Setor setorDoGestor, // <-- NOVO PARÂMETRO DE FILTRO
+            @Param("usuarioId") Long usuarioId,
+            @Param("statuses") List<StatusSolicitacao> statuses,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fim") LocalDateTime fim,
+            @Param("devolucaoIndeterminada") Boolean devolucaoIndeterminada,
+            Pageable pageable
+    );
+
     // Busca por ID de usuário E uma LISTA de status
     List<Solicitacao> findAllByUsuarioIdAndStatusIn(Long usuarioId, Collection<StatusSolicitacao> statuses);
 

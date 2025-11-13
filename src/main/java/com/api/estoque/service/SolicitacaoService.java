@@ -452,16 +452,43 @@
                 LocalDateTime inicio = dataInicio.map(LocalDate::atStartOfDay).orElse(null);
                 LocalDateTime fim = dataFim.map(d -> d.atTime(23, 59, 59)).orElse(null);
 
+                String cargo = usuarioLogado.getCargo().getNome();
+                Page<Solicitacao> solicitacoes;
+
+                if ("ADMIN".equals(cargo)) {
+                    // 1. ADMIN: Vê tudo (usando a query de Admin)
+                    solicitacoes = solicitacaoRepository.findAdminView(
+                            usuarioLogado.getId(),
+                            usuarioId.orElse(null),
+                            statuses,
+                            inicio,
+                            fim,
+                            devolucaoIndeterminada,
+                            pageable
+                    );
+                } else if ("GESTOR".equals(cargo)) {
+                    // 2. GESTOR: Vê apenas o seu setor (usando a nova query)
+                    Setor setorDoGestor = usuarioLogado.getSetor();
+                    if (setorDoGestor == null) {
+                        // Se um gestor não tem setor (ou o setor foi removido), ele não vê nada
+                        return Page.empty();
+                    }
+
                 // A chamada agora inclui o ID do utilizador, correspondendo à nova assinatura
-                Page<Solicitacao> solicitacoes = solicitacaoRepository.findAdminView(
-                        usuarioLogado.getId(),
-                        usuarioId.orElse(null),
-                        statuses,
-                        inicio,
-                        fim,
-                        devolucaoIndeterminada,
-                        pageable
-                );
+                    solicitacoes = solicitacaoRepository.findGestorView( // <-- CHAMA A NOVA QUERY
+                            usuarioLogado.getId(),
+                            setorDoGestor, // <-- Filtra pelo setor do gestor
+                            usuarioId.orElse(null),
+                            statuses,
+                            inicio,
+                            fim,
+                            devolucaoIndeterminada,
+                            pageable
+                    );
+                } else {
+                    // 3. COLABORADOR: Não deve usar este endpoint, retorna vazio.
+                    solicitacoes = Page.empty();
+                }
 
                 return solicitacoes.map(this::mapToSolicitacaoResponse);
             }
