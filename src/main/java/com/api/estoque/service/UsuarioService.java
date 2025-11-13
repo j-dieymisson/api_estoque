@@ -6,11 +6,9 @@ import com.api.estoque.dto.request.UsuarioUpdateRequest;
 import com.api.estoque.dto.response.UsuarioResponse;
 import com.api.estoque.exception.BusinessException;
 import com.api.estoque.exception.ResourceNotFoundException;
-import com.api.estoque.model.Cargo;
-import com.api.estoque.model.Solicitacao;
-import com.api.estoque.model.StatusSolicitacao;
-import com.api.estoque.model.Usuario;
+import com.api.estoque.model.*;
 import com.api.estoque.repository.CargoRepository;
+import com.api.estoque.repository.SetorRepository;
 import com.api.estoque.repository.SolicitacaoRepository;
 import com.api.estoque.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +30,7 @@ public class UsuarioService {
     private final SolicitacaoService solicitacaoService;
     private final CargoRepository cargoRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SetorRepository setorRepository;
 
     @Value("${api.security.super-admin.id}") // Injeta o valor do application.properties
     private Long superAdminId;
@@ -40,12 +39,14 @@ public class UsuarioService {
                           SolicitacaoRepository solicitacaoRepository,
                           SolicitacaoService solicitacaoService,
                           CargoRepository cargoRepository,
-                          PasswordEncoder passwordEncoder) {
+                          PasswordEncoder passwordEncoder,
+                          SetorRepository setorRepository) {
         this.usuarioRepository = usuarioRepository;
         this.solicitacaoRepository = solicitacaoRepository;
         this.solicitacaoService = solicitacaoService;
         this.cargoRepository = cargoRepository;
         this.passwordEncoder = passwordEncoder;
+        this.setorRepository = setorRepository;
     }
 
     @Transactional
@@ -109,16 +110,11 @@ public class UsuarioService {
         novoUsuario.setCargo(cargo);
         novoUsuario.setAtivo(true);
 
-        //Associa o Gestor Imediato, se um ID for fornecido
-        if (request.gestorImediatoId() != null) {
-            Usuario gestor = usuarioRepository.findById(request.gestorImediatoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Gestor Imediato não encontrado com o ID: " + request.gestorImediatoId()));
-
-            // Opcional: Adicionar verificação se o gestor é mesmo um "GESTOR"
-            if (!gestor.getCargo().getNome().equals("GESTOR")) {
-                throw new BusinessException("O utilizador selecionado não tem o cargo de GESTOR.");
-            }
-            novoUsuario.setGestorImediato(gestor);
+        //Associa o Setor, se um ID for fornecido
+        if (request.setorId() != null) {
+            Setor setor = setorRepository.findById(request.setorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Setor não encontrado com o ID: " + request.setorId()));
+            novoUsuario.setSetor(setor);
         }
 
         // 3. O PASSO MAIS IMPORTANTE: Encripta a senha antes de a definir
@@ -198,23 +194,14 @@ public class UsuarioService {
         usuario.setEmail(request.email());
         usuario.setCargo(novoCargo); // A importante alteração de cargo acontece aqui.
 
-        // 4. Atualiza o Gestor Imediato
-        if (request.gestorImediatoId() != null) {
-            // Verifica se o utilizador não está a tentar definir-se a si mesmo como gestor
-            if (id.equals(request.gestorImediatoId())) {
-                throw new BusinessException("Um utilizador não pode ser o seu próprio gestor.");
-            }
-
-            Usuario gestor = usuarioRepository.findById(request.gestorImediatoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Gestor Imediato não encontrado com o ID: " + request.gestorImediatoId()));
-
-            if (!gestor.getCargo().getNome().equals("GESTOR")) {
-                throw new BusinessException("O utilizador selecionado não tem o cargo de GESTOR.");
-            }
-            usuario.setGestorImediato(gestor);
+        // 4. Atualiza o Setor
+        if (request.setorId() != null) {
+            Setor setor = setorRepository.findById(request.setorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Setor não encontrado com o ID: " + request.setorId()));
+            usuario.setSetor(setor);
         } else {
             // Permite remover o gestor (definir como null)
-            usuario.setGestorImediato(null);
+            usuario.setSetor(null);
         }
 
         return mapToUsuarioResponse(usuario);
@@ -238,40 +225,27 @@ public class UsuarioService {
         // O JPA guarda a alteração automaticamente no fim da transação.
     }
 
-    @Transactional(readOnly = true)
-    public List<UsuarioResponse> listarGestores() {
-        // 1. Encontra o Cargo de "GESTOR"
-        Cargo cargoGestor = cargoRepository.findByNome("GESTOR")
-                .orElseThrow(() -> new ResourceNotFoundException("O perfil 'GESTOR' não foi encontrado no sistema."));
-
-        // 2. Busca todos os utilizadores ativos que têm esse cargo
-        List<Usuario> gestores = usuarioRepository.findAllByCargo(cargoGestor).stream()
-                .filter(Usuario::isAtivo) // Garante que apenas gestores ativos sejam listados
-                .toList();
-
-        // 3. Mapeia para a resposta
-        return gestores.stream()
-                .map(this::mapToUsuarioResponse)
-                .toList();
-    }
 
     // Adicione também um método auxiliar para o mapeamento
     public UsuarioResponse mapToUsuarioResponse(Usuario usuario) {
 
-        Usuario gestor = usuario.getGestorImediato();
-        Long gestorId = null;
-        String gestorNome = null;
+        String cargoNome = (usuario.getCargo() != null) ? usuario.getCargo().getNome() : null;
+        Long cargoId = (usuario.getCargo() != null) ? usuario.getCargo().getId() : null;
 
-        // Verificamos se o gestor não é nulo E se ele já foi inicializado
-        if (gestor != null && org.hibernate.Hibernate.isInitialized(gestor)) {
-            // Se sim, podemos aceder aos dados
-            gestorId = gestor.getId();
-            gestorNome = gestor.getNome();
-        } else if (gestor != null) {
-            // Se ele existe mas não foi inicializado (é um Proxy),
-            // podemos pegar o ID sem causar o erro, mas não o nome.
-            gestorId = gestor.getId();
-            // Não tentamos aceder a gestor.getNome() para evitar a exceção
+        // --- LÓGICA DE GESTOR REMOVIDA E SUBSTITUÍDA ---
+        Setor setor = usuario.getSetor(); // Este é o campo LAZY
+        Long setorId = null;
+        String setorNome = null;
+
+        if (setor != null) {
+            // Usamos o 'proxy' para pegar o ID, o que é seguro
+            setorId = setor.getId();
+
+            // Verificamos se o nome já foi carregado (para evitar LazyInitializationException)
+            if (org.hibernate.Hibernate.isInitialized(setor)) {
+                setorNome = setor.getNome();
+            }
+            // Se não estiver inicializado, setorNome permanece null
         }
 
         return new UsuarioResponse(
@@ -281,8 +255,8 @@ public class UsuarioService {
                 usuario.getCargo().getNome(), // Pega o nome do objeto Cargo associado
                 usuario.getCargo().getId(),
                 usuario.isAtivo(),
-                gestorId,
-                gestorNome
+                setorId,
+                setorNome
         );
     }
 }

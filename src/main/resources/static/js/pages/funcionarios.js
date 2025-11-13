@@ -21,7 +21,8 @@ setTimeout(() => {
         const campoSenha = document.getElementById('campo-senha');
         const funcionarioSenhaInput = document.getElementById('funcionario-senha');
         const btnAdicionarFuncionario = document.getElementById('btn-adicionar-funcionario');
-        const funcionarioGestorSelect = document.getElementById('funcionario-gestor');
+        const btnGerirSetores = document.getElementById('btn-gerir-setores');
+        const funcionarioSetorSelect = document.getElementById('funcionario-setor');
 
         const modalSenhaEl = document.getElementById('modal-alterar-senha');
         const modalSenha = new bootstrap.Modal(modalSenhaEl);
@@ -89,17 +90,18 @@ setTimeout(() => {
             } catch (error) { showToast("Não foi possível carregar cargos.", "Erro", true); }
         }
 
-        async function carregarGestores() {
-                    try {
-                        const response = await apiClient.get('/usuarios/gestores');
-                        funcionarioGestorSelect.innerHTML = '<option value="">Nenhum (É um Gestor/Admin)</option>';
-                        response.data.forEach(gestor => {
-                            funcionarioGestorSelect.appendChild(new Option(gestor.nome, gestor.id));
-                        });
-                    } catch (error) {
-                        showToast("Não foi possível carregar a lista de gestores.", "Erro", true);
-                    }
+        async function carregarSetores() {
+                try {
+                    // Chamamos o novo endpoint, pedindo apenas setores ativos
+                    const response = await apiClient.get('/setores', { params: { apenasAtivos: true } });
+                    funcionarioSetorSelect.innerHTML = '<option value="">Nenhum Setor</option>';
+                    response.data.forEach(setor => {
+                        funcionarioSetorSelect.appendChild(new Option(setor.nome, setor.id));
+                    });
+                } catch (error) {
+                    showToast("Não foi possível carregar a lista de setores.", "Erro", true);
                 }
+            }
 
         // --- Funções dos Modais ---
         function abrirModalParaCriar() {
@@ -120,7 +122,7 @@ setTimeout(() => {
                 funcionarioNomeInput.value = user.nome;
                 funcionarioEmailInput.value = user.email;
                 funcionarioCargoSelect.value = user.cargoId;
-                funcionarioGestorSelect.value = user.gestorImediatoId || '';
+                funcionarioSetorSelect.value = user.setorId || '';
                 modalFuncionarioLabel.textContent = `Editar: ${user.nome}`;
                 campoSenha.style.display = 'none';
                 funcionarioSenhaInput.required = false;
@@ -132,7 +134,14 @@ setTimeout(() => {
             event.preventDefault();
             const id = funcionarioIdInput.value;
             const isUpdate = !!id;
-            const data = { nome: funcionarioNomeInput.value, email: funcionarioEmailInput.value, cargoId: parseInt(funcionarioCargoSelect.value), gestorImediatoId: funcionarioGestorSelect.value ? parseInt(funcionarioGestorSelect.value) : null };
+
+            const data = {
+                nome: funcionarioNomeInput.value,
+                email: funcionarioEmailInput.value,
+                cargoId: parseInt(funcionarioCargoSelect.value),
+                setorId: funcionarioSetorSelect.value ? parseInt(funcionarioSetorSelect.value) : null // <-- ENVIA 'setorId'
+            };
+
             if (!isUpdate) data.senha = funcionarioSenhaInput.value;
             try {
                 if (isUpdate) {
@@ -169,7 +178,7 @@ setTimeout(() => {
         async function init() {
             await Promise.all([
                             carregarCargos(),
-                            carregarGestores()
+                            carregarSetores()
                         ]);
             const savedPage = window.pageContext?.page || 0;
             await carregarUsuarios(savedPage);
@@ -179,6 +188,7 @@ setTimeout(() => {
                 const link = e.target.closest('a.page-link');
                 if (link && !link.parentElement.classList.contains('disabled')) { e.preventDefault(); carregarUsuarios(parseInt(link.dataset.page)); }
             });
+            if (btnGerirSetores) btnGerirSetores.addEventListener('click', () => window.navigateTo('setores.html'));
             if (btnAdicionarFuncionario) btnAdicionarFuncionario.addEventListener('click', abrirModalParaCriar);
             if (formFuncionario) formFuncionario.addEventListener('submit', salvarFuncionario);
             if (formSenha) formSenha.addEventListener('submit', salvarNovaSenha);

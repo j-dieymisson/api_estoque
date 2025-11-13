@@ -67,7 +67,7 @@ public class SolicitacaoPdfGenerator implements RelatorioPdfGenerator<Solicitaca
      * Helper para criar a tabela de "DADOS DO SOLICITANTE".
      */
     private PdfPTable criarTabelaInfoSolicitante(Solicitacao sol, Font fontNormal, Font fontBold) {
-        PdfPTable table = new PdfPTable(4); // 4 colunas (Label, Value, Label, Value)
+        PdfPTable table = new PdfPTable(new float[]{ 1.5f, 3.5f, 2f, 3f }); // 4 colunas (Label, Value, Label, Value)
         table.setWidthPercentage(100);
         table.setSpacingAfter(10f);
 
@@ -105,7 +105,7 @@ public class SolicitacaoPdfGenerator implements RelatorioPdfGenerator<Solicitaca
         table.setWidthPercentage(100);
 
         // Linha das Datas
-        addCellSimples(table, "Recceber: " + formatarData(sol.getDataPrevisaoEntrega()), fontNormal, Element.ALIGN_LEFT);
+        addCellSimples(table, "Receber: " + formatarData(sol.getDataPrevisaoEntrega()), fontNormal, Element.ALIGN_LEFT);
         addCellSimples(table, "Devolução: " + formatarData(sol.getDataPrevisaoDevolucao()), fontNormal, Element.ALIGN_LEFT);
 
         // Linha da Justificativa (título)
@@ -131,6 +131,10 @@ public class SolicitacaoPdfGenerator implements RelatorioPdfGenerator<Solicitaca
         // --- ALTERAÇÃO: Larguras (Descrição maior, UN/Qtd menores) ---
         PdfPTable table = new PdfPTable(new float[]{1.5f, 6f, 1f, 1.5f}); // 4 colunas
         table.setWidthPercentage(100);
+
+        // Diz à tabela que a primeira linha (1) é o cabeçalho
+        // e deve ser repetida em todas as páginas novas.
+        table.setHeaderRows(1);
 
         // --- ALTERAÇÃO: Cabeçalho da Tabela ---
         addCellHeader(table, "Código", fontHeader);

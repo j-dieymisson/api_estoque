@@ -20,7 +20,7 @@
     
         @Service
         public class SolicitacaoService {
-    
+
             private final SolicitacaoRepository solicitacaoRepository;
             private final UsuarioRepository usuarioRepository;
             private final EquipamentoRepository equipamentoRepository;
@@ -28,8 +28,8 @@
             private final HistoricoStatusSolicitacaoRepository historicoStatusRepository;
             private final DevolucaoRepository devolucaoRepository;
             private final SolicitacaoItemRepository solicitacaoItemRepository;
-    
-    
+
+
             public SolicitacaoService(SolicitacaoRepository solicitacaoRepository,
                                       UsuarioRepository usuarioRepository,
                                       EquipamentoRepository equipamentoRepository,
@@ -57,17 +57,26 @@
                     throw new BusinessException("Utilizador está inativo e não pode criar solicitações.");
                 }
 
-                // --- NOVA LÓGICA DE STATUS ---
+                // --- NOVA LÓGICA DE STATUS (BASEADA EM CARGO E SETOR) ---
                 // Determina o status inicial baseado na hierarquia
                 StatusSolicitacao statusInicial;
-                if (usuarioLogado.getGestorImediato() != null) {
-                    statusInicial = StatusSolicitacao.PENDENTE_GESTOR;
-                } else {
-                    // Se o utilizador não tem gestor (ex: é um gestor ou admin),
-                    // a solicitação pula a primeira etapa
+                String cargoUsuario = usuarioLogado.getCargo().getNome();
+
+                // SE for Gestor ou Admin, pula a primeira etapa
+                if ("GESTOR".equals(cargoUsuario) || "ADMIN".equals(cargoUsuario)) {
                     statusInicial = StatusSolicitacao.PENDENTE_ADMIN;
+                } else {
+                    // SE for Colaborador, verifica se o seu setor tem gestores
+                    Setor setorDoUsuario = usuarioLogado.getSetor();
+                    if (setorDoUsuario != null &&
+                            usuarioRepository.existsBySetorAndCargoNome(setorDoUsuario, "GESTOR")) {
+                        // Se tem gestor no setor, vai para o Gestor
+                        statusInicial = StatusSolicitacao.PENDENTE_GESTOR;
+                    } else {
+                        // Se o setor não tem gestor (ou o colaborador não tem setor), pula para o Admin
+                        statusInicial = StatusSolicitacao.PENDENTE_ADMIN;
+                    }
                 }
-                // --- FIM DA NOVA LÓGICA ---
 
                 // 2. Cria o objeto principal da solicitação
                 Solicitacao novaSolicitacao = new Solicitacao();
@@ -104,8 +113,12 @@
                 }
 
                 // 3. REGRA DE SEGURANÇA: Verifica se o gestor logado é o gestor do solicitante
-                if (!solicitacao.getUsuario().getGestorImediato().getId().equals(gestorLogado.getId())) {
-                    throw new BusinessException("Você não é o gestor imediato deste solicitante e não pode aprovar este pedido.");
+                Setor setorSolicitante = solicitacao.getUsuario().getSetor();
+                Setor setorGestor = gestorLogado.getSetor();
+
+                // Verifica se o solicitante tem um setor E se o gestor logado pertence a esse mesmo setor
+                if (setorSolicitante == null || !setorSolicitante.equals(setorGestor)) {
+                    throw new BusinessException("Você não pertence ao setor do solicitante e não pode aprovar este pedido.");
                 }
 
                 // 4. Valida itens (ativo/stock) ANTES de aprovar
@@ -211,7 +224,7 @@
 
                 return mapToSolicitacaoResponse(solicitacaoSalva);
             }
-    
+
             @Transactional
             public SolicitacaoResponse criarRascunho(SolicitacaoRequest request, Usuario usuarioLogado) {
 
@@ -220,7 +233,7 @@
                 if (!usuarioLogado.isAtivo()) {
                     throw new BusinessException("Utilizador está inativo e não pode criar rascunhos.");
                 }
-    
+
                 Solicitacao novoRascunho = new Solicitacao();
                 novoRascunho.setUsuario(usuarioLogado);
                 novoRascunho.setDataSolicitacao(LocalDateTime.now());
@@ -228,33 +241,33 @@
                 novoRascunho.setJustificativa(request.justificativa());
                 novoRascunho.setDataPrevisaoEntrega(request.dataPrevisaoEntrega());
                 novoRascunho.setDataPrevisaoDevolucao(request.dataPrevisaoDevolucao());
-    
+
                 // Adiciona os itens JÁ VALIDANDO O STOCK
                 for (SolicitacaoItemRequest itemRequest : request.itens()) {
                     Equipamento equipamento = equipamentoRepository.findById(itemRequest.equipamentoId())
                             .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + itemRequest.equipamentoId()));
-    
-    
+
+
                     if (equipamento.getQuantidadeDisponivel() < itemRequest.quantidade()) {
                         throw new BusinessException("Stock insuficiente para o equipamento: " + equipamento.getNome());
                     }
                     // =================================================================
-    
+
                     SolicitacaoItem novoItem = new SolicitacaoItem();
                     novoItem.setEquipamento(equipamento);
                     novoItem.setQuantidadeSolicitada(itemRequest.quantidade());
-    
+
                     novoRascunho.adicionarItem(novoItem);
                 }
-    
+
                 Solicitacao rascunhoSalvo = solicitacaoRepository.save(novoRascunho);
                 registrarHistoricoDeStatus(rascunhoSalvo, null, StatusSolicitacao.RASCUNHO, usuarioLogado);
-    
+
                 return mapToSolicitacaoResponse(rascunhoSalvo);
             }
 
             @Transactional
-            public SolicitacaoResponse enviarRascunho(Long id, Usuario usuarioLogado) { // Adicionámos usuarioLogado
+            public SolicitacaoResponse enviarRascunho(Long id, Usuario usuarioLogado) {
                 // 1. Busca a solicitação que está em modo rascunho
                 Solicitacao rascunho = solicitacaoRepository.findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Rascunho de solicitação não encontrado com o ID: " + id));
@@ -285,17 +298,24 @@
                 // 1. Valida a DATA
                 validarDatas(rascunho.getDataPrevisaoEntrega(), rascunho.getDataPrevisaoDevolucao());
 
-                // --- NOVA LÓGICA DE STATUS ---
-                // Determina o status baseado na hierarquia do DONO do rascunho
+                // --- NOVA LÓGICA DE STATUS (BASEADA EM CARGO E SETOR) ---
                 StatusSolicitacao statusNovo;
                 Usuario criadorDoRascunho = rascunho.getUsuario();
+                String cargoUsuario = criadorDoRascunho.getCargo().getNome();
 
-                if (criadorDoRascunho.getGestorImediato() != null) {
-                    statusNovo = StatusSolicitacao.PENDENTE_GESTOR;
-                } else {
+                // SE for Gestor ou Admin, pula a primeira etapa
+                if ("GESTOR".equals(cargoUsuario) || "ADMIN".equals(cargoUsuario)) {
                     statusNovo = StatusSolicitacao.PENDENTE_ADMIN;
+                } else {
+                    // SE for Colaborador, verifica se o seu setor tem gestores
+                    Setor setorDoUsuario = criadorDoRascunho.getSetor();
+                    if (setorDoUsuario != null &&
+                            usuarioRepository.existsBySetorAndCargoNome(setorDoUsuario, "GESTOR")) {
+                        statusNovo = StatusSolicitacao.PENDENTE_GESTOR;
+                    } else {
+                        statusNovo = StatusSolicitacao.PENDENTE_ADMIN;
+                    }
                 }
-                // --- FIM DA NOVA LÓGICA ---
 
                 // 4. Altera o status
                 StatusSolicitacao statusAnterior = rascunho.getStatus();
@@ -310,22 +330,22 @@
 
                 return mapToSolicitacaoResponse(solicitacaoEnviada);
             }
-    
+
             @Transactional
             public void apagarRascunho(Long id) {
                 Solicitacao rascunho = solicitacaoRepository.findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Rascunho não encontrado com o ID: " + id));
-    
+
                 if (rascunho.getStatus() != StatusSolicitacao.RASCUNHO) {
                     throw new BusinessException("Apenas solicitações com status RASCUNHO podem ser apagadas.");
                 }
-    
+
                 // Apaga o registo do histórico de status primeiro para evitar problemas de constraint
                 historicoStatusRepository.deleteAll(rascunho.getHistoricoStatus());
-    
+
                 solicitacaoRepository.delete(rascunho);
             }
-    
+
             @Transactional(readOnly = true)
             public List<SolicitacaoResponse> listarRascunhosPorUsuario(Long usuarioId) {
                 List<Solicitacao> rascunhos = solicitacaoRepository.findAllByUsuarioIdAndStatus(usuarioId, StatusSolicitacao.RASCUNHO);
@@ -333,13 +353,13 @@
                         .map(this::mapToSolicitacaoResponse)
                         .toList();
             }
-    
+
             // MÉTODO PARA ATUALIZAR
             @Transactional
             public SolicitacaoResponse atualizarRascunho(Long rascunhoId, SolicitacaoRequest request, Usuario usuarioLogado) {
                 Solicitacao rascunho = solicitacaoRepository.findById(rascunhoId)
                         .orElseThrow(() -> new ResourceNotFoundException("Rascunho não encontrado"));
-    
+
                 if (!rascunho.getUsuario().getId().equals(usuarioLogado.getId())) {
                     throw new BusinessException("Você não tem permissão para editar este rascunho.");
                 }
@@ -348,40 +368,40 @@
                 }
 
                 validarDatas(request.dataPrevisaoEntrega(), request.dataPrevisaoDevolucao());
-    
+
                 // Atualiza os dados gerais
                 rascunho.setJustificativa(request.justificativa());
                 rascunho.setDataPrevisaoEntrega(request.dataPrevisaoEntrega());
                 rascunho.setDataPrevisaoDevolucao(request.dataPrevisaoDevolucao());
-    
+
                 // 1. Apaga os itens antigos
                 solicitacaoItemRepository.deleteAll(rascunho.getItens());
                 rascunho.getItens().clear();
-    
+
                 // 2. Adiciona os novos itens (lógica copiada do 'criarRascunho')
                 for (SolicitacaoItemRequest itemRequest : request.itens()) {
                     Equipamento equipamento = equipamentoRepository.findById(itemRequest.equipamentoId())
                             .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + itemRequest.equipamentoId()));
-    
+
                     SolicitacaoItem item = new SolicitacaoItem();
                     item.setSolicitacao(rascunho);
                     item.setEquipamento(equipamento);
                     item.setQuantidadeSolicitada(itemRequest.quantidade());
                     rascunho.getItens().add(item);
                 }
-    
+
                 solicitacaoRepository.save(rascunho);
                 return mapToSolicitacaoResponse(rascunho);
             }
-    
-    
+
+
             private SolicitacaoResponse mapToSolicitacaoResponse(Solicitacao solicitacao) {
                 List<SolicitacaoItemResponse> itemResponses = new ArrayList<>();
                 for (SolicitacaoItem item : solicitacao.getItens()) {
-    
+
                     // 1. Calcula a nova informação
                     int pendente = item.getQuantidadeSolicitada() - item.getTotalDevolvido();
-    
+
                     itemResponses.add(new SolicitacaoItemResponse(
                             item.getId(),
                             item.getEquipamento().getId(),
@@ -391,7 +411,7 @@
                             pendente
                     ));
                 }
-    
+
                 return new SolicitacaoResponse(
                         solicitacao.getId(),
                         solicitacao.getUsuario().getNome(),
@@ -417,7 +437,7 @@
                         .build();
                 historicoStatusRepository.save(registo);
             }
-    
+
             // MÉTODO para a visão de Admin/Gestor
             @Transactional(readOnly = true)
             public Page<SolicitacaoResponse> listarTodasSolicitacoes(
@@ -428,10 +448,10 @@
                     Optional<LocalDate> dataFim,
                     Boolean devolucaoIndeterminada,
                     Pageable pageable) {
-    
+
                 LocalDateTime inicio = dataInicio.map(LocalDate::atStartOfDay).orElse(null);
                 LocalDateTime fim = dataFim.map(d -> d.atTime(23, 59, 59)).orElse(null);
-    
+
                 // A chamada agora inclui o ID do utilizador, correspondendo à nova assinatura
                 Page<Solicitacao> solicitacoes = solicitacaoRepository.findAdminView(
                         usuarioLogado.getId(),
@@ -442,50 +462,50 @@
                         devolucaoIndeterminada,
                         pageable
                 );
-    
+
                 return solicitacoes.map(this::mapToSolicitacaoResponse);
             }
-    
+
             @Transactional(readOnly = true)
             public SolicitacaoResponse buscarPorId(Long id) {
                 // Usa o método findById do repositório, que retorna um Optional
                 Solicitacao solicitacao = solicitacaoRepository.findById(id)
                         // Se não encontrar, lança a nossa exceção customizada de 'Não Encontrado'
                         .orElseThrow(() -> new ResourceNotFoundException("Solicitação não encontrada com o ID: " + id));
-    
+
                 // Reutiliza o nosso método privado de mapeamento para converter a entidade para DTO
                 return mapToSolicitacaoResponse(solicitacao);
             }
-    
+
             // Dentro da classe SolicitacaoService.java
-    
+
             @Transactional
             public SolicitacaoResponse devolverTudo(Long solicitacaoId, Usuario usuarioLogado) {
                 // 1. Busca a solicitação e valida o seu estado
                 Solicitacao solicitacao = solicitacaoRepository.findById(solicitacaoId)
                         .orElseThrow(() -> new ResourceNotFoundException("Solicitação não encontrada com o ID: " + solicitacaoId));
-    
+
                 if (solicitacao.getStatus() != StatusSolicitacao.APROVADA) {
                     throw new BusinessException("Apenas solicitações com status APROVADA podem ser devolvidas em massa.");
                 }
-    
+
                 // 2. Itera sobre cada item da solicitação para processar a devolução
                 for (SolicitacaoItem item : solicitacao.getItens()) {
                     int quantidadeJaDevolvida = item.getTotalDevolvido();
                     int quantidadeParaDevolver = item.getQuantidadeSolicitada() - quantidadeJaDevolvida;
-    
+
                     if (quantidadeParaDevolver > 0) {
                         Equipamento equipamento = item.getEquipamento();
-    
+
                         // 2a. Captura a quantidade ANTES da mudança
                         int qtdAnterior = equipamento.getQuantidadeDisponivel();
-    
+
                         // 2b. Reabastece o stock
                         equipamento.setQuantidadeDisponivel(equipamento.getQuantidadeDisponivel() + quantidadeParaDevolver);
-    
+
                         // 2c. Captura a quantidade DEPOIS da mudança
                         int qtdPosterior = equipamento.getQuantidadeDisponivel();
-    
+
                         // 2d. Cria o registo da devolução
                         Devolucao novaDevolucao = new Devolucao();
                         novaDevolucao.setSolicitacaoItem(item);
@@ -494,7 +514,7 @@
                         novaDevolucao.setDataDevolucao(LocalDateTime.now());
                         novaDevolucao.setObservacao("Devolução total automática.");
                         devolucaoRepository.save(novaDevolucao);
-    
+
                         // 2e. Regista no histórico de movimentação COM OS DADOS CORRETOS
                         HistoricoMovimentacao registoHistorico = HistoricoMovimentacao.builder()
                                 .dataMovimentacao(LocalDateTime.now())
@@ -508,18 +528,18 @@
                                 .usuarioResponsavel(solicitacao.getUsuario())
                                 .build();
                         historicoRepository.save(registoHistorico);
-    
+
                     }
                 }
-    
+
                 // 3. Finaliza a solicitação
                 StatusSolicitacao statusAnterior = solicitacao.getStatus();
                 solicitacao.setStatus(StatusSolicitacao.FINALIZADA);
                 Solicitacao solicitacaoSalva = solicitacaoRepository.save(solicitacao);
-    
+
                 // 4. Regista a finalização no histórico de status
                 registrarHistoricoDeStatus(solicitacaoSalva, statusAnterior, StatusSolicitacao.FINALIZADA,usuarioLogado);
-    
+
                 return mapToSolicitacaoResponse(solicitacaoSalva);
             }
 
@@ -557,12 +577,21 @@
                 if ("ADMIN".equals(cargo)) {
                     // Admin vê todas as PENDENTE_ADMIN
                     return solicitacaoRepository.countByStatusIn(List.of(StatusSolicitacao.PENDENTE_ADMIN));
+
                 } else if ("GESTOR".equals(cargo)) {
-                    // Gestor vê todas as PENDENTE_GESTOR da sua equipa
-                    // (Isto vai precisar de uma nova query no repositório)
-                    return solicitacaoRepository.countByStatusAndUsuarioGestorImediatoId(StatusSolicitacao.PENDENTE_GESTOR, usuarioLogado.getId());
+                    // Gestor vê todas as PENDENTE_GESTOR do seu setor
+                    Setor setorDoGestor = usuarioLogado.getSetor();
+                    if (setorDoGestor == null) {
+                        return 0; // Se o gestor não tem setor, ele não vê nada
+                    }
+                    return solicitacaoRepository.countByStatusAndUsuarioSetor(
+                            StatusSolicitacao.PENDENTE_GESTOR,
+                            setorDoGestor
+                    );
+
+
                 }
-                // Colaborador não vê contagem
+
                 return 0;
             }
 
@@ -578,23 +607,29 @@
                     throw new BusinessException("Apenas solicitações com status PENDENTE podem ser editadas.");
                 }
 
-                // 3. Limpa os itens antigos
-                solicitacao.getItens().clear();
+                    // 3. Verifica se a nova lista de itens está vazia
+                    if (request.itens() == null || request.itens().isEmpty()) {
+                        throw new BusinessException("Não é possível atualizar uma solicitação para não ter nenhum item.");
+                    }
+                    // ===================================
 
-                // 4. Adiciona os novos itens
-                processarEAgruparItens(request.itens(), solicitacao);
+                    // 4. Limpa os itens antigos
+                    solicitacao.getItens().clear();
 
-                // 5. Atualiza a justificação e salva.
-                solicitacao.setJustificativa(request.justificativa());
-                solicitacaoRepository.save(solicitacao);
+                    // 5. Adiciona os novos itens
+                    processarEAgruparItens(request.itens(), solicitacao);
 
-                return mapToSolicitacaoResponse(solicitacao);
-            }
-    
+                    // 6. Atualiza a justificação e salva.
+                    solicitacao.setJustificativa(request.justificativa());
+                    solicitacaoRepository.save(solicitacao);
+
+                    return mapToSolicitacaoResponse(solicitacao);
+                }
+
             private void processarEAgruparItens(List<SolicitacaoItemRequest> itensRequest, Solicitacao solicitacao) {
                 // Usamos um Map para agrupar itens pelo ID do equipamento
                 Map<Long, SolicitacaoItemRequest> itensAgrupados = new HashMap<>();
-    
+
                 for (SolicitacaoItemRequest itemReq : itensRequest) {
                     itensAgrupados.merge(
                             itemReq.equipamentoId(),
@@ -605,28 +640,28 @@
                             )
                     );
                 }
-    
+
                 // Agora, processamos a lista já agrupada e sem duplicados
                 for (SolicitacaoItemRequest itemAgrupado : itensAgrupados.values()) {
                     Equipamento equipamento = equipamentoRepository.findById(itemAgrupado.equipamentoId())
                             .orElseThrow(() -> new ResourceNotFoundException("Equipamento não encontrado com o ID: " + itemAgrupado.equipamentoId()));
-    
+
                     if (!equipamento.isAtivo()) {
                         throw new BusinessException("Não é possível solicitar o equipamento '" + equipamento.getNome() + "' porque ele está inativo.");
                     }
-    
+
                     // A validação de stock continua aqui, agora sobre a quantidade total somada
                     if (equipamento.getQuantidadeDisponivel() < itemAgrupado.quantidade()) {
                         throw new BusinessException("Stock insuficiente para o equipamento: " + equipamento.getNome());
                     }
-    
+
                     SolicitacaoItem novoItem = new SolicitacaoItem();
                     novoItem.setEquipamento(equipamento);
                     novoItem.setQuantidadeSolicitada(itemAgrupado.quantidade());
                     solicitacao.adicionarItem(novoItem);
                 }
             }
-    
+
             @Transactional(readOnly = true)
             public Page<SolicitacaoResponse> listarMinhasSolicitacoes(
                     Usuario usuarioLogado,
@@ -635,10 +670,10 @@
                     Optional<LocalDate> dataFim,
                     Boolean devolucaoIndeterminada,
                     Pageable pageable) {
-    
+
                 LocalDateTime inicio = dataInicio.map(LocalDate::atStartOfDay).orElse(null);
                 LocalDateTime fim = dataFim.map(d -> d.atTime(23, 59, 59)).orElse(null);
-    
+
                 // Agora chama a nova query, que foi feita especificamente para esta visão
                 Page<Solicitacao> solicitacoes = solicitacaoRepository.findMyView(
                         usuarioLogado.getId(),
@@ -648,10 +683,9 @@
                         devolucaoIndeterminada,
                         pageable
                 );
-    
+
                 return solicitacoes.map(this::mapToSolicitacaoResponse);
             }
-            // --- NOVO MÉTODO AUXILIAR ---
             private void validarDatas(LocalDate entrega, LocalDate devolucao) {
                 if (entrega == null) {
                     throw new BusinessException("A data de previsão de entrega é obrigatória.");

@@ -1,9 +1,15 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0 text-gray-800">Gestão de Funcionários</h1>
-        <button class="btn btn-primary" id="btn-adicionar-funcionario">
-            <i class="bi bi-plus-circle-fill me-2"></i> Adicionar
-        </button>
+
+        <div>
+            <button class="btn btn-info me-2" id="btn-gerir-setores">
+                <i class="bi bi-diagram-3-fill me-2"></i> Gerir Setores
+            </button>
+            <button class="btn btn-primary" id="btn-adicionar-funcionario">
+                <i class="bi bi-plus-circle-fill me-2"></i> Adicionar
+            </button>
+        </div>
     </div>
 
     <div class="card shadow mb-4">
@@ -51,9 +57,9 @@
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="funcionario-gestor" class="form-label">Gestor Imediato (Opcional)</label>
-                            <select class="form-select" id="funcionario-gestor">
-                                <option value="">Nenhum (É um Gestor/Admin)</option>
+                            <label for="funcionario-setor" class="form-label">Setor (Opcional)</label>
+                            <select class="form-select" id="funcionario-setor">
+                                <option value="">Nenhum Setor</option>
                             </select>
                         </div>
                     </div>

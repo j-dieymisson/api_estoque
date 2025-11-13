@@ -66,13 +66,6 @@ public class UsuarioController {
         return ResponseEntity.ok(paginaDeUsuarios);
     }
 
-    @GetMapping("/gestores")
-    @Operation(summary = "Lista todos os utilizadores com o cargo de GESTOR",
-            description = "Retorna uma lista de utilizadores ativos que podem ser definidos como 'Gestor Imediato' (usado para preencher dropdowns no front-end).")
-    public ResponseEntity<List<UsuarioResponse>> listarGestores() {
-        List<UsuarioResponse> gestores = usuarioService.listarGestores();
-        return ResponseEntity.ok(gestores);
-    }
 
     // ENDPOINT PARA DETALHAR UM UTILIZADOR
     @GetMapping("/{id}")

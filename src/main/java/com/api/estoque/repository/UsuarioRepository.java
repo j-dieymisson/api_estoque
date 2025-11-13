@@ -1,6 +1,7 @@
 package com.api.estoque.repository;
 
 import com.api.estoque.model.Cargo;
+import com.api.estoque.model.Setor;
 import com.api.estoque.model.Usuario;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,4 +27,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Page<Usuario> findByNomeContainingIgnoreCaseAndIdNot(String nome, Long id, Pageable pageable);
 
     List<Usuario> findAllByCargo(Cargo cargo);
+
+    boolean existsBySetorAndCargoNome(Setor setor, String nomeCargo);
 }

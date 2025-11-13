@@ -1,5 +1,6 @@
 package com.api.estoque.repository;
 
+import com.api.estoque.model.Setor;
 import com.api.estoque.model.Solicitacao;
 import com.api.estoque.model.StatusSolicitacao;
 import org.springframework.data.domain.Page;
@@ -53,8 +54,8 @@ public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> 
     // Busca o Top 5 por múltiplos status
     List<Solicitacao> findTop5ByStatusInOrderByDataSolicitacaoDesc(Collection<StatusSolicitacao> statuses);
 
-    @Query("SELECT COUNT(s) FROM Solicitacao s WHERE s.status = :status AND s.usuario.gestorImediato.id = :gestorId")
-    long countByStatusAndUsuarioGestorImediatoId(@Param("status") StatusSolicitacao status, @Param("gestorId") Long gestorId);
+    @Query("SELECT COUNT(s) FROM Solicitacao s WHERE s.status = :status AND s.usuario.setor = :setor")
+    long countByStatusAndUsuarioSetor(@Param("status") StatusSolicitacao status, @Param("setor") Setor setor);
 
 
 

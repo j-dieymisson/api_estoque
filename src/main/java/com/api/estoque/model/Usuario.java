@@ -36,14 +36,9 @@ public class Usuario implements UserDetails {
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<PreferenciaDashboard> preferenciasDashboard;
 
-    /**
-     * Define quem é o gestor imediato deste utilizador.
-     * Se este campo for 'null', significa que este utilizador
-     * é do topo (ex: um Admin) ou não tem gestor.
-     */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "gestor_imediato_id")
-    private Usuario gestorImediato;
+    @JoinColumn(name = "setor_id") // <-- O nome da nova coluna
+    private Setor setor;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

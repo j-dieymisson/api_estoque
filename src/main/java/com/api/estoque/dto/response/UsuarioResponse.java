@@ -7,6 +7,6 @@ public record UsuarioResponse(
         String nomeCargo, // Enviamos o nome do cargo para ser mais legível
         Long cargoId,
         boolean ativo,
-        Long gestorImediatoId,
-        String gestorImediatoNome
+        Long setorId,
+        String setorNome
 ) {}

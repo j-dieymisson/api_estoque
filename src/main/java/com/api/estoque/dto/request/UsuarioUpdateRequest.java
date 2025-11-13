@@ -15,6 +15,5 @@ public record UsuarioUpdateRequest(
         @NotNull(message = "O ID do cargo é obrigatório.")
         Long cargoId,
 
-        // Este campo é opcional (pode ser null),
-        Long gestorImediatoId
+        Long setorId
 ) {}

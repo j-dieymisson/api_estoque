@@ -20,5 +20,5 @@ public record UsuarioRequest(
         @NotNull(message = "O ID do cargo é obrigatório.")
         Long cargoId,
 
-        Long gestorImediatoId
+        Long setorId
 ) {}
