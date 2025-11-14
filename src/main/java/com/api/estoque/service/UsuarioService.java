@@ -137,7 +137,8 @@ public class UsuarioService {
     // MÉTODO PARA BUSCAR POR ID
     @Transactional(readOnly = true)
     public UsuarioResponse buscarPorId(Long id) {
-        Usuario usuario = usuarioRepository.findById(id)
+        // Usamos uma query que força o JOIN FETCH
+        Usuario usuario = usuarioRepository.findByIdWithCargoAndSetor(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilizador não encontrado com o ID: " + id));
         return mapToUsuarioResponse(usuario);
     }

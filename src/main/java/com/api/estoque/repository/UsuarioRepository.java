@@ -6,6 +6,8 @@ import com.api.estoque.model.Usuario;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
@@ -13,7 +15,8 @@ import java.util.Optional;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
-    Optional<UserDetails> findByNome(String nome);
+    @Query("SELECT u FROM Usuario u LEFT JOIN FETCH u.cargo LEFT JOIN FETCH u.setor WHERE u.nome = :nome")
+    Optional<UserDetails> findByNome(@Param("nome") String nome);
 
     long countByAtivoTrue();
 
@@ -21,12 +24,17 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Page<Usuario> findByNomeContainingIgnoreCase(String nome, Pageable pageable);
 
     // Busca todos os utilizadores cujo ID não é o que foi passado
-    Page<Usuario> findByIdNot(Long id, Pageable pageable);
+    @Query("SELECT u FROM Usuario u LEFT JOIN FETCH u.cargo LEFT JOIN FETCH u.setor WHERE u.id <> :id")
+    Page<Usuario> findByIdNot(@Param("id") Long id, Pageable pageable);
 
     // Busca por nome, mas também excluindo o super admin
-    Page<Usuario> findByNomeContainingIgnoreCaseAndIdNot(String nome, Long id, Pageable pageable);
+    @Query("SELECT u FROM Usuario u LEFT JOIN FETCH u.cargo LEFT JOIN FETCH u.setor WHERE LOWER(u.nome) LIKE LOWER(CONCAT('%', :nome, '%')) AND u.id <> :id")
+    Page<Usuario> findByNomeContainingIgnoreCaseAndIdNot(@Param("nome") String nome, @Param("id") Long id, Pageable pageable);
 
     List<Usuario> findAllByCargo(Cargo cargo);
 
     boolean existsBySetorAndCargoNome(Setor setor, String nomeCargo);
+
+    @Query("SELECT u FROM Usuario u LEFT JOIN FETCH u.cargo LEFT JOIN FETCH u.setor WHERE u.id = :id")
+    Optional<Usuario> findByIdWithCargoAndSetor(@Param("id") Long id);
 }
