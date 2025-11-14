@@ -26,7 +26,7 @@
             <div class="table-responsive">
                 <table class="table table-bordered table-hover" id="tabela-funcionarios">
                     <thead>
-                    <tr><th>ID</th><th>Nome</th><th>Email</th><th>Cargo</th><th>Status</th><th>Ações</th></tr>
+                    <tr><th>ID</th><th>Nome</th><th>Email</th><th>Cargo (Permissão)</th><th>Função (Título)</th><th>Setor</th><th>Status</th><th>Ações</th></tr>
                     </thead>
                     <tbody id="corpo-tabela-funcionarios"></tbody>
                 </table>
@@ -51,16 +51,19 @@
                         <div class="col-md-6 mb-3"><label for="funcionario-email" class="form-label">Email</label><input type="email" class="form-control" id="funcionario-email" required></div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="funcionario-cargo" class="form-label">Cargo</label>
+                        <div class="col-md-4 mb-3">
+                            <label for="funcionario-cargo" class="form-label">Cargo (Permissão)</label>
                             <select class="form-select" id="funcionario-cargo" required></select>
                         </div>
-
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label for="funcionario-setor" class="form-label">Setor (Opcional)</label>
                             <select class="form-select" id="funcionario-setor">
                                 <option value="">Nenhum Setor</option>
                             </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="funcionario-funcao" class="form-label">Função (Título)</label>
+                            <input type="text" class="form-control" id="funcionario-funcao" placeholder="Ex: Developer, Analista Jr.">
                         </div>
                     </div>
                     <div class="row">
@@ -69,9 +72,10 @@
                             <input type="password" class="form-control" id="funcionario-senha" minlength="6">
                         </div>
                     </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -100,6 +104,7 @@
             </form>
         </div>
     </div>
+
 </div>
 
 <script src="/js/pages/funcionarios.js"></script>

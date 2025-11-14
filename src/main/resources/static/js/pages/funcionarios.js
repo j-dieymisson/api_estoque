@@ -1,4 +1,4 @@
-// funcionarios.js - Versão final e completa
+// funcionarios.js - Versão CORRIGIDA (com o botão de teste)
 setTimeout(() => {
     (async function() {
         console.log("A executar o script da página de funcionários...");
@@ -10,49 +10,58 @@ setTimeout(() => {
         const inputPesquisaNome = document.getElementById('input-pesquisa-nome');
         let currentPage = 0;
 
+        // --- SELETORES DOS MODAIS (Apenas Elementos) ---
         const modalFuncionarioEl = document.getElementById('modal-funcionario');
-        const modalFuncionario = new bootstrap.Modal(modalFuncionarioEl);
         const formFuncionario = document.getElementById('form-funcionario');
         const modalFuncionarioLabel = document.getElementById('modalFuncionarioLabel');
         const funcionarioIdInput = document.getElementById('funcionario-id');
         const funcionarioNomeInput = document.getElementById('funcionario-nome');
         const funcionarioEmailInput = document.getElementById('funcionario-email');
         const funcionarioCargoSelect = document.getElementById('funcionario-cargo');
+        const funcionarioSetorSelect = document.getElementById('funcionario-setor');
+        const funcionarioFuncaoInput = document.getElementById('funcionario-funcao'); // (Assumindo que adicionou este HTML)
         const campoSenha = document.getElementById('campo-senha');
         const funcionarioSenhaInput = document.getElementById('funcionario-senha');
         const btnAdicionarFuncionario = document.getElementById('btn-adicionar-funcionario');
         const btnGerirSetores = document.getElementById('btn-gerir-setores');
-        const funcionarioSetorSelect = document.getElementById('funcionario-setor');
 
         const modalSenhaEl = document.getElementById('modal-alterar-senha');
-        const modalSenha = new bootstrap.Modal(modalSenhaEl);
         const formSenha = document.getElementById('form-alterar-senha');
         const alterarSenhaUsuarioIdInput = document.getElementById('alterar-senha-usuario-id');
         const novaSenhaInput = document.getElementById('nova-senha');
 
+        // --- SELETOR DO BOTÃO DE TESTE ---
+        const btnTesteSenha = document.getElementById('btn-teste-senha'); // <-- ADICIONADO
+
+        // --- Variáveis de Instância (Declaradas aqui) ---
+        let modalFuncionario;
+        let modalSenha;
+
         // --- Funções de Busca e Renderização ---
         async function carregarUsuarios(page = 0) {
-        // 1. Salva a página que estamos a carregar no histórico global
-            window.updateCurrentHistoryContext({ page: page });
+            const nomePesquisado = inputPesquisaNome.value;
+            const currentState = { page: page, nome: nomePesquisado };
+            window.updateCurrentHistoryContext(currentState);
 
             currentPage = page;
-            corpoTabela.innerHTML = '<tr><td colspan="6" class="text-center">A carregar...</td></tr>';
-            const nomePesquisado = inputPesquisaNome.value;
-            const params = { page, size: 10, sort: 'nome,asc' };
-            if (nomePesquisado) params.nome = nomePesquisado;
+            corpoTabela.innerHTML = '<tr><td colspan="8" class="text-center">A carregar...</td></tr>';
+
+            const params = { page, size: 10, sort: 'nome,asc', nome: nomePesquisado || null };
+            Object.keys(params).forEach(key => (params[key] == null || params[key] === '') && delete params[key]);
+
             try {
                 const response = await apiClient.get('/usuarios', { params });
                 renderizarTabela(response.data.content);
                 renderizarPaginacao(response.data);
             } catch (error) {
-                corpoTabela.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Falha ao carregar.</td></tr>';
+                corpoTabela.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Falha ao carregar.</td></tr>';
             }
         }
 
         function renderizarTabela(usuarios) {
             corpoTabela.innerHTML = '';
             if (!usuarios || usuarios.length === 0) {
-                corpoTabela.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum funcionário encontrado.</td></tr>';
+                corpoTabela.innerHTML = '<tr><td colspan="8" class="text-center">Nenhum funcionário encontrado.</td></tr>';
                 return;
             }
             usuarios.forEach(user => {
@@ -61,10 +70,13 @@ setTimeout(() => {
                 const acoesHtml = `<button class="btn btn-sm btn-outline-primary btn-editar" data-id="${user.id}" title="Editar"><i class="bi bi-pencil-fill"></i></button>
                                     <button class="btn btn-sm btn-outline-secondary btn-senha ms-1" data-id="${user.id}" data-nome="${user.nome}" title="Alterar senha"><i class="bi bi-key-fill"></i></button>
                                     ${user.ativo ? `<button class="btn btn-sm btn-outline-success btn-desativar ms-1" data-id="${user.id}" title="Desativar"><i class="bi bi-toggle-off"></i></button>` : `<button class="btn btn-sm btn-outline-danger btn-ativar ms-1" data-id="${user.id}" title="Ativar"><i class="bi bi-toggle-on"></i></button>`}`;
+
                 tr.innerHTML = `<td>${user.id}</td>
                                 <td class="truncate-text" title="${user.nome}">${user.nome}</td>
                                 <td class="truncate-text" title="${user.email}">${user.email}</td>
                                 <td>${user.nomeCargo}</td>
+                                <td>${user.funcao || 'N/A'}</td>
+                                <td>${user.setorNome || 'N/A'}</td>
                                 <td>${statusBadge}</td>
                                 <td>${acoesHtml}</td>`;
                 corpoTabela.appendChild(tr);
@@ -92,7 +104,6 @@ setTimeout(() => {
 
         async function carregarSetores() {
                 try {
-                    // Chamamos o novo endpoint, pedindo apenas setores ativos
                     const response = await apiClient.get('/setores', { params: { apenasAtivos: true } });
                     funcionarioSetorSelect.innerHTML = '<option value="">Nenhum Setor</option>';
                     response.data.forEach(setor => {
@@ -123,6 +134,7 @@ setTimeout(() => {
                 funcionarioEmailInput.value = user.email;
                 funcionarioCargoSelect.value = user.cargoId;
                 funcionarioSetorSelect.value = user.setorId || '';
+                if(funcionarioFuncaoInput) funcionarioFuncaoInput.value = user.funcao || '';
                 modalFuncionarioLabel.textContent = `Editar: ${user.nome}`;
                 campoSenha.style.display = 'none';
                 funcionarioSenhaInput.required = false;
@@ -134,12 +146,12 @@ setTimeout(() => {
             event.preventDefault();
             const id = funcionarioIdInput.value;
             const isUpdate = !!id;
-
             const data = {
                 nome: funcionarioNomeInput.value,
                 email: funcionarioEmailInput.value,
                 cargoId: parseInt(funcionarioCargoSelect.value),
-                setorId: funcionarioSetorSelect.value ? parseInt(funcionarioSetorSelect.value) : null // <-- ENVIA 'setorId'
+                setorId: funcionarioSetorSelect.value ? parseInt(funcionarioSetorSelect.value) : null,
+                funcao: funcionarioFuncaoInput ? funcionarioFuncaoInput.value : null
             };
 
             if (!isUpdate) data.senha = funcionarioSenhaInput.value;
@@ -152,16 +164,20 @@ setTimeout(() => {
                     showToast('Funcionário criado!', 'Sucesso');
                 }
                 modalFuncionario.hide();
-                carregarUsuarios(isUpdate ? currentPage : 0);
+                carregarUsuarios(currentPage);
             } catch(error) { showToast(error.response?.data?.message || 'Erro ao salvar.', 'Erro', true); }
         }
 
         function abrirModalSenha(id, nome) {
-            formSenha.reset();
-            alterarSenhaUsuarioIdInput.value = id;
-            modalSenhaEl.querySelector('.modal-title').textContent = `Alterar Senha de ${nome}`;
-            modalSenha.show();
-        }
+           formSenha.reset();
+           alterarSenhaUsuarioIdInput.value = id;
+           const titleEl = modalSenhaEl.querySelector('.modal-title');
+           if (titleEl) {
+               titleEl.textContent = `Alterar Senha de ${nome}`;
+           }
+           modalSenha.show();
+       }
+
 
         async function salvarNovaSenha(event) {
             event.preventDefault();
@@ -176,20 +192,57 @@ setTimeout(() => {
 
         // --- Inicialização e Event Listeners ---
         async function init() {
+
+            // ===================================
+            // === CORREÇÃO: Inicializar os modais AQUI ===
+            // ===================================
+            // Só inicializamos o Bootstrap DEPOIS que o script todo correu
+            // e os elementos (modalFuncionarioEl) estão prontos.
+            if(modalFuncionarioEl) {
+                modalFuncionario = new bootstrap.Modal(modalFuncionarioEl);
+            }
+            if(modalSenhaEl) {
+                modalSenha = new bootstrap.Modal(modalSenhaEl);
+            }
+            // ===================================
+
             await Promise.all([
                             carregarCargos(),
                             carregarSetores()
                         ]);
-            const savedPage = window.pageContext?.page || 0;
+
+            const savedState = window.pageContext || {};
+            const savedPage = savedState.page || 0;
+
+            inputPesquisaNome.value = savedState.nome || '';
+
             await carregarUsuarios(savedPage);
 
             if(formPesquisa) formPesquisa.addEventListener('submit', (e) => { e.preventDefault(); carregarUsuarios(0); });
+
             if(paginacaoContainer) paginacaoContainer.addEventListener('click', (e) => {
-                const link = e.target.closest('a.page-link');
-                if (link && !link.parentElement.classList.contains('disabled')) { e.preventDefault(); carregarUsuarios(parseInt(link.dataset.page)); }
+                const link = event.target.closest('a.page-link');
+                if (link && !link.parentElement.classList.contains('disabled')) {
+                    e.preventDefault();
+                    carregarUsuarios(parseInt(link.dataset.page));
+                }
             });
+
             if (btnGerirSetores) btnGerirSetores.addEventListener('click', () => window.navigateTo('setores.html'));
             if (btnAdicionarFuncionario) btnAdicionarFuncionario.addEventListener('click', abrirModalParaCriar);
+
+            // ===================================
+            // === ADIÇÃO: Listener do Botão de Teste ===
+            // ===================================
+            if (btnTesteSenha) {
+                btnTesteSenha.addEventListener('click', () => {
+                    console.log("A tentar abrir o modal de TESTE DE SENHA...");
+                    // Usamos a mesma função que o botão da tabela usa
+                    abrirModalSenha(999, "Utilizador Teste");
+                });
+            }
+            // ===================================
+
             if (formFuncionario) formFuncionario.addEventListener('submit', salvarFuncionario);
             if (formSenha) formSenha.addEventListener('submit', salvarNovaSenha);
 
@@ -198,8 +251,12 @@ setTimeout(() => {
                 if (!target) return;
                 const id = target.dataset.id;
 
-                if (target.classList.contains('btn-editar')) abrirModalParaEditar(id);
-                else if (target.classList.contains('btn-senha')) abrirModalSenha(id, target.dataset.nome);
+                if (target.classList.contains('btn-editar')) {
+                    abrirModalParaEditar(id);
+                }
+                else if (target.classList.contains('btn-senha')) {
+                    abrirModalSenha(id, target.dataset.nome);
+                }
                 else if (target.classList.contains('btn-desativar')) {
                     showConfirmModal('Desativar Funcionário', `Tem a certeza?`, async () => {
                         try {
@@ -219,6 +276,7 @@ setTimeout(() => {
                 }
             });
         }
+
         init();
     })();
 }, 0);
