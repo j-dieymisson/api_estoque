@@ -75,8 +75,8 @@ setTimeout(() => {
                                 <td class="truncate-text" title="${user.nome}">${user.nome}</td>
                                 <td class="truncate-text" title="${user.email}">${user.email}</td>
                                 <td>${user.nomeCargo}</td>
-                                <td>${user.funcao || 'N/A'}</td>
-                                <td>${user.setorNome || 'N/A'}</td>
+                                <td class="truncate-text" title="${user.funcao || 'N/A'}">${user.funcao || 'N/A'}</td>
+                                <td class="truncate-text" title="${user.setorNome || 'N/A'}">${user.setorNome || 'N/A'}</td>
                                 <td>${statusBadge}</td>
                                 <td>${acoesHtml}</td>`;
                 corpoTabela.appendChild(tr);
