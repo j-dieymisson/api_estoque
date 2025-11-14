@@ -229,8 +229,9 @@ public class UsuarioService {
         if ("GESTOR".equals(cargoLogado)) {
             // Gestor só pode editar utilizadores do seu próprio setor
             Setor setorDoGestor = usuarioLogado.getSetor();
-            if (setorDoGestor == null || !setorDoGestor.equals(usuario.getSetor())) {
-                throw new BusinessException("Você não tem permissão para editar utilizadores de outro setor.");
+            Setor setorDoUsuario = usuario.getSetor();
+            if (setorDoUsuario != null && !setorDoUsuario.equals(setorDoGestor)) {
+                throw new BusinessException("Você não tem permissão para editar utilizadores que pertencem a outro setor.");
             }
             // Gestor não pode promover ninguém a ADMIN
             Cargo novoCargo = cargoRepository.findById(request.cargoId())
@@ -260,7 +261,7 @@ public class UsuarioService {
 
         // 4. Atualiza o Setor
         if ("ADMIN".equals(cargoLogado)) {
-            // Só Admin pode mudar o setor de um utilizador
+            // ADMIN: Pode atribuir qualquer setor ou null
             if (request.setorId() != null) {
                 Setor setor = setorRepository.findById(request.setorId())
                         .orElseThrow(() -> new ResourceNotFoundException("Setor não encontrado com o ID: " + request.setorId()));
@@ -269,8 +270,21 @@ public class UsuarioService {
                 usuario.setSetor(null);
             }
         } else if ("GESTOR".equals(cargoLogado)) {
-            // Gestor só pode atribuir o seu próprio setor
-            usuario.setSetor(usuarioLogado.getSetor());
+            // GESTOR: Só pode atribuir ao seu próprio setor ou a null
+            Setor setorDoGestor = usuarioLogado.getSetor();
+
+            if (request.setorId() != null) {
+                // Se o Gestor tentou atribuir um setor...
+                if (setorDoGestor == null || !request.setorId().equals(setorDoGestor.getId())) {
+                    // ... e esse setor NÃO É o dele (ou ele não tem setor)
+                    throw new BusinessException("Gestores só podem atribuir utilizadores ao seu próprio setor.");
+                }
+                // Se for o setor dele, atribui.
+                usuario.setSetor(setorDoGestor);
+            } else {
+                // Se o Gestor enviou null (para "Nenhum Setor"), permite.
+                usuario.setSetor(null);
+            }
         }
 
         return mapToUsuarioResponse(usuario);
