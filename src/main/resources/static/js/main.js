@@ -213,40 +213,47 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- LÓGICA DE NOTIFICAÇÃO (AGORA GLOBAL E UNIFICADA) ---
 
       window.atualizarNotificacaoPendentes = async function() {
-                  if (currentUserRole !== 'ADMIN') {
-                      mostrarNotificacao(false);
-                      return;
+                  if (currentUserRole !== 'ADMIN' && currentUserRole !== 'GESTOR') {
+                    mostrarNotificacao(false);
+                    return;
                   }
 
                   try {
                       // 1. Chamamos o novo endpoint leve (isto está correto)
                       const response = await apiClient.get('/solicitacoes/pendentes/contagem', {
-                                          params: {
-                                              _: new Date().getTime() // Adiciona um carimbo de data/hora (ex: ?_=123456789)
-                                          }
-                                      });
+                      params: {
+                          _: new Date().getTime() // Adiciona um carimbo de data/hora (ex: ?_=123456789)
+                      }
+                    });
 
                      // 2. Devemos ler a resposta (ex: { contagem: 3 })
                       const dadosContagem = response.data;
 
-                      // 3. Verificamos o campo 'contagem' (e não 'solicitacoesPendentes')
-                      if (dadosContagem && dadosContagem.contagem > 0) {
-                          mostrarNotificacao(true);
-                      } else {
-                          mostrarNotificacao(false);
-                      }
+
+                    // 3. Pega a contagem (ou 0 se for nulo)
+                   const contagem = dadosContagem?.contagem || 0;
+
+                   // 2. Passa a contagem para a função 'mostrarNotificacao'
+                   if (contagem > 0) {
+                       mostrarNotificacao(true, contagem);
+                   } else {
+                       mostrarNotificacao(false, 0);
+                   }
                   } catch (error) {
                       console.error("Erro ao verificar solicitações pendentes:", error);
                   }
-              }
-
-        // Esta função é agora uma "ajudante" interna, usada pela função acima
-        function mostrarNotificacao(show) {
+      }
+        // Esta função agora aceita a contagem e escreve o número
+        function mostrarNotificacao(show, contagem = 0) { // <-- 1. Aceita a contagem
             const notificacoes = document.querySelectorAll('.notificacao-pendentes');
             notificacoes.forEach(notificacao => {
                 if (show) {
+                    // 2. Escreve o número dentro do badge
+                    notificacao.textContent = contagem;
                     notificacao.classList.remove('d-none');
                 } else {
+                    // 3. Limpa o texto e esconde
+                    notificacao.textContent = '';
                     notificacao.classList.add('d-none');
                 }
             });
