@@ -34,9 +34,10 @@ public class UsuarioController {
     @PostMapping
     public ResponseEntity<UsuarioResponse> criar(
             @RequestBody @Valid UsuarioRequest request,
+            @AuthenticationPrincipal Usuario usuarioLogado,
             UriComponentsBuilder uriBuilder
     ) {
-        UsuarioResponse response = usuarioService.criarUsuario(request);
+        UsuarioResponse response = usuarioService.criarUsuario(request, usuarioLogado);
         URI uri = uriBuilder.path("/usuarios/{id}").buildAndExpand(response.id()).toUri();
         return ResponseEntity.created(uri).body(response);
     }
@@ -58,11 +59,12 @@ public class UsuarioController {
     // ENDPOINT PARA LISTAR TODOS OS UTILIZADORES
     @GetMapping
     public ResponseEntity<Page<UsuarioResponse>> listar(
+            @AuthenticationPrincipal Usuario usuarioLogado,
             @PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao,
             // Adicionamos o novo parâmetro opcional de pesquisa
             @RequestParam(required = false) Optional<String> nome
     ) {
-        Page<UsuarioResponse> paginaDeUsuarios = usuarioService.listarTodos(nome, paginacao);
+        Page<UsuarioResponse> paginaDeUsuarios = usuarioService.listarTodos(nome, paginacao, usuarioLogado);
         return ResponseEntity.ok(paginaDeUsuarios);
     }
 

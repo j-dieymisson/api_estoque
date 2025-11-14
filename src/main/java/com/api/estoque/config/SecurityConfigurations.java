@@ -34,18 +34,27 @@ public class SecurityConfigurations {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .requestMatchers("/login.html", "/app/**", "/css/**", "/js/**").permitAll()
 
-
+                        // =========================================================
+                        // === NOVAS REGRAS DE SETORES (CORREÇÃO DO BUG) ===
+                        // =========================================================
+                        // 1. GESTOR/ADMIN podem LER (GET) a lista de setores (para os dropdowns)
+                        .requestMatchers(HttpMethod.GET, "/setores", "/setores/**").hasAnyRole("ADMIN", "GESTOR")
+                        // 2. Apenas ADMIN pode ESCREVER (Criar, Editar, Apagar)
+                        .requestMatchers("/setores", "/setores/**").hasRole("ADMIN")
+                        // =========================================================
 
                         // ===== Regras de Admin (Exigem login como Admin) =====
-                        // Qualquer outra ação em /cargos (que não seja o GET público) exige ser ADMIN
-                        .requestMatchers("/usuarios/**", "/cargos/**", "/dashboard/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/aprovar").hasAnyRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/recusar").hasAnyRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/solicitacoes/pendentes/contagem").hasRole("ADMIN")
+                        .requestMatchers("/dashboard/**").hasRole("ADMIN")
+                        // --- REGRAS DE APROVAÇÃO ANTIGAS (CORRIGIDAS) ---
+                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/aprovar-admin").hasRole("ADMIN") // <-- ALTERAÇÃO
+                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/recusar").hasAnyRole("ADMIN", "GESTOR") // <-- ALTERAÇÃO (Gestor agora pode recusar)
+                        .requestMatchers(HttpMethod.GET, "/solicitacoes/pendentes/contagem").hasAnyRole("ADMIN", "GESTOR") // <-- ALTERAÇÃO (Gestor agora vê a contagem dele)
 
+                        // --- NOVA REGRA DE APROVAÇÃO (GESTOR) ---
+                        .requestMatchers(HttpMethod.PATCH, "/solicitacoes/*/aprovar-gestor").hasRole("GESTOR") // <-- ADICIONADO
 
                         // ===== Regras de Gestor/Admin =====
-                        .requestMatchers("/historico/**").hasAnyRole("ADMIN", "GESTOR")
+                        .requestMatchers("/usuarios/**", "/cargos/**", "/historico/**").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers(HttpMethod.POST, "/equipamentos", "/categorias").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers(HttpMethod.PUT, "/equipamentos/**", "/categorias/**").hasAnyRole("ADMIN", "GESTOR")
                         .requestMatchers(HttpMethod.DELETE, "/equipamentos/**", "/categorias/**").hasAnyRole("ADMIN", "GESTOR")

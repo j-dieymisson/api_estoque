@@ -2,10 +2,12 @@ package com.api.estoque.service;
 
 import com.api.estoque.exception.ResourceNotFoundException;
 import com.api.estoque.model.Setor;
+import com.api.estoque.model.Usuario;
 import com.api.estoque.repository.SetorRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -18,11 +20,31 @@ public class SetorService {
     }
 
     @Transactional(readOnly = true)
-    public List<Setor> listarTodos(boolean apenasAtivos) {
-        if (apenasAtivos) {
-            return setorRepository.findAllByAtivoTrueOrderByNomeAsc();
+    public List<Setor> listarTodos(boolean apenasAtivos, Usuario usuarioLogado) {
+
+        String cargo = usuarioLogado.getCargo().getNome();
+
+        // 1. ADMIN vê todos os setores
+        if ("ADMIN".equals(cargo)) {
+            if (apenasAtivos) {
+                return setorRepository.findAllByAtivoTrueOrderByNomeAsc();
+            }
+            return setorRepository.findAllByOrderByNomeAsc();
         }
-        return setorRepository.findAllByOrderByNomeAsc();
+        // 2. GESTOR vê apenas o seu próprio setor
+        else if ("GESTOR".equals(cargo)) {
+            Setor setorDoGestor = usuarioLogado.getSetor();
+            if (setorDoGestor != null && (!apenasAtivos || setorDoGestor.isAtivo())) {
+                // Retorna uma lista contendo APENAS o setor do gestor
+                return List.of(setorDoGestor);
+            }
+            // Gestor sem setor (ou se o setor estiver inativo) não pode atribuir nada
+            return Collections.emptyList();
+        }
+        // 3. COLABORADOR não deve chamar isto
+        else {
+            return Collections.emptyList();
+        }
     }
 
     @Transactional(readOnly = true)

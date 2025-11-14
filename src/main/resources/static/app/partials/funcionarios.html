@@ -15,12 +15,12 @@
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
             <h6 class="m-0 font-weight-bold text-secondary">Lista de Funcionários</h6>
-            <form id="form-pesquisa-funcionario" class="d-none d-sm-inline-block form-inline w-50">
+            <div id="form-pesquisa-funcionario" class="d-none d-sm-inline-block form-inline w-50">
                 <div class="input-group">
-                    <input type="text" class="form-control" id="input-pesquisa-nome" placeholder="Pesquisar por nome..." autocomplete="off">
-                    <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+                    <input type="text" class="form-control" id="input-pesquisa-nome" placeholder="Pesquisar por nome...">
+                    <button class="btn btn-primary" type="button" id="btn-pesquisa-funcionario"><i class="bi bi-search"></i></button>
                 </div>
-            </form>
+            </div>
         </div>
         <div class="card-body card-body-table-wrapper">
             <div class="table-responsive">

@@ -37,4 +37,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     @Query("SELECT u FROM Usuario u LEFT JOIN FETCH u.cargo LEFT JOIN FETCH u.setor WHERE u.id = :id")
     Optional<Usuario> findByIdWithCargoAndSetor(@Param("id") Long id);
+
+    @Query("SELECT u FROM Usuario u LEFT JOIN FETCH u.cargo LEFT JOIN FETCH u.setor WHERE u.id <> :id AND (u.setor = :setor OR u.setor IS NULL) AND u.cargo.nome <> 'ADMIN'")
+    Page<Usuario> findByIdNotAndSetor(@Param("id") Long id, @Param("setor") Setor setor, Pageable pageable);
+
+    @Query("SELECT u FROM Usuario u LEFT JOIN FETCH u.cargo LEFT JOIN FETCH u.setor WHERE LOWER(u.nome) LIKE LOWER(CONCAT('%', :nome, '%')) AND u.id <> :id AND (u.setor = :setor OR u.setor IS NULL) AND u.cargo.nome <> 'ADMIN'")
+    Page<Usuario> findByNomeContainingIgnoreCaseAndIdNotAndSetor(@Param("nome") String nome, @Param("id") Long id, @Param("setor") Setor setor, Pageable pageable);
 }

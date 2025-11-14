@@ -218,7 +218,20 @@ setTimeout(() => {
 
             await carregarUsuarios(savedPage);
 
-            if(formPesquisa) formPesquisa.addEventListener('submit', (e) => { e.preventDefault(); carregarUsuarios(0); });
+            // Procura o botão de pesquisa
+            const btnPesquisa = document.getElementById('btn-pesquisa-funcionario');
+
+            // Listener para o clique no botão
+            if(btnPesquisa) btnPesquisa.addEventListener('click', () => {
+                carregarUsuarios(0);
+            });
+
+            // Listener para a tecla "Enter" no input
+            if(inputPesquisaNome) inputPesquisaNome.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    carregarUsuarios(0);
+                }
+            });
 
             if(paginacaoContainer) paginacaoContainer.addEventListener('click', (e) => {
                 const link = event.target.closest('a.page-link');

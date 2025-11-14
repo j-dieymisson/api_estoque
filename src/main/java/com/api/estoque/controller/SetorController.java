@@ -1,9 +1,11 @@
 package com.api.estoque.controller;
 
 import com.api.estoque.model.Setor;
+import com.api.estoque.model.Usuario;
 import com.api.estoque.service.SetorService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -22,8 +24,10 @@ public class SetorController {
 
     @GetMapping
     public ResponseEntity<List<Setor>> listar(
-            @RequestParam(defaultValue = "false") boolean apenasAtivos) {
-        List<Setor> setores = setorService.listarTodos(apenasAtivos);
+            @RequestParam(defaultValue = "false") boolean apenasAtivos,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+
+        List<Setor> setores = setorService.listarTodos(apenasAtivos, usuarioLogado);
         return ResponseEntity.ok(setores);
     }
 

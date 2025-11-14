@@ -92,8 +92,7 @@ public class UsuarioService {
     }
 
     @Transactional
-    public UsuarioResponse criarUsuario(UsuarioRequest request) {
-        // 1. Busca o cargo na base de dados a partir do ID recebido
+    public UsuarioResponse criarUsuario(UsuarioRequest request, Usuario usuarioLogado) { // <-- 1. PARÂMETRO ADICIONADO
 
         if (usuarioRepository.findByNome(request.nome()).isPresent()) {
             throw new BusinessException("Nome de utilizador já em uso.");
@@ -102,28 +101,49 @@ public class UsuarioService {
         Cargo cargo = cargoRepository.findById(request.cargoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cargo não encontrado com o ID: " + request.cargoId()));
 
-        // 2. Cria a nova entidade de utilizador
         Usuario novoUsuario = new Usuario();
+
         novoUsuario.setNome(request.nome());
         novoUsuario.setEmail(request.email());
-        novoUsuario.setLogin(request.nome()); // Usando o nome como login, conforme o plano
+        novoUsuario.setLogin(request.nome());
         novoUsuario.setCargo(cargo);
         novoUsuario.setAtivo(true);
-
-        //Associa o Setor, se um ID for fornecido
-        if (request.setorId() != null) {
-            Setor setor = setorRepository.findById(request.setorId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Setor não encontrado com o ID: " + request.setorId()));
-            novoUsuario.setSetor(setor);
-        }
-        novoUsuario.setFuncao(request.funcao()); // Salva a nova função
-        // 3. O PASSO MAIS IMPORTANTE: Encripta a senha antes de a definir
+        novoUsuario.setFuncao(request.funcao());
         novoUsuario.setSenha(passwordEncoder.encode(request.senha()));
 
-        // 4. Salva o novo utilizador na base de dados
-        usuarioRepository.save(novoUsuario);
+        // =============================================
+        // === 2. NOVA LÓGICA DE GESTOR ===
+        // =============================================
+        String cargoLogado = usuarioLogado.getCargo().getNome();
 
-        // 5. Mapeia a entidade para o DTO de resposta
+        if ("GESTOR".equals(cargoLogado)) {
+            Setor setorDoGestor = usuarioLogado.getSetor();
+
+            // Regra 1: Gestor sem setor não pode criar
+            if (setorDoGestor == null) {
+                throw new BusinessException("Gestores sem setor atribuído não podem criar novos utilizadores.");
+            }
+
+            // Regra 2: Gestor não pode criar ADMIN
+            if ("ADMIN".equals(cargo.getNome())) {
+                throw new BusinessException("Gestores não têm permissão para criar utilizadores ADMIN.");
+            }
+
+            // Regra 3: Força o novo utilizador a ser do mesmo setor do Gestor
+            novoUsuario.setSetor(setorDoGestor);
+
+        } else if ("ADMIN".equals(cargoLogado)) {
+            // Admin pode definir o setor livremente
+            if (request.setorId() != null) {
+                Setor setor = setorRepository.findById(request.setorId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Setor não encontrado com o ID: " + request.setorId()));
+                novoUsuario.setSetor(setor);
+            }
+        }
+        // (Colaboradores não devem conseguir chamar este endpoint)
+        // --- FIM DA LÓGICA ---
+
+        usuarioRepository.save(novoUsuario);
         return mapToUsuarioResponse(novoUsuario);
     }
 
@@ -144,15 +164,42 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-    public Page<UsuarioResponse> listarTodos(Optional<String> nome, Pageable pageable) {
+    public Page<UsuarioResponse> listarTodos(
+            Optional<String> nome,
+            Pageable pageable,
+            Usuario usuarioLogado) { // <-- 1. PARÂMETRO ADICIONADO
+
         Page<Usuario> usuarios;
-        if (nome.isPresent()) {
-            // Usa a nova busca por nome que exclui o super admin
-            usuarios = usuarioRepository.findByNomeContainingIgnoreCaseAndIdNot(nome.get(), superAdminId, pageable);
+        String cargo = usuarioLogado.getCargo().getNome();
+        String nomePesquisado = nome.orElse(null);
+
+
+        // 2. NOVA LÓGICA DE CARGO (A CORREÇÃO)
+        if ("ADMIN".equals(cargo)) {
+            // ADMIN: Vê todos (exceto o super admin)
+            if (nomePesquisado != null) {
+                usuarios = usuarioRepository.findByNomeContainingIgnoreCaseAndIdNot(nomePesquisado, superAdminId, pageable);
+            } else {
+                usuarios = usuarioRepository.findByIdNot(superAdminId, pageable);
+            }
+        } else if ("GESTOR".equals(cargo)) {
+            // GESTOR: Vê apenas o seu setor (exceto o super admin)
+            Setor setorDoGestor = usuarioLogado.getSetor();
+            if (setorDoGestor == null) {
+                return Page.empty(); // Gestor sem setor não vê ninguém
+            }
+
+            if (nomePesquisado != null) {
+                usuarios = usuarioRepository.findByNomeContainingIgnoreCaseAndIdNotAndSetor(nomePesquisado, superAdminId, setorDoGestor, pageable);
+            } else {
+                usuarios = usuarioRepository.findByIdNotAndSetor(superAdminId, setorDoGestor, pageable);
+            }
         } else {
-            // Usa a nova listagem geral que exclui o super admin
-            usuarios = usuarioRepository.findByIdNot(superAdminId, pageable);
+            // COLABORADOR: Não deve ver esta lista
+            usuarios = Page.empty();
         }
+        // --- FIM DA LÓGICA ---
+
         return usuarios.map(this::mapToUsuarioResponse);
     }
 
@@ -178,6 +225,21 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilizador não encontrado com o ID: " + id));
 
+        String cargoLogado = usuarioLogado.getCargo().getNome();
+        if ("GESTOR".equals(cargoLogado)) {
+            // Gestor só pode editar utilizadores do seu próprio setor
+            Setor setorDoGestor = usuarioLogado.getSetor();
+            if (setorDoGestor == null || !setorDoGestor.equals(usuario.getSetor())) {
+                throw new BusinessException("Você não tem permissão para editar utilizadores de outro setor.");
+            }
+            // Gestor não pode promover ninguém a ADMIN
+            Cargo novoCargo = cargoRepository.findById(request.cargoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Cargo não encontrado com o ID: " + request.cargoId()));
+            if ("ADMIN".equals(novoCargo.getNome())) {
+                throw new BusinessException("Gestores não têm permissão para definir outros utilizadores como ADMIN.");
+            }
+        }
+
         if (usuario.getId().equals(superAdminId)) {
             // Verifica se a requisição está a tentar alterar o cargo do super admin
             if (!usuario.getCargo().getId().equals(request.cargoId())) {
@@ -194,17 +256,22 @@ public class UsuarioService {
         usuario.setLogin(request.nome());
         usuario.setEmail(request.email());
         usuario.setCargo(novoCargo); // A importante alteração de cargo acontece aqui.
+        usuario.setFuncao(request.funcao());
 
         // 4. Atualiza o Setor
-        if (request.setorId() != null) {
-            Setor setor = setorRepository.findById(request.setorId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Setor não encontrado com o ID: " + request.setorId()));
-            usuario.setSetor(setor);
-        } else {
-            // Permite remover o gestor (definir como null)
-            usuario.setSetor(null);
+        if ("ADMIN".equals(cargoLogado)) {
+            // Só Admin pode mudar o setor de um utilizador
+            if (request.setorId() != null) {
+                Setor setor = setorRepository.findById(request.setorId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Setor não encontrado com o ID: " + request.setorId()));
+                usuario.setSetor(setor);
+            } else {
+                usuario.setSetor(null);
+            }
+        } else if ("GESTOR".equals(cargoLogado)) {
+            // Gestor só pode atribuir o seu próprio setor
+            usuario.setSetor(usuarioLogado.getSetor());
         }
-        usuario.setFuncao(request.funcao());
 
         return mapToUsuarioResponse(usuario);
     }
