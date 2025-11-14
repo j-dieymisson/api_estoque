@@ -8,5 +8,6 @@ public record UsuarioResponse(
         Long cargoId,
         boolean ativo,
         Long setorId,
-        String setorNome
+        String setorNome,
+        String funcao
 ) {}

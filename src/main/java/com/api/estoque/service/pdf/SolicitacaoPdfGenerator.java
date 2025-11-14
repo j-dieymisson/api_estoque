@@ -66,23 +66,44 @@ public class SolicitacaoPdfGenerator implements RelatorioPdfGenerator<Solicitaca
     /**
      * Helper para criar a tabela de "DADOS DO SOLICITANTE".
      */
-    private PdfPTable criarTabelaInfoSolicitante(Solicitacao sol, Font fontNormal, Font fontBold) {
-        PdfPTable table = new PdfPTable(new float[]{ 1.5f, 3.5f, 2f, 3f }); // 4 colunas (Label, Value, Label, Value)
+    private PdfPTable criarTabelaInfoSolicitante(Solicitacao sol, Font fontNormal, Font fontBold) throws DocumentException {
+
+        // 1. Criar a tabela com 4 colunas (Label_Esq, Valor_Esq, Label_Dir, Valor_Dir)
+        PdfPTable table = new PdfPTable(4);
         table.setWidthPercentage(100);
         table.setSpacingAfter(10f);
+        // Definir larguras relativas (Label estreita, Valor largo)
+        table.setWidths(new float[]{ 1.5f, 3.5f, 2f, 3f });
 
-        // --- ALTERAÇÃO AQUI ---
-        // Alinhamento dos labels (células 1 e 3) mudado para a ESQUERDA
+        // --- LÓGICA DE TRADUÇÃO DO STATUS (Pedido 2) ---
+        String statusVisual = sol.getStatus().name();
+        if ("PENDENTE_GESTOR".equals(statusVisual) || "PENDENTE_ADMIN".equals(statusVisual)) {
+            statusVisual = "Pendente"; // Traduzido
+        }
+
+        // --- DADOS EM 2 COLUNAS (Pedido 1) ---
+
+        // Linha 1: Nome (Esquerda) | Status (Direita)
         addCellSimples(table, "Nome:", fontBold, Element.ALIGN_LEFT);
         addCellSimples(table, sol.getUsuario().getNome(), fontNormal, Element.ALIGN_LEFT);
-        addCellSimples(table, "Cargo:", fontBold, Element.ALIGN_LEFT);
-        addCellSimples(table, sol.getUsuario().getCargo().getNome(), fontNormal, Element.ALIGN_LEFT);
-
         addCellSimples(table, "Status:", fontBold, Element.ALIGN_LEFT);
-        addCellSimples(table, sol.getStatus().name(), fontNormal, Element.ALIGN_LEFT);
+        addCellSimples(table, statusVisual, fontNormal, Element.ALIGN_LEFT); // Usa o statusVisual
+
+        // Linha 2: Setor (Esquerda) | Data Solicitação (Direita)
+        String setorNome = (sol.getUsuario().getSetor() != null) ? sol.getUsuario().getSetor().getNome() : "";
+        addCellSimples(table, "Setor:", fontBold, Element.ALIGN_LEFT);
+        addCellSimples(table, setorNome, fontNormal, Element.ALIGN_LEFT);
         addCellSimples(table, "Data Solicitação:", fontBold, Element.ALIGN_LEFT);
         addCellSimples(table, sol.getDataSolicitacao().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")), fontNormal, Element.ALIGN_LEFT);
-        // --- FIM DA ALTERAÇÃO ---
+
+        // Linha 3: Função (Esquerda) | Célula Vazia (Direita)
+        String funcaoNome = (sol.getUsuario().getFuncao() != null && !sol.getUsuario().getFuncao().isBlank())
+                ? sol.getUsuario().getFuncao()
+                : "N/A";
+        addCellSimples(table, "Função:", fontBold, Element.ALIGN_LEFT);
+        addCellSimples(table, funcaoNome, fontNormal, Element.ALIGN_LEFT);
+        addCellSimples(table, "", fontNormal, Element.ALIGN_LEFT); // Célula vazia para manter o layout
+        addCellSimples(table, "", fontNormal, Element.ALIGN_LEFT); // Célula vazia para manter o layout
 
         return table;
     }

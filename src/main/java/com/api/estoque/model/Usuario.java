@@ -39,6 +39,8 @@ public class Usuario implements UserDetails {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "setor_id") // <-- O nome da nova coluna
     private Setor setor;
+    @Column(name = "funcao")
+    private String funcao;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

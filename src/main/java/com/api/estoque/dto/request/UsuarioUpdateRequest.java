@@ -15,5 +15,6 @@ public record UsuarioUpdateRequest(
         @NotNull(message = "O ID do cargo é obrigatório.")
         Long cargoId,
 
-        Long setorId
+        Long setorId,
+        String funcao
 ) {}

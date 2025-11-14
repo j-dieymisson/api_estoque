@@ -116,7 +116,7 @@ public class UsuarioService {
                     .orElseThrow(() -> new ResourceNotFoundException("Setor não encontrado com o ID: " + request.setorId()));
             novoUsuario.setSetor(setor);
         }
-
+        novoUsuario.setFuncao(request.funcao()); // Salva a nova função
         // 3. O PASSO MAIS IMPORTANTE: Encripta a senha antes de a definir
         novoUsuario.setSenha(passwordEncoder.encode(request.senha()));
 
@@ -203,6 +203,7 @@ public class UsuarioService {
             // Permite remover o gestor (definir como null)
             usuario.setSetor(null);
         }
+        usuario.setFuncao(request.funcao());
 
         return mapToUsuarioResponse(usuario);
     }
@@ -256,7 +257,8 @@ public class UsuarioService {
                 usuario.getCargo().getId(),
                 usuario.isAtivo(),
                 setorId,
-                setorNome
+                setorNome,
+                usuario.getFuncao()
         );
     }
 }
