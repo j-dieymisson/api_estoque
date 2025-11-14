@@ -97,6 +97,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             mainContentArea.innerHTML = await response.text();
 
+            aplicarPermissoesUI();
+
             const scriptUrl = `/js/pages/${pageUrl.replace('.html', '.js')}`;
             if (currentScript) {
                 document.body.removeChild(currentScript);
@@ -144,37 +146,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (nomeUsuarioSpan) nomeUsuarioSpan.textContent = usuario.nome;
 
-                                currentUserRole = usuario.nomeCargo; // <-- DEFINA A VARIÁVEL GLOBAL AQUI
-                                const cargo = currentUserRole;
+                                currentUserRole = usuario.nomeCargo;
 
-                // Primeiro, mostramos tudo para começar do zero a cada login
-                document.querySelectorAll('.admin-only, .gestor-only').forEach(item => {
-                    item.style.display = ''; // Remove o 'display: none'
-                });
 
-                // Agora, escondemos com base no cargo
-                if (cargo === 'COLABORADOR') {
-                    document.querySelectorAll('.admin-only, .gestor-only').forEach(item => {
-                        item.style.display = 'none';
-                    });
-                } else if (cargo === 'GESTOR') {
-                    // Um GESTOR só não vê o que é EXCLUSIVO do ADMIN
-                    // (Ex: o link "Funcionários", que só tem a classe 'admin-only')
-                    document.querySelectorAll('.admin-only:not(.gestor-only)').forEach(item => {
-                         item.style.display = 'none';
-                    });
-                }
-                // Se for ADMIN, não escondemos nada.
+                                aplicarPermissoesUI();
 
 
                 let paginaInicial = 'solicitacoes.html';
 
-                if (cargo === 'ADMIN' ) {
+                if (currentUserRole === 'ADMIN' ) {
                     paginaInicial = 'dashboard.html';
                     window.atualizarNotificacaoPendentes();
                 }
 
-                if (cargo === 'GESTOR'){
+                if (currentUserRole === 'GESTOR'){
                     paginaInicial = 'equipamentos.html';
                 }
 
@@ -186,6 +171,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 fazerLogout();
             }
         }
+
+    function aplicarPermissoesUI() {
+                    // Se o cargo ainda não foi carregado, não faz nada
+                    if (!currentUserRole) return;
+
+                    const cargo = currentUserRole;
+
+                    // Esta função agora aplica permissões a TUDO (sidebar E conteúdo)
+                    document.querySelectorAll('.admin-only, .gestor-only').forEach(item => {
+                        item.style.display = ''; // Reseta (mostra) tudo
+                    });
+
+                    if (cargo === 'COLABORADOR') {
+                        document.querySelectorAll('.admin-only, .gestor-only').forEach(item => {
+                            item.style.display = 'none';
+                        });
+                    } else if (cargo === 'GESTOR') {
+                        document.querySelectorAll('.admin-only:not(.gestor-only)').forEach(item => {
+                             item.style.display = 'none';
+                        });
+                    }
+                    // Se for ADMIN, não escondemos nada.
+                }
 
     function marcarLinkAtivo(pageUrl) {
         menus.forEach(menu => {
