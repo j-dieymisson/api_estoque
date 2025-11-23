@@ -198,6 +198,28 @@ body {
 
 /* --- RESPONSIVIDADE PARA MOBILE --- */
 
+
+/* Cor do texto (Inativo) para o menu mobile */
+#sidebar-mobile .offcanvas-body .nav-link {
+    color: var(--cor-texto-sidebar); /* A sua nova cor de texto */
+    border-radius: .375rem;
+    margin-bottom: .25rem;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* Cor do Hover para o menu mobile */
+#sidebar-mobile .offcanvas-body .nav-link:hover {
+    color: var(--cor-hover-sidebar); /* A sua nova cor de hover */
+    background-color: rgba(255, 255, 255, 0.1); /* O seu fundo de hover */
+}
+
+/* Cor do Ativo (Link selecionado) para o menu mobile */
+#sidebar-mobile .offcanvas-body .nav-link.active {
+    color: #fff; /* (Cor de texto do link ativo) */
+    background-color: var(--cor-primaria); /* (Cor de fundo do link ativo) */
+}
+
 @media (max-width: 767.98px) {
     /* Em ecrãs pequenos, a sidebar principal do desktop desaparece */
     .sidebar {

@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # O nosso Banco de Dados
+  mysqldb:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS_ESTOQUE}
+      MYSQL_DATABASE: api_estoque
+      # --- OTIMIZAÇÃO 1: Limita o MySQL para usar pouca RAM ---
+      command: --innodb-buffer-pool-size=64M
+    ports:
+      - "3306:3306" # Apenas para debug, em produção podemos fechar esta porta externa
+    volumes:
+      - db_data:/var/lib/mysql
+
+  # A nossa API Spring Boot
+  app:
+    build: .
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      # Conecta ao container 'mysqldb'
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysqldb:3306/api_estoque?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASS_ESTOQUE}
+      JWT_SECRET_ESTOQUE: ${JWT_SECRET_ESTOQUE}
+      # Garante que a app não tenta usar mais RAM do que o servidor tem
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx350m"
+    depends_on:
+      - mysqldb
+
+volumes:
+  db_data:

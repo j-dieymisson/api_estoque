@@ -1,9 +1,15 @@
+# =====================================
+# 1. JAVA & MAVEN (Padrão do Projeto)
+# =====================================
 HELP.md
 target/
-.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# =====================================
+# 2. IDEs (Configurações do Editor)
+# =====================================
 ### STS ###
 .apt_generated
 .classpath
@@ -31,3 +37,33 @@ build/
 
 ### VS Code ###
 .vscode/
+.history/
+
+# =====================================
+# 3. SEGURANÇA & INFRAESTRUTURA (NOVO)
+# =====================================
+
+# --- Segredos e Variáveis de Ambiente ---
+.env
+*.env
+
+# --- Terraform (Arquivos Temporários e Segredos) ---
+# Ignora a pasta de plugins baixados
+infra/.terraform/
+.terraform/
+
+# Ignora o estado da infraestrutura (contém IPs e dados sensíveis)
+*.tfstate
+*.tfstate.backup
+
+# Ignora o arquivo de variáveis (ONDE ESTÃO OS OCIDs!)
+*.tfvars
+infra/terraform.tfvars
+
+# Ignora arquivos de crash log
+crash.log
+
+# --- Chaves SSH e Certificados ---
+*.pem
+*.key
+*.pub
