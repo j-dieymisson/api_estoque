@@ -1,9 +1,10 @@
 // main.js - Versão final com carregador de script dinâmico
+const BASE_URL = '/cepra';
 
 document.addEventListener('DOMContentLoaded', function() {
     const token = localStorage.getItem('authToken');
     if (!token) {
-        window.location.href = '/login.html';
+        window.location.href = BASE_URL + '/login.html';
         return;
     }
     console.log("Utilizador autenticado. A inicializar a aplicação principal.");
@@ -92,29 +93,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             console.log(`A carregar a página parcial: ${pageUrl}`);
-            const response = await fetch(`/app/partials/${  pageUrl}`);
-            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            // 1. Garante que removemos o .html se ele já vier no nome
+                        const nomePaginaLimpo = pageUrl.replace('.html', '');
+
+                        // 2. Adicionamos o .html manualmente UMA VEZ
+                        const response = await fetch(`${BASE_URL}/app/partials/${nomePaginaLimpo}.html`);
+
+                        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
 
             mainContentArea.innerHTML = await response.text();
 
             aplicarPermissoesUI();
 
-            const scriptUrl = `/js/pages/${pageUrl.replace('.html', '.js')}`;
-            if (currentScript) {
-                document.body.removeChild(currentScript);
-            }
-            currentScript = document.createElement('script');
-            currentScript.src = scriptUrl;
-            currentScript.onerror = () => console.error(`Erro ao carregar o script: ${scriptUrl}`);
-            document.body.appendChild(currentScript);
+           // 3. CORREÇÃO: Usamos o nome limpo para buscar o JS
+                      const scriptUrl = `${BASE_URL}/js/pages/${nomePaginaLimpo}.js`;
 
-            window.atualizarNotificacaoPendentes();
+                       if (currentScript) {
+                           document.body.removeChild(currentScript);
+                       }
+                       currentScript = document.createElement('script');
+                       currentScript.src = scriptUrl;
+                       currentScript.onerror = () => console.error(`Erro ao carregar o script: ${scriptUrl}`);
+                       document.body.appendChild(currentScript);
 
-        } catch (error) {
-            console.error("Falha ao carregar o conteúdo da página:", error);
-            mainContentArea.innerHTML = `<div class="alert alert-danger">Erro ao carregar conteúdo.</div>`;
-        }
-    }
+                       window.atualizarNotificacaoPendentes();
+
+                   } catch (error) {
+                       console.error("Falha ao carregar o conteúdo da página:", error);
+                       mainContentArea.innerHTML = `<div class="alert alert-danger">Erro ao carregar conteúdo.</div>`;
+                   }
+               }
 
     function setupMenuNavigation(menuElement) {
             if (!menuElement) return;
@@ -207,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function fazerLogout() {
         localStorage.removeItem('authToken');
-        window.location.href = '/login.html';
+        window.location.href = BASE_URL + '/login.html';
     }
 
     // --- LÓGICA DE NOTIFICAÇÃO (AGORA GLOBAL E UNIFICADA) ---

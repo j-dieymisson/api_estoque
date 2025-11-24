@@ -1,36 +1,42 @@
 version: '3.8'
 
 services:
-  # O nosso Banco de Dados
+  # --- 1. BANCO DE DADOS ---
   mysqldb:
     image: mysql:8.0
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASS_ESTOQUE}
       MYSQL_DATABASE: api_estoque
-      # --- OTIMIZAÇÃO 1: Limita o MySQL para usar pouca RAM ---
-      command: --innodb-buffer-pool-size=64M
-    ports:
-      - "3306:3306" # Apenas para debug, em produção podemos fechar esta porta externa
+    command: --innodb-buffer-pool-size=64M
     volumes:
       - db_data:/var/lib/mysql
 
-  # A nossa API Spring Boot
+  # --- 2. APLICAÇÃO JAVA ---
   app:
     build: .
     restart: always
-    ports:
-      - "8080:8080"
+    # NOTA: Não expomos a porta "8080" para fora.
+    # Apenas o Nginx consegue falar com ela internamente.
     environment:
-      # Conecta ao container 'mysqldb'
       SPRING_DATASOURCE_URL: jdbc:mysql://mysqldb:3306/api_estoque?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${DB_PASS_ESTOQUE}
       JWT_SECRET_ESTOQUE: ${JWT_SECRET_ESTOQUE}
-      # Garante que a app não tenta usar mais RAM do que o servidor tem
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx350m"
     depends_on:
       - mysqldb
+
+  # --- 3. NGINX (NOVO) ---
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile-nginx
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - app
 
 volumes:
   db_data:

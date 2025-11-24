@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', function() {
 
     if (localStorage.getItem('authToken')) {
-        window.location.href = '/app/index.html';
+        window.location.href = '/cepra/app/index.html';
         return;
     }
 
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 const response = await apiClient.post('/login', { nome, senha });
                 localStorage.setItem('authToken', response.data.token);
-                window.location.href = '/app/index.html';
+                window.location.href = '/cepra/app/index.html';
             } catch (error) {
                 console.error("Erro no login:", error);
 

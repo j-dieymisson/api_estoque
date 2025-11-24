@@ -6,7 +6,7 @@ VOLUME /tmp
 
 # 3. Copiamos o JAR gerado (assumindo que o Maven gera em /target)
 # DICA: O nome do jar pode variar. O '*' ajuda a pegar qualquer versão.
-COPY app.jar app.jar
+COPY target/*.jar app.jar
 
 # 4. Comando para iniciar a API
 ENTRYPOINT ["java","-jar","/app.jar"]

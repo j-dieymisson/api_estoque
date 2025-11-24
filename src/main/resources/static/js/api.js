@@ -1,9 +1,8 @@
 // api.js
 
 // Cria uma instância central do Axios com configurações padrão
-const apiClient = axios.create({
-    baseURL: '/'
-});
+const API_CONTEXT = '/cepra';
+const apiClient = axios.create({ baseURL: API_CONTEXT });
 
 // --- Interceptor de Requisição ---
 // Este código é executado ANTES de cada requisição ser enviada.
@@ -40,7 +39,7 @@ apiClient.interceptors.response.use(
                 if (isAuthError && isNotOnLoginPage) {
                     console.error("Erro de autenticação/autorização numa página protegida. A redirecionar para o login.");
                     localStorage.removeItem('authToken');
-                    window.location.href = '/login.html';
+                    window.location.href = API_CONTEXT + '/login.html';
                 }
                 // ===============================================================
 
