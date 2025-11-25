@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova Solicitação</title>
+    <style>
+        /* Estilos Inline para compatibilidade com Email */
+        body { font-family: Arial, sans-serif; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .header { background-color: #17a2b8; color: white; padding: 10px; text-align: center; border-radius: 5px 5px 0 0; }
+        .content { padding: 20px; }
+        .footer { text-align: center; font-size: 12px; color: #777; margin-top: 20px; }
+        .btn { display: inline-block; background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Nova Solicitação Pendente</h1>
+    </div>
+    <div class="content">
+        <p>Olá,</p>
+        <p>O colaborador <strong th:text="${nomeSolicitante}">João Silva</strong> criou uma nova solicitação de equipamentos.</p>
+
+        <ul>
+            <li><strong>Nº Solicitação:</strong> <span th:text="${idSolicitacao}">123</span></li>
+            <li><strong>Data:</strong> <span th:text="${dataSolicitacao}">01/01/2025</span></li>
+            <li><strong>Setor:</strong> <span th:text="${nomeSetor}">TI</span></li>
+        </ul>
+
+        <p>Por favor, aceda ao sistema para analisar e aprovar.</p>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a th:href="${linkSistema}" class="btn" style="color: white;">Aceder ao Sistema</a>
+        </div>
+    </div>
+    <div class="footer">
+        <p>Este é um email automático do sistema CEPRA Estoque.</p>
+    </div>
+</div>
+</body>
+</html>

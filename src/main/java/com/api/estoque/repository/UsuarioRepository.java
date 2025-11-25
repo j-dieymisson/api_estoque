@@ -43,4 +43,12 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     @Query("SELECT u FROM Usuario u LEFT JOIN FETCH u.cargo LEFT JOIN FETCH u.setor WHERE LOWER(u.nome) LIKE LOWER(CONCAT('%', :nome, '%')) AND u.id <> :id AND (u.setor = :setor OR u.setor IS NULL) AND u.cargo.nome <> 'ADMIN'")
     Page<Usuario> findByNomeContainingIgnoreCaseAndIdNotAndSetor(@Param("nome") String nome, @Param("id") Long id, @Param("setor") Setor setor, Pageable pageable);
+
+    // Busca emails de todos os utilizadores ativos com um certo cargo num setor específico
+    @Query("SELECT u.email FROM Usuario u WHERE u.cargo.nome = :cargoNome AND u.setor = :setor AND u.ativo = true")
+    List<String> findEmailsByCargoAndSetor(@Param("cargoNome") String cargoNome, @Param("setor") Setor setor);
+
+    // Busca emails de todos os utilizadores ativos com um certo cargo (para Admins)
+    @Query("SELECT u.email FROM Usuario u WHERE u.cargo.nome = :cargoNome AND u.ativo = true")
+    List<String> findEmailsByCargo(@Param("cargoNome") String cargoNome);
 }

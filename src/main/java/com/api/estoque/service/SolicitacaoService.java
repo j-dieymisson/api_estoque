@@ -14,9 +14,11 @@
         import org.springframework.data.domain.Pageable;
         import org.springframework.stereotype.Service;
         import org.springframework.transaction.annotation.Transactional;
-    
+        import org.thymeleaf.context.Context;
+
         import java.time.LocalDate;
         import java.time.LocalDateTime;
+        import java.time.format.DateTimeFormatter;
         import java.util.*;
     
         @Service
@@ -29,6 +31,7 @@
             private final HistoricoStatusSolicitacaoRepository historicoStatusRepository;
             private final DevolucaoRepository devolucaoRepository;
             private final SolicitacaoItemRepository solicitacaoItemRepository;
+            private final EmailService emailService;
 
 
             public SolicitacaoService(SolicitacaoRepository solicitacaoRepository,
@@ -37,8 +40,10 @@
                                       HistoricoMovimentacaoRepository historicoRepository,
                                       HistoricoStatusSolicitacaoRepository historicoStatusRepository,
                                       DevolucaoRepository devolucaoRepository,
-                                      SolicitacaoItemRepository solicitacaoItemRepository
-            ) {
+                                      SolicitacaoItemRepository solicitacaoItemRepository,
+                                      EmailService emailService)
+
+             {
                 this.solicitacaoRepository = solicitacaoRepository;
                 this.usuarioRepository = usuarioRepository;
                 this.equipamentoRepository = equipamentoRepository;
@@ -46,6 +51,7 @@
                 this.historicoStatusRepository = historicoStatusRepository;
                 this.devolucaoRepository = devolucaoRepository;
                 this.solicitacaoItemRepository = solicitacaoItemRepository;
+                 this.emailService = emailService;
             }
 
             @Transactional
@@ -83,7 +89,7 @@
                 Solicitacao novaSolicitacao = new Solicitacao();
                 novaSolicitacao.setUsuario(usuarioLogado);
                 novaSolicitacao.setDataSolicitacao(LocalDateTime.now());
-                novaSolicitacao.setStatus(statusInicial); // <-- MUDANÇA AQUI
+                novaSolicitacao.setStatus(statusInicial);
                 novaSolicitacao.setJustificativa(request.justificativa());
                 novaSolicitacao.setDataPrevisaoEntrega(request.dataPrevisaoEntrega());
                 novaSolicitacao.setDataPrevisaoDevolucao(request.dataPrevisaoDevolucao());
@@ -95,7 +101,10 @@
                 Solicitacao solicitacaoSalva = solicitacaoRepository.save(novaSolicitacao);
 
                 // Registar o primeiro status no histórico (com o utilizador correto)
-                registrarHistoricoDeStatus(solicitacaoSalva, null, statusInicial, usuarioLogado); // <-- MUDANÇA AQUI
+                registrarHistoricoDeStatus(solicitacaoSalva, null, statusInicial, usuarioLogado);
+
+                // --- NOTIFICAÇÃO POR EMAIL ---
+                notificarMudancaStatus(solicitacaoSalva, statusInicial);
 
                 // 5. Mapeia a entidade salva para o DTO de resposta
                 return mapToSolicitacaoResponse(solicitacaoSalva);
@@ -140,6 +149,9 @@
                 // 6. Salva e regista no histórico
                 Solicitacao solicitacaoSalva = solicitacaoRepository.save(solicitacao);
                 registrarHistoricoDeStatus(solicitacaoSalva, statusAnterior, StatusSolicitacao.PENDENTE_ADMIN, gestorLogado);
+
+                // --- NOTIFICAÇÃO POR EMAIL ---
+                notificarMudancaStatus(solicitacaoSalva, StatusSolicitacao.PENDENTE_ADMIN);
 
                 return mapToSolicitacaoResponse(solicitacaoSalva);
             }
@@ -201,6 +213,9 @@
                 // 6. Registar a mudança de status no histórico
                 registrarHistoricoDeStatus(solicitacaoSalva, statusAnterior, StatusSolicitacao.APROVADA, adminLogado);
 
+                // --- NOTIFICAÇÃO POR EMAIL ---
+                notificarMudancaStatus(solicitacaoSalva, StatusSolicitacao.APROVADA);
+
                 return mapToSolicitacaoResponse(solicitacaoSalva);
             }
 
@@ -224,6 +239,9 @@
                 Solicitacao solicitacaoSalva = solicitacaoRepository.save(solicitacao);
 
                 registrarHistoricoDeStatus(solicitacaoSalva, statusAnterior, StatusSolicitacao.RECUSADA, usuarioLogado);
+
+                // --- NOTIFICAÇÃO POR EMAIL ---
+                notificarMudancaStatus(solicitacaoSalva, StatusSolicitacao.RECUSADA);
 
                 return mapToSolicitacaoResponse(solicitacaoSalva);
             }
@@ -329,7 +347,10 @@
 
                 // 6. Regista a mudança de status no histórico
                 // O responsável é o utilizador logado que clicou em "enviar"
-                registrarHistoricoDeStatus(solicitacaoEnviada, statusAnterior, statusNovo, usuarioLogado); // <-- MUDANÇA AQUI
+                registrarHistoricoDeStatus(solicitacaoEnviada, statusAnterior, statusNovo, usuarioLogado);
+
+                // --- NOTIFICAÇÃO POR EMAIL ---
+                notificarMudancaStatus(solicitacaoEnviada, statusNovo);
 
                 return mapToSolicitacaoResponse(solicitacaoEnviada);
             }
@@ -425,6 +446,60 @@
                         solicitacao.getJustificativa(),
                         itemResponses
                 );
+            }
+
+            private void notificarMudancaStatus(Solicitacao solicitacao, StatusSolicitacao novoStatus) {
+                try {
+                    // Preparar o contexto do Thymeleaf (Variáveis para o HTML)
+                    Context context = new Context();
+                    context.setVariable("idSolicitacao", solicitacao.getId());
+                    context.setVariable("nomeSolicitante", solicitacao.getUsuario().getNome());
+                    context.setVariable("nomeSetor", solicitacao.getUsuario().getSetor() != null ? solicitacao.getUsuario().getSetor().getNome() : "N/A");
+                    context.setVariable("dataSolicitacao", solicitacao.getDataSolicitacao().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+                    context.setVariable("linkSistema", "http://158.101.195.208/cepra"); // Ajuste o IP
+
+                    // 1. Nova Solicitação no Setor (Para GESTORES)
+                    if (novoStatus == StatusSolicitacao.PENDENTE_GESTOR) {
+                        List<String> emailsGestores = usuarioRepository.findEmailsByCargoAndSetor("GESTOR", solicitacao.getUsuario().getSetor());
+                        for (String email : emailsGestores) {
+                            emailService.enviarEmailHtml(email, "Nova Solicitação Pendente", "email-solicitacao-criada", context);
+                        }
+                    }
+
+                    // 2. Aprovado pelo Gestor / Nova para Admin (Para ADMINS)
+                    else if (novoStatus == StatusSolicitacao.PENDENTE_ADMIN) {
+                        List<String> emailsAdmins = usuarioRepository.findEmailsByCargo("ADMIN");
+                        for (String email : emailsAdmins) {
+                            emailService.enviarEmailHtml(email, "Solicitação Aguardando Aprovação", "email-solicitacao-criada", context);
+                        }
+                    }
+
+                    // 3. Aprovada Final (Para o SOLICITANTE)
+                    else if (novoStatus == StatusSolicitacao.APROVADA) {
+                        String dataEntrega = solicitacao.getDataPrevisaoEntrega().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                        context.setVariable("dataEntrega", dataEntrega);
+
+                        String emailSolicitante = solicitacao.getUsuario().getEmail();
+                        if (emailSolicitante != null && !emailSolicitante.isBlank()) {
+                            emailService.enviarEmailHtml(emailSolicitante, "Sua Solicitação foi Aprovada!", "email-solicitacao-aprovada", context);
+                        }
+                    }
+
+                    // 4. Recusada (Para o SOLICITANTE)
+                    else if (novoStatus == StatusSolicitacao.RECUSADA) {
+                        context.setVariable("motivoRecusa", solicitacao.getMotivoRecusa());
+
+                        String emailSolicitante = solicitacao.getUsuario().getEmail();
+                        if (emailSolicitante != null && !emailSolicitante.isBlank()) {
+                            emailService.enviarEmailHtml(emailSolicitante, "Atualização: Solicitação Recusada", "email-solicitacao-recusada", context);
+                        }
+                    }
+
+                } catch (Exception e) {
+                    // Loga o erro mas NÃO para o processo. O email é acessório, não pode bloquear a transação.
+                    System.err.println("Erro ao processar notificação de email: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
 
             private void registrarHistoricoDeStatus(Solicitacao solicitacao,

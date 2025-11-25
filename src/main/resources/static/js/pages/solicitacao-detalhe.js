@@ -70,6 +70,7 @@ setTimeout(() => {
                 solicitacaoAtual.itens.forEach(item => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
+                        <td>${item.equipamentoId}</td>
                         <td>${item.nomeEquipamento}</td>
                         <td>${item.quantidadeSolicitada}</td>
                         <td>${item.quantidadeDevolvida}</td>
