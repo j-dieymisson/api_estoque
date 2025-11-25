@@ -31,6 +31,9 @@ public class Solicitacao {
 
     private String justificativa;
 
+    @Column(name = "motivo_recusa", columnDefinition = "TEXT")
+    private String motivoRecusa;
+
     // --- Relacionamento com Usuario ---
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")

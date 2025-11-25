@@ -1,5 +1,6 @@
     package com.api.estoque.service;
     
+        import com.api.estoque.dto.request.RecusaRequest;
         import com.api.estoque.dto.request.SolicitacaoItemRequest;
         import com.api.estoque.dto.request.SolicitacaoRequest;
         import com.api.estoque.dto.request.SolicitacaoUpdateRequest;
@@ -204,7 +205,7 @@
             }
 
             @Transactional
-            public SolicitacaoResponse recusarSolicitacao(Long id, Usuario usuarioLogado) { // Adicionámos usuarioLogado
+            public SolicitacaoResponse recusarSolicitacao(Long id, RecusaRequest request, Usuario usuarioLogado) {
                 // 1. Busca a solicitação
                 Solicitacao solicitacao = solicitacaoRepository.findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Solicitação não encontrada com o ID: " + id));
@@ -214,6 +215,8 @@
                         solicitacao.getStatus() != StatusSolicitacao.PENDENTE_ADMIN) {
                     throw new BusinessException("Apenas solicitações pendentes podem ser recusadas. Status atual: " + solicitacao.getStatus());
                 }
+
+                solicitacao.setMotivoRecusa(request.motivo());
 
                 // 3. Altera o status. Não mexemos no estoque.
                 StatusSolicitacao statusAnterior = solicitacao.getStatus();

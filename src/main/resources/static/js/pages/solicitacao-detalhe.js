@@ -180,7 +180,27 @@ setTimeout(() => {
                         }
                         break;
                     case 'btn-recusar':
-                        showConfirmModal('Recusar Solicitação', `Tem a certeza?`, () => acaoPatch(`/solicitacoes/${id}/recusar`));
+                        showConfirmModal('Recusar Solicitação', `Esta ação é irreversível. Deseja continuar?`, async () => {
+
+                            // 1. Pede o motivo ao utilizador
+                            const motivo = window.prompt("Por favor, insira o motivo da recusa:");
+
+                            // 2. Se o utilizador cancelou ou deixou vazio, para.
+                            if (motivo === null) return; // Clicou em Cancelar
+                            if (motivo.trim() === "") {
+                                showToast("O motivo da recusa é obrigatório.", "Erro", true);
+                                return;
+                            }
+
+                            // 3. Chama a API enviando o motivo no corpo (Body)
+                            try {
+                                await apiClient.patch(`/solicitacoes/${id}/recusar`, { motivo: motivo });
+                                showToast('Solicitação recusada.', 'Sucesso');
+                                await carregarDetalhes();
+                            } catch (error) {
+                                showToast(error.response?.data?.message || 'Erro ao recusar.', 'Erro', true);
+                            }
+                        });
                         break;
                     case 'btn-cancelar':
                         showConfirmModal('Cancelar Solicitação', `Tem a certeza?`, () => acaoPatch(`/solicitacoes/${id}/cancelar`));

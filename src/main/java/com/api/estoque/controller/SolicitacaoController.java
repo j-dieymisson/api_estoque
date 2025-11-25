@@ -1,5 +1,6 @@
 package com.api.estoque.controller;
 
+import com.api.estoque.dto.request.RecusaRequest;
 import com.api.estoque.dto.request.SolicitacaoRequest;
 import com.api.estoque.dto.request.SolicitacaoUpdateRequest;
 import com.api.estoque.dto.response.ContagemResponse;
@@ -83,8 +84,10 @@ public class SolicitacaoController {
     @PatchMapping("/{id}/recusar")
     public ResponseEntity<SolicitacaoResponse> recusar(
             @PathVariable Long id,
-            @AuthenticationPrincipal Usuario usuarioLogado) { // <-- PARÂMETRO ADICIONADO
-        SolicitacaoResponse response = solicitacaoService.recusarSolicitacao(id, usuarioLogado); // <-- PARÂMETRO PASSADO
+            @RequestBody @Valid RecusaRequest request,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+
+        SolicitacaoResponse response = solicitacaoService.recusarSolicitacao(id, request, usuarioLogado);
         return ResponseEntity.ok(response);
     }
 
