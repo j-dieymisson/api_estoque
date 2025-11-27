@@ -140,7 +140,6 @@ public class PdfService {
         } catch (DocumentException | IOException e) {
             throw new RuntimeException("Erro ao gerar o PDF de histórico.", e);
         }
-        // Nota: decidimos não auditar a geração de relatórios de histórico por agora,
-        // mas poderíamos adicionar essa lógica aqui facilmente se quiséssemos.
+
     }
 }

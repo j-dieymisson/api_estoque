@@ -43,3 +43,4 @@ services:
       - app
 
 volumes:
+  db_data:
