@@ -1,7 +1,6 @@
 // devolucoes.js - Lógica para a página de histórico de devoluções
 
 (async function() {
-    console.log("A executar o script da página de devoluções...");
 
     const corpoTabela = document.getElementById('corpo-tabela-devolucoes');
 

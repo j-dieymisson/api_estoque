@@ -1,7 +1,6 @@
 // solicitacao-form.js - Versão final e correta
 setTimeout(() => {
     (async function() {
-        console.log("A executar o script do formulário de solicitação...");
 
         // --- Estado e Seletores ---
         const rascunhoId = window.pageContext?.rascunhoId; // O ID vem do clique em "Editar Rascunho"

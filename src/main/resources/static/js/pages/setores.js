@@ -1,7 +1,6 @@
 // setores.js - Lógica para a página de gestão de setores
 setTimeout(() => {
     (async function() {
-        console.log("A executar o script da página de setores...");
 
         // --- Seletores ---
         const corpoTabela = document.getElementById('corpo-tabela-setores');

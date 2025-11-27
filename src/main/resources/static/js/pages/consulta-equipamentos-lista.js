@@ -1,7 +1,6 @@
 // consulta-equipamentos-lista.js - Lógica para a página de resultados do relatório de equipamentos
 setTimeout(() => {
     (async function() {
-        console.log("A executar o script da lista de resultados de equipamentos...");
 
         // --- Seletores ---
         const cabecalhoResultado = document.getElementById('resultado-cabecalho');

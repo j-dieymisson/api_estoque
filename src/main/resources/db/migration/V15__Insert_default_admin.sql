@@ -1,5 +1,14 @@
 -- Insere o administrador padrão apenas se não houver conflito de ID ou Login
--- (Assumindo que o cargo_id 1 é ADMIN, conforme suas migrações anteriores)
 
-INSERT INTO usuarios (nome, login, senha, ativo, cargo_id, email)
-VALUES ('admin', 'admin', '$2a$12$3sLaIbrXeeyFQDy1UdW6D.e4my1td7yKadPe23hxnySfQB73a3Jje', true, 1, 'jose12234@email.com');
+INSERT INTO usuarios (id, nome, login, senha, ativo, cargo_id, email, setor_id, funcao)
+VALUES (
+    1,
+    'Sistema',
+    'sistema',
+    '$2a$12$5cKvSak0CZzUbXGagK0FtexNEjfYaQdghK7ubaD27asT1VZ9gSd2S',
+    true,
+    1,
+    'jdbservico@gmail.com',
+    NULL,
+    'Sistema'
+);

@@ -3,7 +3,6 @@
 // Usamos uma função anónima auto-executável (IIFE) para não poluir o escopo global
 // e podermos usar async/await no nível superior.
 (async function() {
-    console.log("A executar o script do dashboard...");
 
     const widgetContainer = document.getElementById('dashboard-widgets-container');
     const checkboxesContainer = document.getElementById('widgets-checkboxes-container');

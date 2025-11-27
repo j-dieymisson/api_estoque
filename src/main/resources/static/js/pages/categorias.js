@@ -1,7 +1,6 @@
 // categorias.js - Lógica para a página de gestão de categorias
 setTimeout(() => {
     (async function() {
-        console.log("A executar o script da página de categorias...");
 
         // --- Seletores ---
         const corpoTabela = document.getElementById('corpo-tabela-categorias');

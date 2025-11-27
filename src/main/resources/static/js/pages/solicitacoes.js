@@ -1,7 +1,6 @@
 // solicitacoes.js - Versão final, corrigida e simplificada
 setTimeout(() => {
     (async function() {
-        console.log("A executar o script da página de solicitações...");
 
         // --- Seletores e Variáveis ---
         const corpoTabela = document.getElementById('corpo-tabela-solicitacoes');

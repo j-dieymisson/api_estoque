@@ -1,7 +1,6 @@
 // consulta-usuario.js - Versão refatorada com tabela paginada
 
 (function() {
-    console.log("A executar o script da página de consulta de utilizador...");
 
     const usuarioId = window.pageContext?.id;
 

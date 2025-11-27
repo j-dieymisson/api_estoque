@@ -1,7 +1,6 @@
 // equipamento-form.js - Lógica para o formulário de criar/editar equipamento
 setTimeout(() => {
     (async function() {
-        console.log("A executar o script do formulário de equipamento...");
 
         // --- Seletores ---
         const equipamentoId = window.pageContext?.id;

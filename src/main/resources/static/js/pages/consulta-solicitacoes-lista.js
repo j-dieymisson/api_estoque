@@ -1,7 +1,6 @@
 // consulta-solicitacoes-lista.js - Versão CORRIGIDA
 setTimeout(() => {
     (async function() {
-        console.log("A executar o script da lista de resultados de solicitações...");
 
         // --- Seletores ---
         const cabecalhoUsuario = document.getElementById('resultado-cabecalho-usuario');

@@ -456,7 +456,7 @@
                     context.setVariable("nomeSolicitante", solicitacao.getUsuario().getNome());
                     context.setVariable("nomeSetor", solicitacao.getUsuario().getSetor() != null ? solicitacao.getUsuario().getSetor().getNome() : "N/A");
                     context.setVariable("dataSolicitacao", solicitacao.getDataSolicitacao().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-                    context.setVariable("linkSistema", "http://158.101.195.208/cepra"); // Ajuste o IP
+                    context.setVariable("linkSistema", "https://jdbservico.com/cepra");
 
                     // 1. Nova Solicitação no Setor (Para GESTORES)
                     if (novoStatus == StatusSolicitacao.PENDENTE_GESTOR) {

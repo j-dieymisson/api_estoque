@@ -1,7 +1,6 @@
 // solicitacao-detalhe.js - Versão final com "botões inteligentes"
 setTimeout(() => {
     (async function() {
-        console.log("A executar o script da página de detalhe da solicitação...");
 
         const solicitacaoId = window.pageContext?.id;
 

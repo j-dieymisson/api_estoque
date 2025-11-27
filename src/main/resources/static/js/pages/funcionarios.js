@@ -1,7 +1,6 @@
 // funcionarios.js - Versão CORRIGIDA (com o botão de teste)
 setTimeout(() => {
     (async function() {
-        console.log("A executar o script da página de funcionários...");
 
         // --- Seletores e Variáveis ---
         const corpoTabela = document.getElementById('corpo-tabela-funcionarios');
@@ -249,7 +248,7 @@ setTimeout(() => {
             // ===================================
             if (btnTesteSenha) {
                 btnTesteSenha.addEventListener('click', () => {
-                    console.log("A tentar abrir o modal de TESTE DE SENHA...");
+
                     // Usamos a mesma função que o botão da tabela usa
                     abrirModalSenha(999, "Utilizador Teste");
                 });

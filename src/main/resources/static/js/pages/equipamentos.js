@@ -1,7 +1,6 @@
 // equipamentos.js - Lógica para a página de listagem e busca de equipamentos
 setTimeout(() => {
     (async function() {
-        console.log("A executar o script da página de equipamentos...");
 
         // --- Seletores e Variáveis ---
         const corpoTabela = document.getElementById('corpo-tabela-equipamentos');

@@ -1,7 +1,6 @@
 // consulta-equipamento.js - Versão refatorada e corrigida
 
 (function() {
-    console.log("A executar o script da página de consulta de equipamento...");
 
     // O ID é passado pelo nosso router no main.js
     const equipamentoId = window.pageContext?.id;

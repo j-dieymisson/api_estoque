@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = BASE_URL + '/login.html';
         return;
     }
-    console.log("Utilizador autenticado. A inicializar a aplicação principal.");
 
     const nomeUsuarioSpan = document.getElementById('nome-usuario');
     const mainContentArea = document.getElementById('main-content-area');
@@ -92,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 mainContentArea.innerHTML = `<div class="alert alert-secondary">Selecione uma opção no menu.</div>`;
                 return;
             }
-            console.log(`A carregar a página parcial: ${pageUrl}`);
+
             // 1. Garante que removemos o .html se ele já vier no nome
                         const nomePaginaLimpo = pageUrl.replace('.html', '');
 

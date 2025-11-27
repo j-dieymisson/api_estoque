@@ -1,7 +1,6 @@
 // consultas.js
 setTimeout(() => {
     (function() {
-        console.log("A executar o script da página de consultas...");
 
         // --- Seletores da Aba 1 ---
         const formRelatorioEquipamentos = document.getElementById('form-relatorio-equipamentos');

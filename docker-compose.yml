@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # --- 1. BANCO DE DADOS ---
   mysqldb:
     image: mysql:8.0
     restart: always
@@ -12,31 +11,35 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
-  # --- 2. APLICAÇÃO JAVA ---
   app:
     build: .
     restart: always
-    # NOTA: Não expomos a porta "8080" para fora.
-    # Apenas o Nginx consegue falar com ela internamente.
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysqldb:3306/api_estoque?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${DB_PASS_ESTOQUE}
       JWT_SECRET_ESTOQUE: ${JWT_SECRET_ESTOQUE}
+      # Novas variáveis de Email
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx350m"
     depends_on:
       - mysqldb
 
-  # --- 3. NGINX (NOVO) ---
   nginx:
     build:
       context: .
       dockerfile: Dockerfile-nginx
     restart: always
     ports:
-      - "80:80"
+      - "80:80"   # HTTP
+      - "443:443" # HTTPS
+    volumes:
+
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/jdb-site:/usr/share/nginx/html/landing:ro
+
     depends_on:
       - app
 
 volumes:
-  db_data:

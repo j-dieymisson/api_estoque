@@ -1,7 +1,6 @@
 // categoria-form.js - Lógica para o formulário de criar/editar categoria
 setTimeout(() => {
     (async function() {
-        console.log("A executar o script do formulário de categoria...");
 
         // --- Seletores ---
         const categoriaId = window.pageContext?.id;

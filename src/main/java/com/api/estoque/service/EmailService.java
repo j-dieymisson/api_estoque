@@ -50,7 +50,6 @@ public class EmailService {
 
             // 3. Envia
             mailSender.send(mimeMessage);
-            System.out.println("✅ Email enviado com sucesso para: " + destinatario);
 
         } catch (MessagingException e) {
             // Logamos o erro, mas NÃO lançamos exceção para não quebrar a resposta ao utilizador
